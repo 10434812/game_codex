@@ -1,0 +1,19 @@
+<svg width="160" height="176" viewBox="0 0 160 176" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="jadeBody" x1="80" y1="26" x2="80" y2="154" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D7F6D7"/>
+      <stop offset="1" stop-color="#4E9C6A"/>
+    </linearGradient>
+    <linearGradient id="jadeTie" x1="80" y1="14" x2="80" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E3C47D"/>
+      <stop offset="1" stop-color="#A56B25"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="80" cy="150" rx="44" ry="12" fill="#1F4930" fill-opacity="0.14"/>
+  <path d="M54 42C54 27 66 16 80 16C94 16 106 27 106 42C106 52 102 60 95 67L92 70H68L65 67C58 60 54 52 54 42Z" fill="url(#jadeTie)"/>
+  <path d="M40 74C40 61 51 50 64 50H96C109 50 120 61 120 74V78C128 88 132 99 132 112C132 139 109 158 80 158C51 158 28 139 28 112C28 99 32 88 40 78V74Z" fill="url(#jadeBody)"/>
+  <path d="M63 50H97L92 73H68L63 50Z" fill="#C9E8C9"/>
+  <path d="M80 71C88 71 95 77 95 85C95 93 88 99 80 99C72 99 65 93 65 85C65 77 72 71 80 71Z" fill="#F4FBEA" fill-opacity="0.82"/>
+  <path d="M57 106C63 101 71 98 80 98C89 98 97 101 103 106" stroke="#EEFCE8" stroke-width="5" stroke-linecap="round" stroke-opacity="0.6"/>
+  <path d="M54 89C61 82 70 78 80 78C90 78 99 82 106 89" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-opacity="0.72"/>
+</svg>

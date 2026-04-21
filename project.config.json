@@ -1,0 +1,58 @@
+{
+  "description": "game prototype",
+  "packOptions": {
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "assets/iocns"
+      },
+      {
+        "type": "folder",
+        "value": "assets/avatars"
+      }
+    ],
+    "include": [
+      {
+        "type": "file",
+        "value": "assets/iocns/2657.png_300.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/iocns/2657.png_30012.png"
+      }
+    ]
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "enhance": true,
+    "showShadowRootInWxmlPanel": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.4.0",
+  "appid": "wx72a4b552a87b44cf",
+  "projectname": "game_codex",
+  "simulatorType": "wechat",
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
+}

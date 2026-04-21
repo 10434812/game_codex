@@ -1,0 +1,41 @@
+<view class="paper-bg profile-page">
+  <image class="global-bg-image" src="/assets/bg/bg.png" mode="scaleToFill"></image>
+
+  <view class="app-header profile-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
+    <view class="app-user">
+      <view class="app-user-avatar"></view>
+      <text class="app-user-name">完善资料</text>
+    </view>
+    <view class="app-header-right">
+      <view class="app-status-pill">
+        <text class="app-status-text">个人信息</text>
+      </view>
+      <view class="app-gear">⚙</view>
+    </view>
+  </view>
+
+  <view class="page-content profile-content">
+    <view class="card profile-card">
+      <view class="avatar-section">
+        <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <image wx:if="{{draft.avatarUrl}}" class="picked-avatar" src="{{draft.avatarUrl}}" mode="aspectFill"></image>
+          <view wx:else class="picked-avatar empty">+</view>
+        </button>
+        <view class="helper">点击选择微信头像</view>
+      </view>
+
+      <view class="form-section">
+        <input
+          class="nickname-input"
+          type="nickname"
+          placeholder="请输入微信昵称"
+          value="{{draft.nickName}}"
+          bindinput="onNicknameInput"
+          bindblur="onNicknameInput"
+        />
+
+        <button class="primary-btn save-btn" bindtap="onSaveProfile" disabled="{{!canSave}}">保存并返回</button>
+      </view>
+    </view>
+  </view>
+</view>

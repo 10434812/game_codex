@@ -1,0 +1,110 @@
+<view class="paper-bg result-page">
+  <image class="global-bg-image" src="/assets/bg/bg.png" mode="scaleToFill"></image>
+  <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
+    <view class="app-user" bindtap="onTapProfile">
+      <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
+      <view wx:else class="app-user-avatar"></view>
+      <text class="app-user-name">{{userProfile.nickName}}</text>
+    </view>
+    <view class="app-header-right">
+      <view class="app-status-pill">
+        <text class="app-status-dot">●</text>
+        <text class="app-status-text">进行中</text>
+      </view>
+      <view class="app-gear">⚙</view>
+    </view>
+  </view>
+
+  <view class="page-content">
+    <view class="main-title">获得胜利</view>
+    <view class="sub-title">本局结算成绩</view>
+
+    <view class="crown-mark">♛</view>
+    <view class="podium-wrap">
+      <view class="podium side left">
+        <image class="podium-avatar" src="{{top3.second.avatar}}" mode="aspectFill"></image>
+        <text class="podium-rank silver">2</text>
+        <view class="podium-name">{{top3.second.name}}</view>
+        <view class="podium-score">{{top3.second.score}}</view>
+      </view>
+
+      <view class="podium winner">
+        <view class="winner-badge">♕</view>
+        <image class="podium-avatar champion" src="{{top3.first.avatar}}" mode="aspectFill"></image>
+        <text class="podium-rank gold">1</text>
+        <view class="podium-name self">{{top3.first.name}}</view>
+        <view class="podium-score self">{{top3.first.score}}</view>
+      </view>
+
+      <view class="podium side right">
+        <image class="podium-avatar third" src="{{top3.third.avatar}}" mode="aspectFill"></image>
+        <text class="podium-rank bronze">3</text>
+        <view class="podium-name">{{top3.third.name}}</view>
+        <view class="podium-score">{{top3.third.score}}</view>
+      </view>
+    </view>
+
+    <view class="meta-row">
+      <view class="card meta-card">
+        <view class="meta-title">本局收益</view>
+        <view class="meta-line gain">+{{gainText}} <text class="meta-label">经验值</text></view>
+        <view class="meta-line coin">{{coinText}}</view>
+      </view>
+      <view class="card meta-card">
+        <view class="meta-title tag">新成就</view>
+        <view class="meta-achievement">{{achievementText}}</view>
+        <view class="meta-mountain"></view>
+      </view>
+    </view>
+
+    <view class="rank-head">
+      <view class="rank-title">详细排名 (4-10)</view>
+      <view class="rank-total">{{totalText}}</view>
+    </view>
+
+    <view class="rank-list">
+      <view class="rank-item" wx:for="{{rankList}}" wx:key="rank">
+        <text class="rank">{{item.rank}}</text>
+        <image class="avatar sm" src="{{item.avatar}}" mode="aspectFill"></image>
+        <text class="player">{{item.name}}</text>
+        <text class="num">{{item.score}}</text>
+      </view>
+    </view>
+
+    <view class="view-all">查看完整榜单</view>
+
+    <view class="action-row">
+      <button class="primary-btn action-btn" bindtap="replay">↻ 再来一局</button>
+      <button class="action-btn ghost-btn" bindtap="goHome">⌂ 返回首页</button>
+    </view>
+
+      <view class="bottom-nav result-nav">
+        <view class="nav-item">
+          <view class="nav-dot">
+            <image class="nav-icon" src="/assets/nav/explore.svg" mode="aspectFit"></image>
+          </view>
+          <text>探索</text>
+        </view>
+        <view class="nav-item">
+          <view class="nav-dot">
+            <image class="nav-icon" src="/assets/nav/social.svg" mode="aspectFit"></image>
+          </view>
+          <text>社交</text>
+        </view>
+        <view class="nav-item">
+          <view class="nav-dot">
+            <image class="nav-icon" src="/assets/nav/play.svg" mode="aspectFit"></image>
+          </view>
+          <text>游玩</text>
+        </view>
+      <view class="nav-item active">
+        <view class="nav-dot">
+          <image class="nav-icon" src="/assets/nav/history_active.svg" mode="aspectFit"></image>
+        </view>
+        <text>历史</text>
+      </view>
+    </view>
+
+    <view class="nav-placeholder"></view>
+  </view>
+</view>

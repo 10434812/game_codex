@@ -1,0 +1,19 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/arena/index",
+    "pages/room/index",
+    "pages/result/index",
+    "pages/profile/index",
+    "pages/shop/index"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundTextStyle": "light",
+    "backgroundColor": "#f4e9cd",
+    "backgroundColorTop": "#f4e9cd",
+    "backgroundColorBottom": "#f4e9cd"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,106 @@
+{
+  "pack": {
+    "id": "lorestrome-portraits",
+    "sourcePage": "https://opengameart.org/content/200-free-lorestrome-portraits",
+    "license": "CC0",
+    "notes": "从 Lorestrome 公开头像素材中挑选 16 张，统一导出为本地小程序头像池。"
+  },
+  "assets": [
+    {
+      "avatarAssetId": "traveler-01",
+      "sourceCell": "A1",
+      "familyIntent": "traveler",
+      "notes": "默认回退头像，旅行者家族的中性基准款。"
+    },
+    {
+      "avatarAssetId": "traveler-02",
+      "sourceCell": "A2",
+      "familyIntent": "traveler",
+      "notes": "旅行者家族的轻快补位款。"
+    },
+    {
+      "avatarAssetId": "traveler-03",
+      "sourceCell": "A3",
+      "familyIntent": "traveler",
+      "notes": "旅行者家族的冷色补位款。"
+    },
+    {
+      "avatarAssetId": "traveler-04",
+      "sourceCell": "A4",
+      "familyIntent": "traveler",
+      "notes": "旅行者家族的高饱和补位款。"
+    },
+    {
+      "avatarAssetId": "guardian-01",
+      "sourceCell": "B1",
+      "familyIntent": "guardian",
+      "notes": "守护者家族的稳重主视觉款。"
+    },
+    {
+      "avatarAssetId": "guardian-02",
+      "sourceCell": "B2",
+      "familyIntent": "guardian",
+      "notes": "守护者家族的浅色补位款。"
+    },
+    {
+      "avatarAssetId": "guardian-03",
+      "sourceCell": "B3",
+      "familyIntent": "guardian",
+      "notes": "守护者家族的夜色补位款。"
+    },
+    {
+      "avatarAssetId": "guardian-04",
+      "sourceCell": "B4",
+      "familyIntent": "guardian",
+      "notes": "守护者家族的金色补位款。"
+    },
+    {
+      "avatarAssetId": "dreamer-01",
+      "sourceCell": "C1",
+      "familyIntent": "dreamer",
+      "notes": "幻想者家族的柔和彩色款。"
+    },
+    {
+      "avatarAssetId": "dreamer-02",
+      "sourceCell": "C2",
+      "familyIntent": "dreamer",
+      "notes": "幻想者家族的浅粉补位款。"
+    },
+    {
+      "avatarAssetId": "dreamer-03",
+      "sourceCell": "C3",
+      "familyIntent": "dreamer",
+      "notes": "幻想者家族的清冷补位款。"
+    },
+    {
+      "avatarAssetId": "dreamer-04",
+      "sourceCell": "C4",
+      "familyIntent": "dreamer",
+      "notes": "幻想者家族的亮色补位款。"
+    },
+    {
+      "avatarAssetId": "dealer-01",
+      "sourceCell": "D1",
+      "familyIntent": "dealer",
+      "notes": "发牌者家族的强对比主视觉款。"
+    },
+    {
+      "avatarAssetId": "dealer-02",
+      "sourceCell": "D2",
+      "familyIntent": "dealer",
+      "notes": "发牌者家族的深色补位款。"
+    },
+    {
+      "avatarAssetId": "dealer-03",
+      "sourceCell": "D3",
+      "familyIntent": "dealer",
+      "notes": "发牌者家族的暖色补位款。"
+    },
+    {
+      "avatarAssetId": "dealer-04",
+      "sourceCell": "D4",
+      "familyIntent": "dealer",
+      "notes": "发牌者家族的冷色补位款。"
+    }
+  ]
+}

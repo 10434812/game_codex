@@ -1,0 +1,194 @@
+.home-page {
+  padding: 16rpx 22rpx 180rpx;
+}
+
+.topbar-spacer {
+  box-sizing: border-box;
+}
+
+.hero-safe {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.hero-title {
+  margin-top: 4rpx;
+  color: #d4373f;
+  font-size: 100rpx;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  font-family: "STXinwei", "STXingkai", "Kaiti SC", "KaiTi", "DFKai-SB", cursive;
+  text-shadow: 0 2rpx 0 rgba(182, 40, 44, 0.15);
+}
+
+.subtitle {
+  margin-top: 18rpx;
+  font-size: 24rpx;
+  color: #443a33;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.profile-card {
+  margin-top: 18rpx;
+  padding: 30rpx 30rpx 26rpx;
+  border-radius: 40rpx;
+  position: relative;
+  background: #f2e3c6;
+  border: 2rpx solid rgba(214, 186, 138, 0.5);
+  box-shadow: 0 20rpx 38rpx rgba(123, 87, 41, 0.2), 0 6rpx 14rpx rgba(123, 87, 41, 0.12);
+}
+
+.minor {
+  font-size: 24rpx;
+  color: #8e6d46;
+}
+
+.name {
+  margin: 10rpx 0;
+  font-size: 54rpx;
+  font-weight: 800;
+  color: #3a281a;
+}
+
+.badge {
+  position: absolute;
+  right: 30rpx;
+  top: 28rpx;
+  background: #e8d2a7;
+  color: #926735;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  padding: 10rpx 24rpx;
+}
+
+.stat-row {
+  margin-top: 20rpx;
+  display: flex;
+}
+
+.stat {
+  width: 50%;
+}
+
+.label {
+  font-size: 22rpx;
+  color: #9c7a4f;
+}
+
+.value {
+  margin-top: 8rpx;
+  display: block;
+  font-size: 52rpx;
+  font-weight: 800;
+}
+
+.pink {
+  color: #c54543;
+}
+
+.gold {
+  color: #a17a2b;
+}
+
+.section-head {
+  margin: 26rpx 0 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  font-size: 26rpx;
+  color: #8d6940;
+}
+
+.section-tip {
+  font-size: 22rpx;
+  color: #ae8f68;
+}
+
+.destination-card {
+  padding: 8rpx 0 8rpx 8rpx;
+  border: 3rpx solid #d7bb8a;
+  border-radius: 34rpx;
+  overflow: hidden;
+  background: transparent;
+}
+
+.stage-swiper {
+  height: 860rpx;
+}
+
+.stage-item {
+  position: relative;
+  height: 100%;
+  margin-right: 10rpx;
+  border: 3rpx solid #cfb183;
+  border-radius: 34rpx;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #f6edd8;
+}
+
+.tag {
+  position: absolute;
+  right: 20rpx;
+  top: 20rpx;
+  z-index: 2;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: #df4f4c;
+  color: #fff6ea;
+  font-size: 20rpx;
+}
+
+.stage-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.stage-info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 140rpx 42rpx 38rpx;
+  background: linear-gradient(180deg, rgba(246, 237, 216, 0) 0%, rgba(246, 237, 216, 0.78) 34%, rgba(246, 237, 216, 0.98) 62%, rgba(246, 237, 216, 1) 100%);
+}
+
+.dest-meta {
+  font-size: 20rpx;
+  color: #d54a3d;
+  letter-spacing: 4rpx;
+}
+
+.dest-name {
+  margin-top: 6rpx;
+  font-size: 78rpx;
+  color: #cf4338;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.dest-sub {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #8e6945;
+}
+
+.start-btn {
+  margin-top: 28rpx;
+  height: 88rpx;
+  font-size: 32rpx;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.start-btn::after {
+  border: none;
+}

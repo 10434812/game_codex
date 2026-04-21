@@ -1,0 +1,71 @@
+<view class="paper-bg home-page">
+  <image class="global-bg-image" src="/assets/bg/bg.png" mode="scaleToFill"></image>
+  <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
+    <view class="app-user" bindtap="onTapProfile">
+      <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
+      <view wx:else class="app-user-avatar"></view>
+      <text class="app-user-name">{{userProfile.nickName}}</text>
+    </view>
+    <view class="app-header-right">
+      <view class="app-status-pill">
+        <text class="app-status-dot">●</text>
+        <text class="app-status-text">进行中</text>
+      </view>
+      <view class="app-gear">⚙</view>
+    </view>
+  </view>
+
+  <view class="hero-safe">
+    <view class="hero-title">祝你好运</view>
+    <view class="subtitle">两两组队去探索世界，使自己资产增加</view>
+  </view>
+
+  <view class="card profile-card">
+    <view>
+      <view class="minor">当前状态</view>
+      <view class="name">登峰造极</view>
+      <view class="minor">LV.24 持续旅行者</view>
+    </view>
+    <view class="badge">高级</view>
+    <view class="stat-row">
+      <view class="stat">
+        <text class="label">累计收益</text>
+        <text class="value pink">128,490</text>
+      </view>
+      <view class="stat">
+        <text class="label">幸运金币</text>
+        <text class="value gold">8,820</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section-head">
+    <view class="section-title"> ———— 选择景区 · 目的地</view>
+    <view class="section-tip">左右滑动切换</view>
+  </view>
+
+  <view class="card destination-card">
+    <swiper class="stage-swiper" indicator-dots="{{ false }}" circular="{{ true }}" current="{{ activeStage }}" previous-margin="0rpx" next-margin="52rpx" bindchange="onStageChange">
+      <swiper-item wx:for="{{ stages }}" wx:key="id">
+        <view class="stage-item">
+          <view class="tag" wx:if="{{ item.hot }}">当前热门</view>
+          <image class="stage-image" src="{{ item.image }}" mode="aspectFill"></image>
+          <view class="stage-info">
+            <view class="dest-meta">目的地 {{ item.code }}</view>
+            <view class="dest-name">{{ item.name }}</view>
+            <view class="dest-sub">收益 {{ item.income }} / 约 {{ item.online }} 在线</view>
+          </view>
+        </view>
+      </swiper-item>
+    </swiper>
+  </view>
+
+  <button class="primary-btn start-btn" bindtap="startGame">快速开始 ⚡</button>
+
+  <view class="bottom-nav">
+    <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab">
+      <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
+      <text>{{ item.label }}</text>
+    </view>
+  </view>
+</view>

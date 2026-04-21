@@ -1,0 +1,20 @@
+<svg width="160" height="176" viewBox="0 0 160 176" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldBody" x1="80" y1="28" x2="80" y2="152" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE39B"/>
+      <stop offset="1" stop-color="#D58A2C"/>
+    </linearGradient>
+    <linearGradient id="goldTie" x1="80" y1="18" x2="80" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C44B2D"/>
+      <stop offset="1" stop-color="#8F2418"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="80" cy="150" rx="44" ry="12" fill="#5E2E11" fill-opacity="0.18"/>
+  <path d="M53 44C53 28 66 16 80 16C94 16 107 28 107 44C107 52 104 60 98 66L95 69L65 69L62 66C56 60 53 52 53 44Z" fill="url(#goldTie)"/>
+  <path d="M41 74C41 61 51 50 64 50H96C109 50 119 61 119 74V78C127 87 132 99 132 112C132 138 109 158 80 158C51 158 28 138 28 112C28 99 33 87 41 78V74Z" fill="url(#goldBody)"/>
+  <path d="M63 50H97L92 73H68L63 50Z" fill="#F9C35D"/>
+  <path d="M80 70L90 81L80 92L70 81L80 70Z" fill="#B3271D"/>
+  <path d="M52 89C59 82 69 78 80 78C91 78 101 82 108 89" stroke="#FFF5DA" stroke-width="6" stroke-linecap="round" stroke-opacity="0.75"/>
+  <path d="M55 108C62 101 70 98 80 98C90 98 98 101 105 108" stroke="#FFF0CE" stroke-width="5" stroke-linecap="round" stroke-opacity="0.55"/>
+  <circle cx="111" cy="91" r="8" fill="#FFF3CF" fill-opacity="0.75"/>
+</svg>

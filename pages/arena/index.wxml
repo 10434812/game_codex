@@ -1,0 +1,100 @@
+<view class="paper-bg arena-page">
+  <image class="global-bg-image" src="/assets/bg/gamebg.png" mode="scaleToFill"></image>
+  <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
+    <view class="app-user" bindtap="onTapProfile">
+      <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
+      <view wx:else class="app-user-avatar"></view>
+      <text class="app-user-name">{{userProfile.nickName}}</text>
+    </view>
+    <view class="app-header-right">
+      <view class="app-status-pill">
+        <text class="app-status-dot">●</text>
+        <text class="app-status-text">进行中</text>
+      </view>
+      <view class="app-gear">⚙</view>
+    </view>
+  </view>
+
+  <view class="page-content">
+    <view class="timer card">
+      <view class="time">{{timeText}}</view>
+      <view class="hint">{{actionHintText || hintText}}</view>
+    </view>
+
+    <view class="board">
+      <view class="link-layer">
+        <view class="link team-link" wx:for="{{ teamLinks }}" wx:key="id" style="{{ item.style }}"></view>
+        <view class="link invite-link" wx:if="{{ inviteLink }}" style="{{ inviteLink.style }}"></view>
+        <view class="link success-link" wx:if="{{ successLink }}" style="{{ successLink.style }}"></view>
+      </view>
+
+      <view class="fortune-bag-wrap" wx:if="{{ fortuneBag }}" style="left: {{ fortuneBag.x }}rpx; top: {{ fortuneBag.y }}rpx;" bindtap="onTapFortuneBag">
+        <image class="fortune-bag-image" src="{{ fortuneBag.asset }}" mode="aspectFit"></image>
+        <view class="fortune-bag-label">{{ activePosition ? '卖出' : '买入' }}</view>
+      </view>
+
+      <view class="team-success-toast" wx:if="{{ successToast }}" style="left: {{ successToast.x }}rpx; top: {{ successToast.y }}rpx;">
+        {{ successToast.text }}
+      </view>
+
+      <view class="player-node {{ item.isSelf ? 'self-node' : '' }}" wx:for="{{ players }}" wx:key="id" style="left: {{ item.x }}rpx; top: {{ item.y }}rpx;" data-player-id="{{ item.id }}" bindtap="onPlayerTap">
+        <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }}">
+          <image class="avatar" src="{{ item.avatar || '/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill"></image>
+        </view>
+        <view class="pet-badge" wx:if="{{ item.isSelf && item.petLabel }}">
+          <text class="pet-icon">{{ item.petIcon }}</text>
+          <text>{{ item.petLabel }}</text>
+        </view>
+        <view class="score-visible-tag" wx:if="{{ item.showScore && !item.isSelf }}">
+          <view class="score-visible-blood">
+            <view class="score-visible-blood-fill" style="width: {{ item.revealHpPercent }}%;"></view>
+          </view>
+        </view>
+        <view class="emote-bubble" wx:if="{{ item.emoteText }}">{{ item.emoteText }}</view>
+        <view class="self-tag" wx:if="{{ item.isSelf }}">我</view>
+        <view class="node-name name-{{ item.namePos || 'center' }} {{ item.isSelf ? 'self-node-name' : '' }}">{{ item.scoreLabel }}</view>
+      </view>
+    </view>
+
+    <view class="invest-panel" wx:if="{{ activeOpportunity }}">
+      <view class="invest-head">
+        <text class="invest-type">{{ activeOpportunity.category }}</text>
+        <text class="invest-risk">{{ activeOpportunity.riskText }}</text>
+      </view>
+      <view class="invest-title">{{ activeOpportunity.name }}</view>
+      <view class="invest-line">投入成本：{{ activeOpportunity.cost }}</view>
+      <view class="invest-line">预计波动：{{ activeOpportunity.floatRangeText }}</view>
+      <view class="invest-line">{{ activeOpportunity.summary }}</view>
+      <view class="invest-actions">
+        <button class="invest-btn ghost" bindtap="onCloseOpportunity">先放弃</button>
+        <button class="invest-btn primary-btn" bindtap="onConfirmOpportunity">立即买入</button>
+      </view>
+    </view>
+
+    <view class="quick-emote-panel" wx:if="{{ emotePanelVisible }}">
+      <view
+        class="quick-emote-item"
+        wx:for="{{ quickEmotes }}"
+        wx:key="key"
+        data-key="{{ item.key }}"
+        bindtap="onSendQuickEmote"
+      >
+        {{ item.label }}
+      </view>
+    </view>
+
+    <view class="shop-entry" bindtap="onTapShop">
+      <text class="shop-entry-icon">✦</text>
+      <text>商城</text>
+    </view>
+
+    <view class="quick-emote" bindtap="onToggleEmotePanel">☺</view>
+  </view>
+
+  <view class="bottom-nav">
+    <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab">
+      <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
+      <text>{{ item.label }}</text>
+    </view>
+  </view>
+</view>

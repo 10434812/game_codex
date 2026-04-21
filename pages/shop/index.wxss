@@ -1,0 +1,148 @@
+.shop-page {
+  min-height: 100vh;
+  padding: 14rpx 24rpx 44rpx;
+  box-sizing: border-box;
+}
+
+.shop-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ae7640;
+  font-size: 28rpx;
+}
+
+.coins-card {
+  margin-top: 14rpx;
+  padding: 34rpx 30rpx 28rpx;
+  border-radius: 34rpx;
+  background: rgba(251, 245, 230, 0.95);
+}
+
+.coins-label {
+  color: #946f43;
+  font-size: 24rpx;
+}
+
+.coins-value {
+  margin-top: 10rpx;
+  color: #ce4337;
+  font-size: 72rpx;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.coins-tip {
+  margin-top: 12rpx;
+  color: #7d6039;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.category-row {
+  margin-top: 24rpx;
+  display: flex;
+  gap: 18rpx;
+}
+
+.category-chip {
+  min-width: 156rpx;
+  height: 64rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  background: rgba(243, 228, 196, 0.9);
+  border: 2rpx solid rgba(202, 165, 109, 0.55);
+  color: #845f35;
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 64rpx;
+  text-align: center;
+}
+
+.category-chip.active {
+  background: linear-gradient(135deg, #e95c4f, #c92b2b);
+  border-color: rgba(188, 49, 49, 0.72);
+  color: #fff5e5;
+}
+
+.goods-list {
+  margin-top: 24rpx;
+  display: grid;
+  gap: 18rpx;
+}
+
+.goods-card {
+  padding: 26rpx 26rpx 24rpx;
+  border-radius: 30rpx;
+}
+
+.goods-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.goods-badge {
+  min-width: 88rpx;
+  height: 42rpx;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  color: #fff8ea;
+  font-size: 22rpx;
+  line-height: 42rpx;
+  text-align: center;
+  font-weight: 700;
+}
+
+.goods-price {
+  color: #9a774d;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.goods-name {
+  margin-top: 16rpx;
+  color: #4a2d1a;
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.goods-preview {
+  margin-top: 10rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.goods-desc {
+  margin-top: 10rpx;
+  color: #73553a;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.goods-action {
+  margin-top: 20rpx;
+  width: 100%;
+  height: 78rpx;
+  border-radius: 999rpx;
+  padding: 0;
+  font-size: 28rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff7e8;
+  background: linear-gradient(135deg, #e95c4f, #c92b2b);
+}
+
+.goods-action::after {
+  border: none;
+}
+
+.goods-action.equip {
+  background: linear-gradient(135deg, #d6b173, #bf8d46);
+}
+
+.goods-action[disabled] {
+  opacity: 0.62;
+}

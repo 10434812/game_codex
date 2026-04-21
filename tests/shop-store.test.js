@@ -1,0 +1,88 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const storage = new Map();
+
+global.wx = {
+  getStorageSync(key) {
+    return storage.has(key) ? storage.get(key) : null;
+  },
+  setStorageSync(key, value) {
+    storage.set(key, value);
+  },
+  removeStorageSync(key) {
+    storage.delete(key);
+  },
+};
+
+const shopStore = require('../utils/shop-store');
+
+test.beforeEach(() => {
+  storage.clear();
+  shopStore.__resetForTests();
+});
+
+test('getStoreState 会返回默认商城状态', () => {
+  const state = shopStore.getStoreState();
+
+  assert.equal(state.coins, 8820);
+  assert.deepEqual(state.ownedSkins, ['skin-default']);
+  assert.deepEqual(state.ownedPets, []);
+  assert.equal(state.equippedSkinId, 'skin-default');
+  assert.equal(state.equippedPetId, '');
+});
+
+test('purchaseItem 会扣除金币并加入已拥有皮肤', () => {
+  const result = shopStore.purchaseItem('skin', 'skin-sakura');
+  const state = shopStore.getStoreState();
+
+  assert.equal(result.ok, true);
+  assert.equal(state.coins, 7140);
+  assert.deepEqual(state.ownedSkins, ['skin-default', 'skin-sakura']);
+});
+
+test('purchaseItem 在金币不足时不会改写状态', () => {
+  wx.setStorageSync('game_codex_shop_store_v1', {
+    coins: 100,
+    ownedSkins: ['skin-default'],
+    ownedPets: [],
+    equippedSkinId: 'skin-default',
+    equippedPetId: '',
+  });
+
+  const before = shopStore.getStoreState();
+  const result = shopStore.purchaseItem('pet', 'pet-dragon');
+  const after = shopStore.getStoreState();
+
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'INSUFFICIENT_COINS');
+  assert.deepEqual(after, before);
+});
+
+test('purchaseItem 对已拥有商品不会重复扣费', () => {
+  const first = shopStore.purchaseItem('pet', 'pet-luckycat');
+  const second = shopStore.purchaseItem('pet', 'pet-luckycat');
+  const state = shopStore.getStoreState();
+
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, false);
+  assert.equal(second.code, 'ALREADY_OWNED');
+  assert.equal(state.coins, 7840);
+  assert.deepEqual(state.ownedPets, ['pet-luckycat']);
+});
+
+test('equipItem 会更新当前装备状态', () => {
+  shopStore.purchaseItem('skin', 'skin-storm');
+  shopStore.purchaseItem('pet', 'pet-fox');
+
+  const skinResult = shopStore.equipItem('skin', 'skin-storm');
+  const petResult = shopStore.equipItem('pet', 'pet-fox');
+  const display = shopStore.getEquippedDisplay();
+
+  assert.equal(skinResult.ok, true);
+  assert.equal(petResult.ok, true);
+  assert.equal(display.equippedSkinId, 'skin-storm');
+  assert.equal(display.equippedPetId, 'pet-fox');
+  assert.equal(display.skinClass, 'skin-storm');
+  assert.equal(display.petIcon, '🦊');
+});
