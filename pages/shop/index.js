@@ -1,5 +1,6 @@
 const {getNavLayout} = require('../../utils/nav');
 const shopStore = require('../../utils/shop-store');
+const userProfile = require('../../utils/user-profile');
 
 const CATEGORY_OPTIONS = [
   {key: 'skin', label: '皮肤'},
@@ -46,6 +47,7 @@ Page({
     activeCategory: 'skin',
     coins: 0,
     goods: [],
+    avatarUrl: '',
   },
   onLoad() {
     try {
@@ -58,10 +60,12 @@ Page({
   },
   syncPage() {
     const state = shopStore.getStoreState();
+    const profile = userProfile.getCachedProfile();
     const activeCategory = this.data.activeCategory || 'skin';
     this.setData({
       coins: state.coins,
       goods: buildGoods(activeCategory),
+      avatarUrl: profile.avatarUrl,
     });
   },
   onSwitchCategory(e) {

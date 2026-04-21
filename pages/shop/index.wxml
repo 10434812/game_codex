@@ -3,7 +3,8 @@
 
   <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
     <view class="app-user">
-      <view class="app-user-avatar shop-avatar">🛍</view>
+      <image wx:if="{{avatarUrl}}" class="app-user-avatar shop-avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+      <view wx:else class="app-user-avatar shop-avatar">🛍</view>
       <text class="app-user-name">旅行商城</text>
     </view>
     <view class="app-header-right">
