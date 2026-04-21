@@ -18,6 +18,7 @@ const GOODS = {
       accent: '#d14e42',
       description: '基础皮肤，沉稳的赤金外框。',
       skinClass: 'skin-default',
+      skinIcon: '🎴',
     },
     {
       id: 'skin-sakura',
@@ -27,6 +28,7 @@ const GOODS = {
       accent: '#d86b87',
       description: '柔和樱粉与金边，适合高调开局。',
       skinClass: 'skin-sakura',
+      skinIcon: '🌸',
     },
     {
       id: 'skin-storm',
@@ -36,6 +38,7 @@ const GOODS = {
       accent: '#4c6edb',
       description: '深海蓝与冷银线条，更锋利的视觉识别。',
       skinClass: 'skin-storm',
+      skinIcon: '🌊',
     },
     {
       id: 'skin-sunrise',
@@ -45,6 +48,7 @@ const GOODS = {
       accent: '#ea7b2c',
       description: '橙金渐变，适合强调自己的主角感。',
       skinClass: 'skin-sunrise',
+      skinIcon: '🌞',
     },
   ],
   pet: [

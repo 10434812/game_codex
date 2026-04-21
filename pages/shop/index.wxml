@@ -15,45 +15,60 @@
   </view>
 
   <view class="page-content">
-    <view class="card coins-card">
-      <view class="coins-label">当前幸运金币</view>
-      <view class="coins-value">{{ coins }}</view>
-      <view class="coins-tip">购买后可在对局页展示皮肤与宠物效果</view>
+    <view class="asset-card">
+      <view class="asset-header">
+        <text class="asset-label">当前幸运金币</text>
+        <text class="asset-tip">购买后可在对局页展示特效</text>
+      </view>
+      <view class="asset-body">
+        <text class="asset-value">{{ coins }}</text>
+        <text class="asset-currency">枚</text>
+      </view>
     </view>
 
-    <view class="category-row">
+    <view class="category-tabs">
       <view
         wx:for="{{ categories }}"
         wx:key="key"
-        class="category-chip {{ activeCategory === item.key ? 'active' : '' }}"
+        class="tab-item {{ activeCategory == item.key ? 'active' : '' }}"
         data-category="{{ item.key }}"
         bindtap="onSwitchCategory"
       >
         {{ item.label }}
+        <view class="tab-line" wx:if="{{ activeCategory == item.key }}"></view>
       </view>
     </view>
 
-    <view class="goods-list">
-      <view wx:for="{{ goods }}" wx:key="id" class="card goods-card">
-        <view class="goods-top">
-          <view class="goods-badge" style="background: {{ item.accent }};">{{ item.category === 'skin' ? '皮肤' : '宠物' }}</view>
-          <view class="goods-price">{{ item.price === 0 ? '默认拥有' : item.price + ' 金币' }}</view>
+    <view class="goods-grid">
+      <view wx:for="{{ goods }}" wx:key="id" class="goods-card cursor-hover">
+        <view class="goods-head">
+          <view class="goods-badge">{{ item.category == 'skin' ? '装扮' : '灵宠' }}</view>
+          <view class="goods-price">
+            <text class="price-num">{{ item.price == 0 ? '免费' : item.price }}</text>
+            <text class="price-unit" wx:if="{{item.price != 0}}">金</text>
+          </view>
         </view>
-        <view class="goods-name">{{ item.name }}</view>
-        <view class="goods-preview" style="color: {{ item.accent }};">
-          {{ item.category === 'skin' ? '◉ 头像框效果' : item.petIcon + ' ' + item.petLabel }}
+        
+        <view class="goods-visual {{item.skinClass || item.id}}">
+          <view class="visual-placeholder">
+             {{ item.category == 'skin' ? item.skinIcon : item.petIcon }}
+          </view>
         </view>
-        <view class="goods-desc">{{ item.description }}</view>
-        <button
-          class="goods-action {{ item.status.action === 'buy' ? 'buy' : 'equip' }}"
-          disabled="{{ item.status.disabled }}"
+
+        <view class="goods-info">
+          <view class="goods-name">{{ item.name }}</view>
+          <view class="goods-desc">{{ item.description }}</view>
+        </view>
+
+        <view
+          class="goods-action-btn {{ item.status.action == 'buy' ? 'buy' : 'equip' }} {{ item.status.disabled ? 'disabled' : '' }}"
           data-category="{{ item.category }}"
           data-item-id="{{ item.id }}"
-          data-action="{{ item.status.action }}"
+          data-action="{{ item.status.disabled ? '' : item.status.action }}"
           bindtap="onTapAction"
         >
           {{ item.status.text }}
-        </button>
+        </view>
       </view>
     </view>
   </view>
