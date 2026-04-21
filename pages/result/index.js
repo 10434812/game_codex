@@ -45,6 +45,14 @@ Page({
     totalText: '总计 0 玩家',
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
+    showScorePopup: false,
+    selectedPlayer: null,
+    scoreBreakdown: {
+      baseScore: '0',
+      achievementBonus: '0',
+      teamBonus: '0',
+      penalty: '0',
+    },
   },
   onLoad() {
     try {
@@ -118,5 +126,50 @@ Page({
   },
   onTapProfile() {
     wx.navigateTo({url: '/pages/profile/index'});
+  },
+  onTapPlayer(e) {
+    const player = e.currentTarget.dataset.player;
+    if (!player || player.name === '--') return;
+
+    playCue('tap', {volume: 0.75});
+    
+    // Mock score breakdown based on total score
+    const total = parseInt((player.score || '0').replace(/,/g, ''), 10) || 0;
+    const isWin = total > 0;
+    
+    let baseScore = 0;
+    let achievementBonus = 0;
+    let teamBonus = 0;
+    let penalty = 0;
+    
+    if (isWin) {
+      baseScore = Math.floor(total * 0.45);
+      achievementBonus = Math.floor(total * 0.25);
+      teamBonus = total - baseScore - achievementBonus;
+      // random minor penalty between 0 to 5% of total
+      penalty = Math.floor(total * Math.random() * 0.05);
+      // adjust base score to keep the math right if penalty exists
+      baseScore += penalty; 
+    } else {
+      penalty = Math.floor(Math.random() * 50) + 10;
+      baseScore = total + penalty; // base - penalty = total
+    }
+
+    this.setData({
+      showScorePopup: true,
+      selectedPlayer: player,
+      scoreBreakdown: {
+        baseScore: formatNumber(baseScore),
+        achievementBonus: formatNumber(achievementBonus),
+        teamBonus: formatNumber(teamBonus),
+        penalty: formatNumber(penalty),
+      }
+    });
+  },
+  closeScorePopup() {
+    playCue('tap', {volume: 0.75});
+    this.setData({
+      showScorePopup: false,
+    });
   },
 });

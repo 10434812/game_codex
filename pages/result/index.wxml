@@ -21,14 +21,14 @@
 
     <view class="crown-mark">♛</view>
     <view class="podium-wrap">
-      <view class="podium side left">
+      <view class="podium side left" bindtap="onTapPlayer" data-player="{{top3.second}}">
         <image class="podium-avatar" src="{{top3.second.avatar}}" mode="aspectFill"></image>
         <text class="podium-rank silver">2</text>
         <view class="podium-name">{{top3.second.name}}</view>
         <view class="podium-score">{{top3.second.score}}</view>
       </view>
 
-      <view class="podium winner">
+      <view class="podium winner" bindtap="onTapPlayer" data-player="{{top3.first}}">
         <view class="winner-badge">♕</view>
         <image class="podium-avatar champion" src="{{top3.first.avatar}}" mode="aspectFill"></image>
         <text class="podium-rank gold">1</text>
@@ -36,7 +36,7 @@
         <view class="podium-score self">{{top3.first.score}}</view>
       </view>
 
-      <view class="podium side right">
+      <view class="podium side right" bindtap="onTapPlayer" data-player="{{top3.third}}">
         <image class="podium-avatar third" src="{{top3.third.avatar}}" mode="aspectFill"></image>
         <text class="podium-rank bronze">3</text>
         <view class="podium-name">{{top3.third.name}}</view>
@@ -63,7 +63,7 @@
     </view>
 
     <view class="rank-list">
-      <view class="rank-item" wx:for="{{rankList}}" wx:key="rank">
+      <view class="rank-item" wx:for="{{rankList}}" wx:key="rank" bindtap="onTapPlayer" data-player="{{item}}">
         <text class="rank">{{item.rank}}</text>
         <image class="avatar sm" src="{{item.avatar}}" mode="aspectFill"></image>
         <text class="player">{{item.name}}</text>
@@ -106,5 +106,40 @@
     </view>
 
     <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 玩家分数明细弹窗 -->
+  <view class="score-popup" wx:if="{{showScorePopup}}">
+    <view class="score-popup-mask" bindtap="closeScorePopup"></view>
+    <view class="score-popup-content">
+      <view class="score-popup-close" bindtap="closeScorePopup">✕</view>
+      <view class="score-popup-header">
+        <image class="score-popup-avatar" src="{{selectedPlayer.avatar}}" mode="aspectFill"></image>
+        <view class="score-popup-name">{{selectedPlayer.name}}</view>
+        <view class="score-popup-total">总分 <text class="highlight">{{selectedPlayer.score}}</text></view>
+      </view>
+      <view class="score-popup-body">
+        <view class="score-item">
+          <text class="score-label">基础得分</text>
+          <text class="score-value">{{scoreBreakdown.baseScore}}</text>
+        </view>
+        <view class="score-item">
+          <text class="score-label">成就奖励</text>
+          <text class="score-value bonus">+{{scoreBreakdown.achievementBonus}}</text>
+        </view>
+        <view class="score-item">
+          <text class="score-label">团队加成</text>
+          <text class="score-value bonus">+{{scoreBreakdown.teamBonus}}</text>
+        </view>
+        <view class="score-item">
+          <text class="score-label">失误扣除</text>
+          <text class="score-value penalty">-{{scoreBreakdown.penalty}}</text>
+        </view>
+      </view>
+      <view class="score-popup-divider"></view>
+      <view class="score-popup-footer">
+        数据结算完毕
+      </view>
+    </view>
   </view>
 </view>
