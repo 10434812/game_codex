@@ -1,4 +1,30 @@
+/* ============================================
+   Design Tokens — 东方纸张主题色系
+   主色: 朱砂红  辅色: 暖金棕  背景: 米纸黄
+   ============================================ */
 page {
+  /* 背景 */
+  --bg-base: #f6ebd1;
+  --bg-card: rgba(255, 251, 241, 0.9);
+  --bg-panel: rgba(255, 248, 234, 0.93);
+
+  /* 主色 · 朱砂红 */
+  --red-primary: #c92b2b;
+  --red-bright:  #e95c4f;
+  --red-deep:    #9e2820;
+  --red-ink:     #581f1c;
+
+  /* 辅色 · 暖金棕 */
+  --gold-warm:   #d2a45a;
+  --gold-mid:    #9e743e;
+  --gold-dark:   #6b4a2d;
+  --brown-text:  #4a2d1a;
+  --brown-sub:   #8a7051;
+
+  /* 边框 */
+  --border-warm: rgba(205, 171, 114, 0.6);
+  --border-gold: rgba(221, 198, 154, 0.75);
+
   background: #f6ebd1;
   color: #51331c;
   font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;

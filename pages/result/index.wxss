@@ -53,7 +53,7 @@
   margin: 0 auto 10rpx;
   border-radius: 50%;
   border: 4rpx solid rgba(232, 206, 154, 0.9);
-  background: linear-gradient(145deg, #495f7c, #1f3247);
+  background: linear-gradient(145deg, #c4a47a, #8a6444);
   box-shadow: 0 10rpx 20rpx rgba(93, 67, 35, 0.2);
 }
 
@@ -65,7 +65,7 @@
 }
 
 .podium-avatar.third {
-  background: linear-gradient(145deg, #4d6178, #293b4f);
+  background: linear-gradient(145deg, #b09070, #7a5d43);
 }
 
 .podium-rank {
@@ -108,9 +108,9 @@
   min-height: 292rpx;
   border-radius: 24rpx;
   padding: 22rpx 16rpx 20rpx;
-  background: linear-gradient(180deg, #ff8a91 0%, #f84b63 58%, #e6314c 100%);
-  border: 3rpx solid rgba(255, 200, 117, 0.88);
-  box-shadow: 0 14rpx 30rpx rgba(171, 44, 54, 0.34);
+  background: linear-gradient(160deg, #c93e35 0%, #9e2820 60%, #7d1c18 100%);
+  border: 3rpx solid rgba(242, 195, 100, 0.78);
+  box-shadow: 0 14rpx 30rpx rgba(120, 30, 30, 0.38), inset 0 2rpx 0 rgba(255, 235, 180, 0.22);
 }
 
 .winner-badge {
@@ -260,7 +260,7 @@
   height: 48rpx;
   margin: 0 14rpx 0 12rpx;
   border-radius: 50%;
-  background: linear-gradient(145deg, #4b6780, #1e3448);
+  background: linear-gradient(145deg, #c4a47a, #8a6444);
 }
 
 .player {

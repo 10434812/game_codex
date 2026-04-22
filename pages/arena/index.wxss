@@ -163,7 +163,7 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 6rpx solid #7b5a2e;
+  border: 6rpx solid #9a6e3a;
   box-sizing: border-box;
 }
 
