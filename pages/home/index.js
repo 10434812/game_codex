@@ -1,6 +1,7 @@
 const {getNavLayout} = require('../../utils/nav');
-const {DEFAULT_STAGE, STAGES} = require('../../utils/constants');
+const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, STAGES} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
+const shopStore = require('../../utils/shop-store');
 const {playCue} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 
@@ -11,15 +12,12 @@ Page({
       navHeight: 64,
       capsuleSpace: 120,
     },
-    tabs: [
-      {key: 'explore', label: '探索', icon: '/assets/nav/explore.svg', iconActive: '/assets/nav/explore_active.svg', page: '/pages/home/index'},
-      {key: 'social', label: '社交', icon: '/assets/nav/social.svg', iconActive: '/assets/nav/social_active.svg', page: '/pages/room/index'},
-      {key: 'play', label: '游玩', icon: '/assets/nav/play.svg', iconActive: '/assets/nav/play_active.svg', page: '/pages/arena/index'},
-      {key: 'history', label: '历史', icon: '/assets/nav/history.svg', iconActive: '/assets/nav/history_active.svg', page: '/pages/result/index'},
-    ],
+    modeText: MATCH_MODE_TEXT,
+    tabs: NAV_TABS,
     activeTab: 'explore',
     activeStage: 0,
     stages: STAGES,
+    coinText: '0',
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
   },
@@ -30,6 +28,7 @@ Page({
   },
   onShow() {
     this.syncUserProfile();
+    this.syncCoins();
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
@@ -41,18 +40,17 @@ Page({
     const stage = this.data.stages[this.data.activeStage] || DEFAULT_STAGE;
     if (page === '/pages/room/index') {
       gameStore.ensureRoom(stage);
-      wx.navigateTo({url: page});
+      wx.redirectTo({url: page});
       return;
     }
 
     if (page === '/pages/arena/index') {
-      gameStore.createRoomFromStage(stage);
-      gameStore.startGame();
-      wx.navigateTo({url: page});
+      gameStore.ensureRoom(stage);
+      wx.redirectTo({url: '/pages/room/index'});
       return;
     }
 
-    wx.navigateTo({url: page});
+    wx.redirectTo({url: page});
   },
   startGame() {
     playCue('tap', {volume: 0.75});
@@ -70,6 +68,12 @@ Page({
     this.setData({
       userProfile: cached,
       userAuthorized: hasValidProfile(cached),
+    });
+  },
+  syncCoins() {
+    const state = shopStore.getStoreState();
+    this.setData({
+      coinText: Number(state.coins || 0).toLocaleString('en-US'),
     });
   },
   onTapProfile() {

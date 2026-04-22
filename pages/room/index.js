@@ -1,5 +1,11 @@
 const {getNavLayout} = require('../../utils/nav');
-const {DEFAULT_STAGE, ROOM_UI_LIMIT, WAITING_SLOT_NAME} = require('../../utils/constants');
+const {
+  DEFAULT_STAGE,
+  MATCH_MODE_TEXT,
+  NAV_TABS,
+  ROOM_UI_LIMIT,
+  WAITING_SLOT_NAME,
+} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const {playCue} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
@@ -36,10 +42,16 @@ Page({
       navHeight: 64,
       capsuleSpace: 120,
     },
+    modeText: MATCH_MODE_TEXT,
+    tabs: NAV_TABS,
+    activeTab: 'social',
     slots: Array.from({length: ROOM_UI_LIMIT}, buildEmptySlot),
     stageName: DEFAULT_STAGE.name,
     roomId: '----',
     activePercent: 0,
+    selfReady: true,
+    starting: false,
+    startButtonText: '开始游戏',
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
   },
@@ -51,20 +63,57 @@ Page({
   },
   onShow() {
     this.syncUserProfile();
-    this.refreshRoom();
-  },
-  refreshRoom() {
     const snapshot = gameStore.getState();
-    const state = gameStore.ensureRoom(snapshot.stage || DEFAULT_STAGE);
+    this.observeState(gameStore.ensureRoom(snapshot.stage || DEFAULT_STAGE));
+    this.unsubscribeStore();
+    this.unsubscribe = gameStore.subscribe((state) => {
+      this.observeState(state);
+    });
+  },
+  onHide() {
+    this.clearStartCountdown();
+    this.unsubscribeStore();
+  },
+  onUnload() {
+    this.clearStartCountdown();
+    this.unsubscribeStore();
+  },
+  observeState(state) {
+    if (!state) {
+      return;
+    }
+    if (state.status === 'idle') {
+      const ensured = gameStore.ensureRoom(state.stage || DEFAULT_STAGE);
+      this.observeState(ensured);
+      return;
+    }
+    if (state.status === 'playing') {
+      this.clearStartCountdown();
+      wx.redirectTo({url: '/pages/arena/index'});
+      return;
+    }
+    if (state.status === 'finished') {
+      this.clearStartCountdown();
+      wx.redirectTo({url: '/pages/result/index'});
+      return;
+    }
+
     const activePercent = Math.round((state.players.length / ROOM_UI_LIMIT) * 100);
+    const selfPlayer = state.players.find((player) => player.isSelf) || state.players[0];
+    const selfReady = !selfPlayer || selfPlayer.ready !== false;
     this.setData({
       slots: mapRoomSlots(state.players),
       stageName: state.stage.name,
       roomId: state.roomId,
       activePercent,
+      selfReady,
+      modeText: state.modeText || MATCH_MODE_TEXT,
     });
   },
   inviteFriend() {
+    if (this.data.starting) {
+      return;
+    }
     playCue('tap', {volume: 0.75});
     playCue('invite', {volume: 0.7});
     const before = gameStore.getState();
@@ -76,17 +125,51 @@ Page({
       playCue('actionFail', {volume: 0.7});
       wx.showToast({title: '房间已满', icon: 'none'});
     }
-    this.refreshRoom();
+    this.observeState(state);
+  },
+  toggleReady() {
+    if (this.data.starting) {
+      return;
+    }
+    playCue('tap', {volume: 0.75});
+    const state = gameStore.setSelfReady(!this.data.selfReady);
+    this.observeState(state);
   },
   start() {
+    if (this.data.starting) {
+      return;
+    }
+    if (!this.data.selfReady) {
+      playCue('actionFail', {volume: 0.7});
+      wx.showToast({title: '请先点击准备', icon: 'none'});
+      return;
+    }
     playCue('tap', {volume: 0.75});
+    this.clearStartCountdown();
+    let left = 3;
+    this.setData({
+      starting: true,
+      startButtonText: `倒计时 ${left}s`,
+    });
     playCue('countdown3', {volume: 0.55});
-    setTimeout(() => playCue('countdown2', {volume: 0.55}), 260);
-    setTimeout(() => playCue('countdown1', {volume: 0.55}), 520);
-    setTimeout(() => playCue('gameStart', {volume: 0.85}), 800);
-    const state = gameStore.startGame();
-    this.setData({slots: mapRoomSlots(state.players)});
-    wx.redirectTo({url: '/pages/arena/index'});
+    this.startCountdownTimer = setInterval(() => {
+      left -= 1;
+      if (left === 2) {
+        playCue('countdown2', {volume: 0.55});
+      } else if (left === 1) {
+        playCue('countdown1', {volume: 0.55});
+      }
+      if (left <= 0) {
+        this.clearStartCountdown();
+        playCue('gameStart', {volume: 0.85});
+        const state = gameStore.startGame();
+        this.observeState(state);
+        return;
+      }
+      this.setData({
+        startButtonText: `倒计时 ${left}s`,
+      });
+    }, 1000);
   },
   syncUserProfile() {
     const cached = getCachedProfile();
@@ -94,6 +177,39 @@ Page({
       userProfile: cached,
       userAuthorized: hasValidProfile(cached),
     });
+  },
+  clearStartCountdown() {
+    if (this.startCountdownTimer) {
+      clearInterval(this.startCountdownTimer);
+      this.startCountdownTimer = null;
+    }
+    if (this.data.starting || this.data.startButtonText !== '开始游戏') {
+      this.setData({
+        starting: false,
+        startButtonText: '开始游戏',
+      });
+    }
+  },
+  unsubscribeStore() {
+    if (typeof this.unsubscribe === 'function') {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+  },
+  switchTab(e) {
+    playCue('tap', {volume: 0.75});
+    const page = e.currentTarget.dataset.page;
+    if (!page || page === '/pages/room/index') {
+      return;
+    }
+    if (page === '/pages/arena/index') {
+      const snapshot = gameStore.getState();
+      if (snapshot.status !== 'playing') {
+        wx.showToast({title: '请先开始游戏', icon: 'none'});
+        return;
+      }
+    }
+    wx.redirectTo({url: page});
   },
   onTapProfile() {
     wx.navigateTo({url: '/pages/profile/index'});

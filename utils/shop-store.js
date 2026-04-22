@@ -246,6 +246,19 @@ function getEquippedDisplay() {
   };
 }
 
+function addCoins(amount) {
+  const delta = Math.floor(Number(amount) || 0);
+  if (delta <= 0) {
+    return clone(loadState());
+  }
+  const state = loadState();
+  const nextState = saveState({
+    ...state,
+    coins: state.coins + delta,
+  });
+  return clone(nextState);
+}
+
 function __resetForTests() {
   try {
     wx.removeStorageSync(SHOP_STORAGE_KEY);
@@ -258,6 +271,7 @@ module.exports = {
   getGoodsByCategory,
   getStoreState,
   buildGoodsView,
+  addCoins,
   purchaseItem,
   equipItem,
   getEquippedDisplay,

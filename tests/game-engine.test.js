@@ -75,3 +75,14 @@ test('addInvitedHuman 会向房间追加一个真人玩家', () => {
   assert.equal(last.isRobot, false);
   assert.equal(last.isSelf, false);
 });
+
+test('buildVisibleScoreState 会按阶段切换可见分数玩家', () => {
+  const players = engine.createInitialPlayers({count: 6, random: createRandom(0.2, 0.2, 0.2, 0.2, 0.2)});
+  const first = engine.buildVisibleScoreState(players, 180, 180, null, {random: createRandom(0.1, 0.2, 0.3)});
+  const second = engine.buildVisibleScoreState(players, 179, 180, first, {random: createRandom(0.4, 0.5, 0.6)});
+  const third = engine.buildVisibleScoreState(players, 149, 180, second, {random: createRandom(0.2, 0.3, 0.4)});
+
+  assert.equal(first.visibleIds.length, 2);
+  assert.equal(second.changed, false);
+  assert.equal(third.changed, true);
+});

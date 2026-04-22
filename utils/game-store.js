@@ -1,11 +1,13 @@
 const {
   DEFAULT_STAGE,
   GAME_DURATION_SECONDS,
+  MATCH_MODE_TEXT,
   MAX_PLAYERS,
   ROOM_UI_LIMIT,
   ROUND_INTERVAL_SECONDS,
 } = require('./constants');
 const engine = require('./game-engine');
+const shopStore = require('./shop-store');
 
 let state = createEmptyState();
 const listeners = new Set();
@@ -19,6 +21,7 @@ function createEmptyState() {
   return {
     roomId: '',
     stage: clone(DEFAULT_STAGE),
+    modeText: MATCH_MODE_TEXT,
     status: 'idle',
     duration: GAME_DURATION_SECONDS,
     timeLeft: GAME_DURATION_SECONDS,
@@ -27,8 +30,9 @@ function createEmptyState() {
     teams: [],
     result: null,
     initialScores: {},
+    scoreLog: {},
     lastEvents: [],
-    feedText: '等待开局',
+    feedText: `等待开局（${MATCH_MODE_TEXT}）`,
   };
 }
 
@@ -79,6 +83,83 @@ function buildInitialScores(players) {
   }, {});
 }
 
+function createScoreLog(players) {
+  return (players || []).reduce((map, player) => {
+    map[player.id] = [];
+    return map;
+  }, {});
+}
+
+function ensureScoreLogPlayers(baseLog, players) {
+  const next = {...(baseLog || {})};
+  (players || []).forEach((player) => {
+    if (!next[player.id]) {
+      next[player.id] = [];
+    }
+  });
+  return next;
+}
+
+function appendScoreLogEntries(baseLog, players, entries = []) {
+  const next = ensureScoreLogPlayers(baseLog, players);
+  const timestamp = Date.now();
+  entries.forEach((entry) => {
+    if (!entry || !entry.playerId || !next[entry.playerId] || typeof entry.delta !== 'number') {
+      return;
+    }
+    next[entry.playerId] = [
+      ...next[entry.playerId],
+      {
+        type: entry.type || 'round',
+        delta: entry.delta,
+        round: Number(entry.round) || 0,
+        timestamp,
+      },
+    ];
+  });
+  return next;
+}
+
+function buildTeammateMap(teams) {
+  return (teams || []).reduce((map, team) => {
+    if (!team || !Array.isArray(team.memberIds) || team.memberIds.length !== 2) {
+      return map;
+    }
+    map[team.memberIds[0]] = team.memberIds[1];
+    map[team.memberIds[1]] = team.memberIds[0];
+    return map;
+  }, {});
+}
+
+function buildScoreBreakdownMap(scoreLog, players) {
+  const ids = (players || []).map((player) => player.id);
+  return ids.reduce((map, playerId) => {
+    const entries = Array.isArray(scoreLog && scoreLog[playerId]) ? scoreLog[playerId] : [];
+    const breakdown = {
+      round: 0,
+      teamBonus: 0,
+      investment: 0,
+      fortuneBag: 0,
+      total: 0,
+    };
+    entries.forEach((entry) => {
+      const delta = Number(entry.delta) || 0;
+      if (entry.type === 'team_bonus') {
+        breakdown.teamBonus += delta;
+      } else if (entry.type === 'investment') {
+        breakdown.investment += delta;
+      } else if (entry.type === 'fortune_bag') {
+        breakdown.fortuneBag += delta;
+      } else {
+        breakdown.round += delta;
+      }
+    });
+    breakdown.total = breakdown.round + breakdown.teamBonus + breakdown.investment + breakdown.fortuneBag;
+    map[playerId] = breakdown;
+    return map;
+  }, {});
+}
+
 function buildAchievement(stage) {
   const achievementMap = {
     '万里长城': '长城守望者',
@@ -92,15 +173,18 @@ function buildAchievement(stage) {
 
 function buildFinishedResult(currentState) {
   const result = engine.buildResult(currentState.players);
+  const scoreBreakdownMap = buildScoreBreakdownMap(currentState.scoreLog, currentState.players);
   const selfPlayer = result.ranking.find((player) => player.isSelf) || result.ranking[0];
   const initialScore = selfPlayer ? currentState.initialScores[selfPlayer.id] || 0 : 0;
   const gain = selfPlayer ? Math.max(0, selfPlayer.score - initialScore) : 0;
 
   return {
     ...result,
+    resultId: `result-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     gain,
     coins: gain * 3,
     achievement: buildAchievement(currentState.stage),
+    scoreBreakdownMap,
   };
 }
 
@@ -114,7 +198,8 @@ function createRoomFromStage(stage = DEFAULT_STAGE, options = {}) {
     status: 'room',
     players: roomState.players,
     initialScores: buildInitialScores(roomState.players),
-    feedText: '房间已创建，等待开始',
+    scoreLog: createScoreLog(roomState.players),
+    feedText: `房间已创建，等待开始（${MATCH_MODE_TEXT}）`,
   };
   emit();
   return getState();
@@ -171,8 +256,9 @@ function startGame(options = {}) {
     teams: paired.teams,
     result: null,
     initialScores: buildInitialScores(paired.players),
+    scoreLog: createScoreLog(paired.players),
     lastEvents: [],
-    feedText: '对局开始，祝你好运',
+    feedText: `对局开始（${MATCH_MODE_TEXT}），祝你好运`,
   };
 
   if (options.autoStartTimer !== false) {
@@ -185,10 +271,14 @@ function startGame(options = {}) {
 
 function finishGame() {
   stopTimer();
+  const result = buildFinishedResult(state);
+  if (result.coins > 0) {
+    shopStore.addCoins(result.coins);
+  }
   state = {
     ...state,
     status: 'finished',
-    result: buildFinishedResult(state),
+    result,
     lastEvents: [],
     feedText: '对局结束，正在结算',
   };
@@ -247,6 +337,7 @@ function tick(options = {}) {
   let nextRound = state.round;
   let nextEvents = [];
   let nextFeedText = state.feedText;
+  let nextScoreLog = ensureScoreLogPlayers(state.scoreLog, nextPlayers);
 
   if (nextTimeLeft > 0 && nextTimeLeft % ROUND_INTERVAL_SECONDS === 0) {
     const roundResult = engine.playRound(state.players, state.teams, options);
@@ -254,6 +345,34 @@ function tick(options = {}) {
     nextTeams = roundResult.teams;
     nextRound += 1;
     nextEvents = roundResult.events;
+    const teammateMap = buildTeammateMap(nextTeams);
+    const scoreEntries = [];
+    nextEvents.forEach((event) => {
+      if (!event || !event.actorId || typeof event.delta !== 'number') {
+        return;
+      }
+      scoreEntries.push({
+        playerId: event.actorId,
+        type: 'round',
+        delta: event.delta,
+        round: nextRound,
+      });
+      const teammateId = teammateMap[event.actorId];
+      if (!teammateId) {
+        return;
+      }
+      const linkedDelta = engine.getLinkedDelta(event.delta);
+      if (!linkedDelta) {
+        return;
+      }
+      scoreEntries.push({
+        playerId: teammateId,
+        type: 'team_bonus',
+        delta: linkedDelta,
+        round: nextRound,
+      });
+    });
+    nextScoreLog = appendScoreLogEntries(nextScoreLog, nextPlayers, scoreEntries);
     nextFeedText = buildRoundFeed(nextEvents, nextPlayers, nextTeams);
   }
 
@@ -263,6 +382,7 @@ function tick(options = {}) {
     round: nextRound,
     players: nextPlayers,
     teams: nextTeams,
+    scoreLog: nextScoreLog,
     lastEvents: nextEvents,
     feedText: nextFeedText,
   };
@@ -315,8 +435,40 @@ function applyPlayerScoreDelta(playerId, delta, options = {}) {
   state = {
     ...state,
     players: nextPlayers,
+    scoreLog: appendScoreLogEntries(state.scoreLog, nextPlayers, [
+      {
+        playerId: targetId,
+        type: options.scoreType || 'investment',
+        delta: amount,
+        round: state.round,
+      },
+    ]),
     lastEvents: [{actorId: targetId, delta: amount}],
     feedText,
+  };
+  emit();
+  return getState();
+}
+
+function setSelfReady(ready) {
+  if (state.status !== 'room') {
+    return getState();
+  }
+  const nextReady = ready !== false;
+  const nextPlayers = state.players.map((player) => {
+    if (!player.isSelf) {
+      return player;
+    }
+    return {
+      ...player,
+      ready: nextReady,
+      state: nextReady ? '房主·已准备' : '房主·未准备',
+    };
+  });
+  state = {
+    ...state,
+    players: nextPlayers,
+    feedText: nextReady ? '已准备，等待开局' : '已取消准备',
   };
   emit();
   return getState();
@@ -354,6 +506,7 @@ module.exports = {
   resetToHome,
   restartGame,
   applyPlayerScoreDelta,
+  setSelfReady,
   startGame,
   subscribe,
   tick,

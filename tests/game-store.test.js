@@ -1,6 +1,22 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+
+const storage = new Map();
+
+global.wx = {
+  getStorageSync(key) {
+    return storage.has(key) ? storage.get(key) : null;
+  },
+  setStorageSync(key, value) {
+    storage.set(key, value);
+  },
+  removeStorageSync(key) {
+    storage.delete(key);
+  },
+};
+
 const store = require('../utils/game-store');
+const shopStore = require('../utils/shop-store');
 
 function createRandom(...values) {
   let index = 0;
@@ -11,8 +27,13 @@ function createRandom(...values) {
   };
 }
 
-test('startGame 会把房间状态切到 playing 并生成队伍', () => {
+test.beforeEach(() => {
+  storage.clear();
+  shopStore.__resetForTests();
   store.__resetForTests();
+});
+
+test('startGame 会把房间状态切到 playing 并生成队伍', () => {
   store.createRoomFromStage({id: 1, code: '01', name: '万里长城'}, {random: createRandom(0.2, 0.2, 0.2, 0.2)});
 
   const state = store.startGame({
@@ -26,7 +47,6 @@ test('startGame 会把房间状态切到 playing 并生成队伍', () => {
 });
 
 test('tick 会在时间归零后产出 finished 结果', () => {
-  store.__resetForTests();
   store.createRoomFromStage({id: 1, code: '01', name: '万里长城'}, {random: createRandom(0.2, 0.2, 0.2, 0.2)});
   store.startGame({
     random: createRandom(0.2, 0.2, 0.2, 0.2),
@@ -44,7 +64,6 @@ test('tick 会在时间归零后产出 finished 结果', () => {
 });
 
 test('inviteHumanPlayer 会在房间阶段添加真人玩家', () => {
-  store.__resetForTests();
   const first = store.createRoomFromStage({id: 1, code: '01', name: '万里长城'}, {random: createRandom(0.2, 0.2, 0.2, 0.2)});
   const next = store.inviteHumanPlayer({random: createRandom(0.1, 0.1, 0.1)});
 
@@ -52,4 +71,40 @@ test('inviteHumanPlayer 会在房间阶段添加真人玩家', () => {
   const joined = next.players[next.players.length - 1];
   assert.equal(joined.isRobot, false);
   assert.equal(joined.isSelf, false);
+});
+
+test('finishGame 会把金币收益写入商城余额', () => {
+  store.createRoomFromStage({id: 1, code: '01', name: '万里长城'}, {random: createRandom(0.2, 0.2, 0.2, 0.2)});
+  store.startGame({
+    random: createRandom(0.2, 0.2, 0.2, 0.2),
+    autoStartTimer: false,
+  });
+
+  const self = store.getState().players.find((player) => player.isSelf);
+  const beforeCoins = shopStore.getStoreState().coins;
+  store.applyPlayerScoreDelta(self.id, 100, {scoreType: 'investment'});
+  const finished = store.finishGame();
+  const afterCoins = shopStore.getStoreState().coins;
+
+  assert.equal(finished.result.gain, 100);
+  assert.equal(finished.result.coins, 300);
+  assert.equal(afterCoins - beforeCoins, 300);
+});
+
+test('finishGame 会聚合真实 scoreLog 到结算明细', () => {
+  store.createRoomFromStage({id: 1, code: '01', name: '万里长城'}, {random: createRandom(0.2, 0.2, 0.2, 0.2)});
+  store.startGame({
+    random: createRandom(0.2, 0.2, 0.2, 0.2),
+    autoStartTimer: false,
+  });
+
+  const self = store.getState().players.find((player) => player.isSelf);
+  store.applyPlayerScoreDelta(self.id, -50, {scoreType: 'investment'});
+  store.applyPlayerScoreDelta(self.id, 80, {scoreType: 'investment'});
+  const finished = store.finishGame();
+  const breakdown = finished.result.scoreBreakdownMap[self.id];
+
+  assert.equal(typeof finished.result.resultId, 'string');
+  assert.equal(breakdown.investment, 30);
+  assert.equal(breakdown.total, breakdown.round + breakdown.teamBonus + breakdown.investment + breakdown.fortuneBag);
 });

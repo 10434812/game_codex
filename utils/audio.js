@@ -14,6 +14,8 @@ const SOURCES = {
 };
 
 let initialized = false;
+let sharedAudio = null;
+const loopPool = {};
 
 function initAudioOption() {
   if (initialized) {
@@ -28,35 +30,51 @@ function initAudioOption() {
   } catch (error) {}
 }
 
+function createAudio() {
+  const audio = wx.createInnerAudioContext();
+  audio.autoplay = false;
+  audio.onError(() => {
+    try {
+      audio.stop();
+      audio.destroy();
+    } catch (error) {}
+  });
+  return audio;
+}
+
+function getAudioByMode(name, useLoop) {
+  if (useLoop) {
+    if (!loopPool[name]) {
+      loopPool[name] = createAudio();
+    }
+    return loopPool[name];
+  }
+  if (!sharedAudio) {
+    sharedAudio = createAudio();
+  }
+  return sharedAudio;
+}
+
 function playCue(name, options = {}) {
   initAudioOption();
   const src = SOURCES[name];
   if (!src) {
-    return;
+    return null;
   }
 
   try {
-    const audio = wx.createInnerAudioContext();
-    audio.src = src;
-    audio.autoplay = false;
-    audio.loop = options.loop === true;
-    audio.volume = typeof options.volume === 'number' ? options.volume : 1;
-    audio.onEnded(() => {
-      if (!audio.loop) {
-        audio.destroy();
+    const useLoop = options.loop === true;
+    const audio = getAudioByMode(name, useLoop);
+    try {
+      audio.stop();
+      if (typeof audio.seek === 'function') {
+        audio.seek(0);
       }
-    });
-    audio.onError(() => {
-      audio.destroy();
-    });
+    } catch (error) {}
+    audio.src = src;
+    audio.loop = useLoop;
+    audio.volume = typeof options.volume === 'number' ? options.volume : 1;
     audio.play();
-    if (!audio.loop) {
-      setTimeout(() => {
-        try {
-          audio.destroy();
-        } catch (error) {}
-      }, 5000);
-    }
     return audio;
   } catch (error) {
     return null;

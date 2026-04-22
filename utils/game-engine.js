@@ -386,6 +386,60 @@ function playRound(players, teams, options = {}) {
   };
 }
 
+function getRevealCountByPlayerSize(totalPlayers) {
+  if (totalPlayers <= 4) {
+    return 1;
+  }
+  if (totalPlayers <= 6) {
+    return 2;
+  }
+  return 3;
+}
+
+function pickRandomIds(ids, count, random = Math.random) {
+  const pool = [...ids];
+  const result = [];
+  while (pool.length && result.length < count) {
+    const index = randomInt(0, pool.length - 1, random);
+    result.push(pool.splice(index, 1)[0]);
+  }
+  return result;
+}
+
+function buildVisibleScoreState(players, timeLeft, duration, previous = {}, options = {}) {
+  const random = getRandom(options);
+  const list = Array.isArray(players) ? players : [];
+  if (!list.length) {
+    return {
+      phase: -1,
+      playerCount: 0,
+      visibleIds: [],
+      changed: true,
+    };
+  }
+  const totalDuration = Number(duration) || 180;
+  const elapsed = Math.max(0, totalDuration - (Number(timeLeft) || 0));
+  const phase = Math.floor(elapsed / 30);
+  const playerCount = list.length;
+  const samePhase = previous && phase === previous.phase && playerCount === previous.playerCount;
+  if (samePhase && Array.isArray(previous.visibleIds)) {
+    return {
+      phase,
+      playerCount,
+      visibleIds: previous.visibleIds,
+      changed: false,
+    };
+  }
+  const others = list.filter((player) => !player.isSelf).map((player) => player.id);
+  const revealCount = Math.min(getRevealCountByPlayerSize(playerCount), others.length);
+  return {
+    phase,
+    playerCount,
+    visibleIds: pickRandomIds(others, revealCount, random),
+    changed: true,
+  };
+}
+
 function buildRanking(players) {
   return normalizePlayers(players)
     .sort((a, b) => b.score - a.score || a.seat - b.seat)
@@ -408,10 +462,12 @@ function buildResult(players) {
     ranking,
     top3,
     rest: ranking.slice(3).map((player) => ({
+      id: player.id,
       rank: player.rank,
       name: player.name,
       score: formatScore(player.score),
       avatar: player.avatar,
+      isSelf: !!player.isSelf,
     })),
   };
 }
@@ -426,9 +482,11 @@ function emptyResultPlayer() {
 
 function mapResultPlayer(player) {
   return {
+    id: player.id,
     name: player.name,
     score: formatScore(player.score),
     avatar: player.avatar,
+    isSelf: !!player.isSelf,
   };
 }
 
@@ -468,6 +526,7 @@ module.exports = {
   applyRoundEvents,
   buildRanking,
   buildResult,
+  buildVisibleScoreState,
   chooseRoomPlayerCount,
   createHumanPlayer,
   createInitialPlayers,

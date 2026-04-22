@@ -5,6 +5,7 @@ const GAME_DURATION_SECONDS = 180;
 const ROUND_INTERVAL_SECONDS = 3;
 const TEAM_SIZE = 2;
 const ROOM_PLAYER_COUNT_OPTIONS = [4, 5, 6, 7, 8, 9];
+const MATCH_MODE_TEXT = '本地模拟';
 
 const INITIAL_SCORE_RANGE = {min: 80, max: 220};
 const POSITIVE_SCORE_RANGE = {min: 20, max: 80};
@@ -106,10 +107,42 @@ const HUMAN_NAMES = [
   '远山近海',
 ];
 
+const NAV_TABS = [
+  {
+    key: 'explore',
+    label: '探索',
+    icon: '/assets/nav/explore.svg',
+    iconActive: '/assets/nav/explore_active.svg',
+    page: '/pages/home/index',
+  },
+  {
+    key: 'social',
+    label: '社交',
+    icon: '/assets/nav/social.svg',
+    iconActive: '/assets/nav/social_active.svg',
+    page: '/pages/room/index',
+  },
+  {
+    key: 'play',
+    label: '游玩',
+    icon: '/assets/nav/play.svg',
+    iconActive: '/assets/nav/play_active.svg',
+    page: '/pages/arena/index',
+  },
+  {
+    key: 'history',
+    label: '历史',
+    icon: '/assets/nav/history.svg',
+    iconActive: '/assets/nav/history_active.svg',
+    page: '/pages/result/index',
+  },
+];
+
 module.exports = {
   AVATAR_POOL,
   DEFAULT_STAGE,
   GAME_DURATION_SECONDS,
+  MATCH_MODE_TEXT,
   HUMAN_NAMES,
   HUMAN_PLAYER_STATE,
   INITIAL_SCORE_RANGE,
@@ -120,6 +153,7 @@ module.exports = {
   POSITIVE_SCORE_RANGE,
   ROBOT_NAMES,
   ROBOT_PLAYER_STATE,
+  NAV_TABS,
   ROOM_PLAYER_COUNT_OPTIONS,
   ROOM_UI_LIMIT,
   ROUND_INTERVAL_SECONDS,

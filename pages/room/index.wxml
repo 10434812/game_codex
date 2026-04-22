@@ -9,44 +9,57 @@
     <view class="app-header-right">
       <view class="app-status-pill">
         <text class="app-status-dot">●</text>
-        <text class="app-status-text">进行中</text>
+        <text class="app-status-text">{{modeText}}</text>
       </view>
       <view class="app-gear">⚙</view>
     </view>
   </view>
 
-  <view class="big-title">{{stageName}}</view>
-  <view class="tags">
-    <text class="tag">房间 #{{roomId}}</text>
-    <text class="tag">经典模式</text>
-  </view>
-
-  <view class="slot-grid">
-    <view class="slot {{item.filled?'filled':'empty'}}" wx:for="{{slots}}" wx:key="index">
-      <image class="avatar" wx:if="{{item.filled}}" src="{{item.avatar}}" mode="aspectFill"></image>
-      <view class="plus" wx:else>＋</view>
-      <view class="slot-name">{{item.name}}</view>
-      <view class="slot-state" wx:if="{{item.state}}">• {{item.state}}</view>
-      <view class="star" wx:if="{{item.star}}">★</view>
+  <view class="page-content">
+    <view class="big-title">{{stageName}}</view>
+    <view class="tags">
+      <text class="tag">房间 #{{roomId}}</text>
+      <text class="tag">经典模式</text>
     </view>
-  </view>
 
-  <view class="voice-box">
-    <view class="voice-line">
-      <text class="voice-title">房间活跃度</text>
-      <text class="percent">{{activePercent}}%</text>
+    <view class="slot-grid">
+      <view class="slot {{item.filled?'filled':'empty'}}" wx:for="{{slots}}" wx:key="index">
+        <image class="avatar" wx:if="{{item.filled}}" src="{{item.avatar}}" mode="aspectFill"></image>
+        <view class="plus" wx:else>＋</view>
+        <view class="slot-name">{{item.name}}</view>
+        <view class="slot-state" wx:if="{{item.state}}">• {{item.state}}</view>
+        <view class="star" wx:if="{{item.star}}">★</view>
+      </view>
     </view>
-    <view class="track"><view class="bar"></view></view>
-  </view>
 
-  <view class="bottom-actions">
-    <button class="primary-btn invite-btn" bindtap="inviteFriend">
-      <text class="btn-icon">👤+</text>
-      <text>邀请好友</text>
-    </button>
-    <button class="start-btn" bindtap="start">
-      <text class="btn-icon">▶</text>
-      <text>开始游戏</text>
-    </button>
+    <view class="voice-box">
+      <view class="voice-line">
+        <text class="voice-title">房间活跃度</text>
+        <text class="percent">{{activePercent}}%</text>
+      </view>
+      <view class="track"><view class="bar" style="width: {{activePercent}}%;"></view></view>
+    </view>
+
+    <view class="bottom-actions">
+      <button class="primary-btn invite-btn" bindtap="inviteFriend" disabled="{{starting}}">
+        <text class="btn-icon">👤+</text>
+        <text>邀请好友</text>
+      </button>
+      <button class="ready-btn" bindtap="toggleReady" disabled="{{starting}}">
+        <text class="btn-icon">{{selfReady ? '✓' : '○'}}</text>
+        <text>{{selfReady ? '取消准备' : '准备'}}</text>
+      </button>
+      <button class="start-btn" bindtap="start" disabled="{{starting}}">
+        <text class="btn-icon">▶</text>
+        <text>{{startButtonText}}</text>
+      </button>
+    </view>
+
+    <view class="bottom-nav">
+      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab">
+        <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
+        <text>{{ item.label }}</text>
+      </view>
+    </view>
   </view>
 </view>

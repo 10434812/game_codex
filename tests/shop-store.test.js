@@ -86,3 +86,11 @@ test('equipItem 会更新当前装备状态', () => {
   assert.equal(display.skinClass, 'skin-storm');
   assert.equal(display.petIcon, '🦊');
 });
+
+test('addCoins 会累加金币余额', () => {
+  const before = shopStore.getStoreState();
+  const next = shopStore.addCoins(560);
+
+  assert.equal(next.coins, before.coins + 560);
+  assert.equal(shopStore.getStoreState().coins, before.coins + 560);
+});

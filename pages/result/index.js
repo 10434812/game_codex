@@ -1,4 +1,5 @@
 const {getNavLayout} = require('../../utils/nav');
+const {MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const {playCue} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
@@ -30,6 +31,17 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString('en-US');
 }
 
+function formatSigned(value) {
+  const amount = Number(value || 0);
+  if (amount > 0) {
+    return `+${formatNumber(amount)}`;
+  }
+  if (amount < 0) {
+    return `-${formatNumber(Math.abs(amount))}`;
+  }
+  return '0';
+}
+
 Page({
   data: {
     nav: {
@@ -39,6 +51,10 @@ Page({
     },
     top3: createEmptyTop3(),
     rankList: [],
+    modeText: MATCH_MODE_TEXT,
+    tabs: NAV_TABS,
+    activeTab: 'history',
+    resultId: '',
     gainText: '0',
     coinText: '0',
     achievementText: '--',
@@ -48,10 +64,10 @@ Page({
     showScorePopup: false,
     selectedPlayer: null,
     scoreBreakdown: {
-      baseScore: '0',
-      achievementBonus: '0',
+      round: '0',
       teamBonus: '0',
-      penalty: '0',
+      investment: '0',
+      fortuneBag: '0',
     },
   },
   onLoad() {
@@ -62,8 +78,11 @@ Page({
   },
   onShow() {
     this.syncUserProfile();
-    this.playResultFirework();
     this.refreshResult();
+    if (this.data.resultId && this.data.resultId !== this.lastPlayedResultId) {
+      this.playResultFirework();
+      this.lastPlayedResultId = this.data.resultId;
+    }
   },
   onHide() {
     this.stopResultFirework();
@@ -104,6 +123,8 @@ Page({
       gainText: formatNumber(state.result.gain),
       coinText: formatNumber(state.result.coins),
       achievementText: state.result.achievement,
+      modeText: state.modeText || MATCH_MODE_TEXT,
+      resultId: state.result.resultId || '',
       totalText: `总计 ${state.result.ranking.length} 玩家`,
     });
   },
@@ -132,38 +153,24 @@ Page({
     if (!player || player.name === '--') return;
 
     playCue('tap', {volume: 0.75});
-    
-    // Mock score breakdown based on total score
-    const total = parseInt((player.score || '0').replace(/,/g, ''), 10) || 0;
-    const isWin = total > 0;
-    
-    let baseScore = 0;
-    let achievementBonus = 0;
-    let teamBonus = 0;
-    let penalty = 0;
-    
-    if (isWin) {
-      baseScore = Math.floor(total * 0.45);
-      achievementBonus = Math.floor(total * 0.25);
-      teamBonus = total - baseScore - achievementBonus;
-      // random minor penalty between 0 to 5% of total
-      penalty = Math.floor(total * Math.random() * 0.05);
-      // adjust base score to keep the math right if penalty exists
-      baseScore += penalty; 
-    } else {
-      penalty = Math.floor(Math.random() * 50) + 10;
-      baseScore = total + penalty; // base - penalty = total
-    }
+    const state = gameStore.getState();
+    const breakdownMap = (state.result && state.result.scoreBreakdownMap) || {};
+    const breakdown = breakdownMap[player.id] || {
+      round: 0,
+      teamBonus: 0,
+      investment: 0,
+      fortuneBag: 0,
+    };
 
     this.setData({
       showScorePopup: true,
       selectedPlayer: player,
       scoreBreakdown: {
-        baseScore: formatNumber(baseScore),
-        achievementBonus: formatNumber(achievementBonus),
-        teamBonus: formatNumber(teamBonus),
-        penalty: formatNumber(penalty),
-      }
+        round: formatSigned(breakdown.round),
+        teamBonus: formatSigned(breakdown.teamBonus),
+        investment: formatSigned(breakdown.investment),
+        fortuneBag: formatSigned(breakdown.fortuneBag),
+      },
     });
   },
   closeScorePopup() {
@@ -171,5 +178,13 @@ Page({
     this.setData({
       showScorePopup: false,
     });
+  },
+  switchTab(e) {
+    playCue('tap', {volume: 0.75});
+    const page = e.currentTarget.dataset.page;
+    if (!page || page === '/pages/result/index') {
+      return;
+    }
+    wx.redirectTo({url: page});
   },
 });

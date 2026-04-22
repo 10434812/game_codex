@@ -9,7 +9,7 @@
     <view class="app-header-right">
       <view class="app-status-pill">
         <text class="app-status-dot">●</text>
-        <text class="app-status-text">进行中</text>
+        <text class="app-status-text">{{modeText}}</text>
       </view>
       <view class="app-gear">⚙</view>
     </view>
@@ -78,30 +78,12 @@
       <button class="action-btn ghost-btn" bindtap="goHome">⌂ 返回首页</button>
     </view>
 
-      <view class="bottom-nav result-nav">
-        <view class="nav-item">
-          <view class="nav-dot">
-            <image class="nav-icon" src="/assets/nav/explore.svg" mode="aspectFit"></image>
-          </view>
-          <text>探索</text>
-        </view>
-        <view class="nav-item">
-          <view class="nav-dot">
-            <image class="nav-icon" src="/assets/nav/social.svg" mode="aspectFit"></image>
-          </view>
-          <text>社交</text>
-        </view>
-        <view class="nav-item">
-          <view class="nav-dot">
-            <image class="nav-icon" src="/assets/nav/play.svg" mode="aspectFit"></image>
-          </view>
-          <text>游玩</text>
-        </view>
-      <view class="nav-item active">
+    <view class="bottom-nav result-nav">
+      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab">
         <view class="nav-dot">
-          <image class="nav-icon" src="/assets/nav/history_active.svg" mode="aspectFit"></image>
+          <image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image>
         </view>
-        <text>历史</text>
+        <text>{{ item.label }}</text>
       </view>
     </view>
 
@@ -120,20 +102,20 @@
       </view>
       <view class="score-popup-body">
         <view class="score-item">
-          <text class="score-label">基础得分</text>
-          <text class="score-value">{{scoreBreakdown.baseScore}}</text>
+          <text class="score-label">回合收益</text>
+          <text class="score-value">{{scoreBreakdown.round}}</text>
         </view>
         <view class="score-item">
-          <text class="score-label">成就奖励</text>
-          <text class="score-value bonus">+{{scoreBreakdown.achievementBonus}}</text>
+          <text class="score-label">团队联动</text>
+          <text class="score-value">{{scoreBreakdown.teamBonus}}</text>
         </view>
         <view class="score-item">
-          <text class="score-label">团队加成</text>
-          <text class="score-value bonus">+{{scoreBreakdown.teamBonus}}</text>
+          <text class="score-label">投资收益</text>
+          <text class="score-value">{{scoreBreakdown.investment}}</text>
         </view>
         <view class="score-item">
-          <text class="score-label">失误扣除</text>
-          <text class="score-value penalty">-{{scoreBreakdown.penalty}}</text>
+          <text class="score-label">福袋事件</text>
+          <text class="score-value">{{scoreBreakdown.fortuneBag}}</text>
         </view>
       </view>
       <view class="score-popup-divider"></view>

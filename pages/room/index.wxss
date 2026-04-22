@@ -4,6 +4,10 @@
   background: transparent;
 }
 
+.page-content {
+  padding-bottom: 184rpx;
+}
+
 .room-top {
   display: flex;
   justify-content: space-between;
@@ -144,7 +148,6 @@
 }
 
 .bar {
-  width: 88%;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #e95c4f, #c92b2b);
@@ -193,8 +196,27 @@
   justify-content: center;
 }
 
+.ready-btn {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0;
+  margin: 16rpx auto 0;
+  border-radius: 999rpx;
+  height: 88rpx;
+  border: 3rpx solid rgba(194, 156, 104, 0.62);
+  box-shadow: 0 6rpx 14rpx rgba(122, 90, 48, 0.2);
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff7e5;
+  background: linear-gradient(135deg, #c79a5f, #a9783f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .invite-btn::after,
-.start-btn::after {
+.start-btn::after,
+.ready-btn::after {
   border: 0;
 }
 
