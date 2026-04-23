@@ -1,0 +1,3008 @@
+[
+  {
+    "key": "UFh6zKnDh+",
+    "en": "{count} × Claude for Enterprise Standard Nonprofit",
+    "zh": "{count} × Claude for Enterprise Standard Nonprofit",
+    "reason": "equal"
+  },
+  {
+    "key": "UGN0W16dsc",
+    "en": "Start {name}",
+    "zh": "Start {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "UGbueSMblC",
+    "en": "{tierLabel} limits",
+    "zh": "{tierLabel} limits",
+    "reason": "equal"
+  },
+  {
+    "key": "UHECrvnURc",
+    "en": "Next run {when}",
+    "zh": "Next run {when}",
+    "reason": "equal"
+  },
+  {
+    "key": "UMLOHo6H9c",
+    "en": "Shared by {sharedBy}",
+    "zh": "Shared by {sharedBy}",
+    "reason": "equal"
+  },
+  {
+    "key": "UMUgG7EQNO",
+    "en": "Invite {orgName} to merge?",
+    "zh": "Invite {orgName} to merge?",
+    "reason": "equal"
+  },
+  {
+    "key": "UOLzzSylAr",
+    "en": "~{count} characters",
+    "zh": "~{count} characters",
+    "reason": "equal"
+  },
+  {
+    "key": "UOxi8mioge",
+    "en": "Welcome back, {name}",
+    "zh": "Welcome back, {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "UQqHrnCotN",
+    "en": "Resets in {hours} hr {minutes} min",
+    "zh": "Resets in {hours} hr {minutes} min",
+    "reason": "equal"
+  },
+  {
+    "key": "URbFQgcMmL",
+    "en": "You're currently within the {organizationName} organization. ",
+    "zh": "You're currently within the {organizationName} organization. ",
+    "reason": "equal"
+  },
+  {
+    "key": "UTHuKQqYze",
+    "en": "{activeCount} of {maxSessions}",
+    "zh": "{activeCount} of {maxSessions}",
+    "reason": "equal"
+  },
+  {
+    "key": "UUBYJKQMzA",
+    "en": "Network access to {hostname} is blocked by your organization's network egress settings. Telemetry events will not be exported. Add it under <link>network egress settings</link>.",
+    "zh": "Network access to {hostname} is blocked by your organization's network egress settings. Telemetry events will not be exported. Add it under <link>network egress settings</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "UUtwvdZ1Jv",
+    "en": "{names}, +{remaining} more",
+    "zh": "{names}, +{remaining} more",
+    "reason": "equal"
+  },
+  {
+    "key": "UXJkFY+U7p",
+    "en": "SMS and data charges may apply. <supportLink>Learn more</supportLink>",
+    "zh": "SMS and data charges may apply. <supportLink>Learn more</supportLink>",
+    "reason": "equal"
+  },
+  {
+    "key": "UYyLrb4ej2",
+    "en": "<link>Pay your invoice</link> to restore access.",
+    "zh": "<link>Pay your invoice</link> to restore access.",
+    "reason": "equal"
+  },
+  {
+    "key": "UahY1SRXiX",
+    "en": "Role changed to {role}",
+    "zh": "Role changed to {role}",
+    "reason": "equal"
+  },
+  {
+    "key": "UfgPiUtfvp",
+    "en": "Minimum amount is {minAmount}",
+    "zh": "Minimum amount is {minAmount}",
+    "reason": "equal"
+  },
+  {
+    "key": "UhPeL+5MP6",
+    "en": "<bold>Skip all approvals is on.</bold> Claude can take actions without asking, including using connectors, browsing the web, and controlling apps on your computer. <link>See safe use tips</link>",
+    "zh": "<bold>Skip all approvals is on.</bold> Claude can take actions without asking, including using connectors, browsing the web, and controlling apps on your computer. <link>See safe use tips</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "UjLsgvKVLg",
+    "en": "Create new task with context from \"{projectName}\"?",
+    "zh": "Create new task with context from \"{projectName}\"?",
+    "reason": "equal"
+  },
+  {
+    "key": "UkjwCx3pKY",
+    "en": "{count} questions",
+    "zh": "{count} questions",
+    "reason": "equal"
+  },
+  {
+    "key": "UkpsjGQpHi",
+    "en": "Renamed to {skillName}",
+    "zh": "Renamed to {skillName}",
+    "reason": "equal"
+  },
+  {
+    "key": "Uo1/vi0qTp",
+    "en": "\"{name}\" is already installed. Installing this bundle will replace it.",
+    "zh": "\"{name}\" is already installed. Installing this bundle will replace it.",
+    "reason": "equal"
+  },
+  {
+    "key": "Uoe/PEvNYN",
+    "en": "exit code {returncode}",
+    "zh": "exit code {returncode}",
+    "reason": "equal"
+  },
+  {
+    "key": "Urxv0rSqsj",
+    "en": "on {repo}",
+    "zh": "on {repo}",
+    "reason": "equal"
+  },
+  {
+    "key": "UsXTV4Emtn",
+    "en": "Trial ends in {daysRemaining, plural, one {# day} other {# days}}. Charges begin {chargeDate}. <link>Manage billing</link>",
+    "zh": "Trial ends in {daysRemaining, plural, one {# day} other {# days}}. Charges begin {chargeDate}. <link>Manage billing</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "Uz1+WNY/JM",
+    "en": "Open session for PR #{number}",
+    "zh": "Open session for PR #{number}",
+    "reason": "equal"
+  },
+  {
+    "key": "V+jPyROpXb",
+    "en": "Edited {fileName}",
+    "zh": "Edited {fileName}",
+    "reason": "equal"
+  },
+  {
+    "key": "V0asIseP2Y",
+    "en": "Forked from {source}",
+    "zh": "Forked from {source}",
+    "reason": "equal"
+  },
+  {
+    "key": "V1+iIbN/BI",
+    "en": "Percentage of users who started at least one chat on {date} (UTC). Change is compared to the same day last week.",
+    "zh": "Percentage of users who started at least one chat on {date} (UTC). Change is compared to the same day last week.",
+    "reason": "equal"
+  },
+  {
+    "key": "V1BZzLP6Yo",
+    "en": "{count} unclaimed {count, plural, one {seat} other {seats}}",
+    "zh": "{count} unclaimed {count, plural, one {seat} other {seats}}",
+    "reason": "equal"
+  },
+  {
+    "key": "V2Rch8WVXY",
+    "en": "Spend limit updated for \"{name}\".",
+    "zh": "Spend limit updated for \"{name}\".",
+    "reason": "equal"
+  },
+  {
+    "key": "VAjV+8SnM6",
+    "en": "https://school.instructure.com or https://canvas.myschool.edu",
+    "zh": "https://school.instructure.com or https://canvas.myschool.edu",
+    "reason": "equal"
+  },
+  {
+    "key": "VFZmWiM2AU",
+    "en": "You’re currently within the {organizationName} organization.",
+    "zh": "You’re currently within the {organizationName} organization.",
+    "reason": "equal"
+  },
+  {
+    "key": "VFxpJYuBJP",
+    "en": "Errors detected in schema. Settings may not work as expected. See the <link>Claude Code settings docs</link>.",
+    "zh": "Errors detected in schema. Settings may not work as expected. See the <link>Claude Code settings docs</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "VIEJ8YDu8T",
+    "en": "<b>{count, plural, one {# session stuck} other {# sessions stuck}}</b> — failed on 3 different runners each. Auto-recovery exhausted. Check runner logs, then retry or delete.",
+    "zh": "<b>{count, plural, one {# session stuck} other {# sessions stuck}}</b> — failed on 3 different runners each. Auto-recovery exhausted. Check runner logs, then retry or delete.",
+    "reason": "equal"
+  },
+  {
+    "key": "VJ6z/l9Cq2",
+    "en": "use {label}",
+    "zh": "use {label}",
+    "reason": "equal"
+  },
+  {
+    "key": "VJEbdh5AQq",
+    "en": "Connect to {hostname} and grant Claude access to your repositories.",
+    "zh": "Connect to {hostname} and grant Claude access to your repositories.",
+    "reason": "equal"
+  },
+  {
+    "key": "VN18WbCyTl",
+    "en": "{count} errors",
+    "zh": "{count} errors",
+    "reason": "equal"
+  },
+  {
+    "key": "VOaEb+Grao",
+    "en": "Data processing.{br}Confirm the {link} is installed.",
+    "zh": "Data processing.{br}Confirm the {link} is installed.",
+    "reason": "equal"
+  },
+  {
+    "key": "VU67M+9esK",
+    "en": "Ensure you have appropriate permissions and trust third-party tools before continuing. <link>Learn more</link> about safely using research with connected apps.",
+    "zh": "Ensure you have appropriate permissions and trust third-party tools before continuing. <link>Learn more</link> about safely using research with connected apps.",
+    "reason": "equal"
+  },
+  {
+    "key": "VUvO/yD1Iw",
+    "en": "The United Kingdom’s general elections will be held on 4 July, 2024. Please visit the <link>UK Election Commission’s website</link> to get reliable, up-to-date, impartial guidance on how and where to vote in the United Kingdom’s general elections.",
+    "zh": "The United Kingdom’s general elections will be held on 4 July, 2024. Please visit the <link>UK Election Commission’s website</link> to get reliable, up-to-date, impartial guidance on how and where to vote in the United Kingdom’s general elections.",
+    "reason": "equal"
+  },
+  {
+    "key": "VVrr7NBM/Q",
+    "en": "Join {organizationName}",
+    "zh": "Join {organizationName}",
+    "reason": "equal"
+  },
+  {
+    "key": "VXDHFtHJRz",
+    "en": "\"{name}\" and its data will be removed from this container.",
+    "zh": "\"{name}\" and its data will be removed from this container.",
+    "reason": "equal"
+  },
+  {
+    "key": "VYtnXW5u3K",
+    "en": "GitHub access is required for Claude Code on the web. Enable it in <link>connector settings</link>.",
+    "zh": "GitHub access is required for Claude Code on the web. Enable it in <link>connector settings</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "VZKromeiwV",
+    "en": "Claude is unable to respond to this request. Please <newChat>start a new chat</newChat>.",
+    "zh": "Claude is unable to respond to this request. Please <newChat>start a new chat</newChat>.",
+    "reason": "equal"
+  },
+  {
+    "key": "Va9pIJe6+T",
+    "en": "Usage charges are billed separately. Your organization will be charged monthly for actual token consumption across all users. Admins can set spend limits at the organization, seat type, or individual user level to manage costs. <link>Token pricing can be found here.</link>",
+    "zh": "Usage charges are billed separately. Your organization will be charged monthly for actual token consumption across all users. Admins can set spend limits at the organization, seat type, or individual user level to manage costs. <link>Token pricing can be found here.</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "Van0APAe6Y",
+    "en": "Last synced: {time}",
+    "zh": "Last synced: {time}",
+    "reason": "equal"
+  },
+  {
+    "key": "Ve782hP+2+",
+    "en": "Submit {count, plural, one {# comment} other {# comments}}",
+    "zh": "Submit {count, plural, one {# comment} other {# comments}}",
+    "reason": "equal"
+  },
+  {
+    "key": "VhxbyvrBR2",
+    "en": "Updated to {versionNumber}",
+    "zh": "Updated to {versionNumber}",
+    "reason": "equal"
+  },
+  {
+    "key": "VmeIF88gHf",
+    "en": "This is a research preview. Start with tasks where mistakes are easy to fix. <link>Read safe use tips</link>",
+    "zh": "This is a research preview. Start with tasks where mistakes are easy to fix. <link>Read safe use tips</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "VmjqcyW64s",
+    "en": "{count} Premium seats",
+    "zh": "{count} Premium seats",
+    "reason": "equal"
+  },
+  {
+    "key": "VtdSxu1o1G",
+    "en": "You are about to renew the {planName} subscription for {organizationName}.",
+    "zh": "You are about to renew the {planName} subscription for {organizationName}.",
+    "reason": "equal"
+  },
+  {
+    "key": "VxAi+UVbLl",
+    "en": "Downloading... {percent}%",
+    "zh": "Downloading... {percent}%",
+    "reason": "equal"
+  },
+  {
+    "key": "VxlqdTj7BN",
+    "en": "{serverName}: {widgetTitle}",
+    "zh": "{serverName}: {widgetTitle}",
+    "reason": "equal"
+  },
+  {
+    "key": "VxzaUcb4kt",
+    "en": "Delete {serviceName}?",
+    "zh": "Delete {serviceName}?",
+    "reason": "equal"
+  },
+  {
+    "key": "W+d/ldjA6l",
+    "en": "{featureName} requires Windows 10 build 2004 or later. Update your operating system to use this feature.",
+    "zh": "{featureName} requires Windows 10 build 2004 or later. Update your operating system to use this feature.",
+    "reason": "equal"
+  },
+  {
+    "key": "W/2zE+LA7Z",
+    "en": "This will disconnect {serverName} for everyone on your team.",
+    "zh": "This will disconnect {serverName} for everyone on your team.",
+    "reason": "equal"
+  },
+  {
+    "key": "W/E9VUEYdM",
+    "en": "{cost}/month",
+    "zh": "{cost}/month",
+    "reason": "equal"
+  },
+  {
+    "key": "W0UDufPv5W",
+    "en": "{count} Enterprise seats",
+    "zh": "{count} Enterprise seats",
+    "reason": "equal"
+  },
+  {
+    "key": "W3VYGrcKxl",
+    "en": "{inviterName} ({inviterEmail}) has invited you to join {organizationName}'s workspace on the Team plan.",
+    "zh": "{inviterName} ({inviterEmail}) has invited you to join {organizationName}'s workspace on the Team plan.",
+    "reason": "equal"
+  },
+  {
+    "key": "W3lBobzbHA",
+    "en": "You are out of available {tier} seats. Your subscription is scheduled to end on {date}, so downgrades cannot be scheduled. Resume your subscription to schedule a downgrade or purchase additional seats.",
+    "zh": "You are out of available {tier} seats. Your subscription is scheduled to end on {date}, so downgrades cannot be scheduled. Resume your subscription to schedule a downgrade or purchase additional seats.",
+    "reason": "equal"
+  },
+  {
+    "key": "W3yCHw7TSO",
+    "en": "Delete {name}? This will also delete {runCountLabel} past runs. This can't be undone.",
+    "zh": "Delete {name}? This will also delete {runCountLabel} past runs. This can't be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "W4Qjg7jH+K",
+    "en": " ({month} {day})",
+    "zh": " ({month} {day})",
+    "reason": "equal"
+  },
+  {
+    "key": "W6ibcUvGRx",
+    "en": "Your organization has lost access to the {planName}",
+    "zh": "Your organization has lost access to the {planName}",
+    "reason": "equal"
+  },
+  {
+    "key": "W9f7DlCWtB",
+    "en": "{count, plural, one {# Invite} other {# Invites}} sent",
+    "zh": "{count, plural, one {# Invite} other {# Invites}} sent",
+    "reason": "equal"
+  },
+  {
+    "key": "WCDzxb5dr+",
+    "en": "Unlock more with Claude when you connect your team's tools. <link>Learn more</link>",
+    "zh": "Unlock more with Claude when you connect your team's tools. <link>Learn more</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "WCrJjVZDsS",
+    "en": "Live artifacts are interactive pages that stay up-to-date using live data from your connectors. <b>Cancel</b> to create a normal file instead.",
+    "zh": "Live artifacts are interactive pages that stay up-to-date using live data from your connectors. <b>Cancel</b> to create a normal file instead.",
+    "reason": "equal"
+  },
+  {
+    "key": "WKFCAEy2O3",
+    "en": "1 = {firstLabel}, {scale} = {lastLabel}",
+    "zh": "1 = {firstLabel}, {scale} = {lastLabel}",
+    "reason": "equal"
+  },
+  {
+    "key": "WOYHsGRtWV",
+    "en": "Shared with {count, plural, one {# person} other {# people}}",
+    "zh": "Shared with {count, plural, one {# person} other {# people}}",
+    "reason": "equal"
+  },
+  {
+    "key": "WRc35/ML1T",
+    "en": "Home in {countdown}s",
+    "zh": "Home in {countdown}s",
+    "reason": "equal"
+  },
+  {
+    "key": "WT2fpp+SiB",
+    "en": "Are you sure you want to dismiss this invite request for {name}? This action cannot be undone.",
+    "zh": "Are you sure you want to dismiss this invite request for {name}? This action cannot be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "WXKqGkVhYw",
+    "en": "Select configuration: {name}",
+    "zh": "Select configuration: {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "WdZqvX3coc",
+    "en": "Connected to {serverName}.",
+    "zh": "Connected to {serverName}.",
+    "reason": "equal"
+  },
+  {
+    "key": "WfHogbCrPa",
+    "en": "resets {hr}h",
+    "zh": "resets {hr}h",
+    "reason": "equal"
+  },
+  {
+    "key": "WgaCTNCyuZ",
+    "en": "Select {name}",
+    "zh": "Select {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "WhXpxZz+uO",
+    "en": "{sign}{count, plural, one {# premium seat} other {# premium seats}} (pro-rated month)",
+    "zh": "{sign}{count, plural, one {# premium seat} other {# premium seats}} (pro-rated month)",
+    "reason": "equal"
+  },
+  {
+    "key": "WjfQBOJ1Zl",
+    "en": "Claude Code isn't set up yet. <link>Get started with Claude Code</link> to launch sessions from here.",
+    "zh": "Claude Code isn't set up yet. <link>Get started with Claude Code</link> to launch sessions from here.",
+    "reason": "equal"
+  },
+  {
+    "key": "WkVvbbXJ1t",
+    "en": "{count, plural, one {# request} other {# requests}} approved.",
+    "zh": "{count, plural, one {# request} other {# requests}} approved.",
+    "reason": "equal"
+  },
+  {
+    "key": "WlxZnwL5MB",
+    "en": "{count, plural, one {# tool} other {# tools}}",
+    "zh": "{count, plural, one {# tool} other {# tools}}",
+    "reason": "equal"
+  },
+  {
+    "key": "Wondpr7m/M",
+    "en": "{v} confirmed · {r} refuted",
+    "zh": "{v} confirmed · {r} refuted",
+    "reason": "equal"
+  },
+  {
+    "key": "WpVUKrNoik",
+    "en": "By clicking ‘Subscribe’, you agree to Anthropic’s <terms>Commercial Terms</terms> including any <serviceTerms>Service Specific Terms</serviceTerms>, and you represent that you are authorized to enter this agreement by Customer. By providing your payment information, you allow Anthropic to charge your card in the amount above today, then your full subscription price {billingInterval} starting {trialEndDate}, until you cancel in accordance with our <cancellation>terms</cancellation>. You can cancel at any time.",
+    "zh": "By clicking ‘Subscribe’, you agree to Anthropic’s <terms>Commercial Terms</terms> including any <serviceTerms>Service Specific Terms</serviceTerms>, and you represent that you are authorized to enter this agreement by Customer. By providing your payment information, you allow Anthropic to charge your card in the amount above today, then your full subscription price {billingInterval} starting {trialEndDate}, until you cancel in accordance with our <cancellation>terms</cancellation>. You can cancel at any time.",
+    "reason": "equal"
+  },
+  {
+    "key": "WqA1e811jS",
+    "en": "You have {count} Cowork invites",
+    "zh": "You have {count} Cowork invites",
+    "reason": "equal"
+  },
+  {
+    "key": "WrpI57Uej/",
+    "en": "{count, plural, one {# source} other {# sources}}",
+    "zh": "{count, plural, one {# source} other {# sources}}",
+    "reason": "equal"
+  },
+  {
+    "key": "Wur112HVmK",
+    "en": "Update to {version}",
+    "zh": "Update to {version}",
+    "reason": "equal"
+  },
+  {
+    "key": "WwFqrs8II/",
+    "en": "{count, plural, one {Widget} other {# Widgets}}",
+    "zh": "{count, plural, one {Widget} other {# Widgets}}",
+    "reason": "equal"
+  },
+  {
+    "key": "WwltkHgs/8",
+    "en": "+{count} more {count, plural, one {seat} other {seats}} will add {cost}{interval} to your bill · <remove>Remove</remove>",
+    "zh": "+{count} more {count, plural, one {seat} other {seats}} will add {cost}{interval} to your bill · <remove>Remove</remove>",
+    "reason": "equal"
+  },
+  {
+    "key": "WzHh65JGsl",
+    "en": "Anthropic deletes your data promptly when requested, except for safety violations or conversations you’ve shared through feedback. {link}",
+    "zh": "Anthropic deletes your data promptly when requested, except for safety violations or conversations you’ve shared through feedback. {link}",
+    "reason": "equal"
+  },
+  {
+    "key": "X/5ECvWEq1",
+    "en": "Slug: {slug}",
+    "zh": "Slug: {slug}",
+    "reason": "equal"
+  },
+  {
+    "key": "X0dGFu39AG",
+    "en": "View PR #{prNumber}",
+    "zh": "View PR #{prNumber}",
+    "reason": "equal"
+  },
+  {
+    "key": "X1MwV8S0dn",
+    "en": "{count, plural, one {# endpoint} other {# endpoints}}",
+    "zh": "{count, plural, one {# endpoint} other {# endpoints}}",
+    "reason": "equal"
+  },
+  {
+    "key": "X4J/f3yO08",
+    "en": "Claude may not be able to provide accurate, real time information on elections. Please visit <link>TurboVote</link> or check the Secretary of State site for your state to get reliable, up-to-date, non partisan guidance on how and where to vote in elections across the US.",
+    "zh": "Claude may not be able to provide accurate, real time information on elections. Please visit <link>TurboVote</link> or check the Secretary of State site for your state to get reliable, up-to-date, non partisan guidance on how and where to vote in elections across the US.",
+    "reason": "equal"
+  },
+  {
+    "key": "X5/9IbCTwZ",
+    "en": "Claude isn't installed on {upstreamOwner} — opening the PR on GitHub instead.",
+    "zh": "Claude isn't installed on {upstreamOwner} — opening the PR on GitHub instead.",
+    "reason": "equal"
+  },
+  {
+    "key": "X8pOEedmuA",
+    "en": "You have planned seat changes that go into effect on {date}. You must cancel your existing scheduled changes before making new seat allocation changes.",
+    "zh": "You have planned seat changes that go into effect on {date}. You must cancel your existing scheduled changes before making new seat allocation changes.",
+    "reason": "equal"
+  },
+  {
+    "key": "X9Z2S33opa",
+    "en": "Ran {count} agents",
+    "zh": "Ran {count} agents",
+    "reason": "equal"
+  },
+  {
+    "key": "XAudskUr+7",
+    "en": "Happy Sunday, {name}",
+    "zh": "Happy Sunday, {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "XDSQrtczfL",
+    "en": "Welcome, {name}",
+    "zh": "Welcome, {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "XILH7qeS2Y",
+    "en": "{orgName} has a plan that covers you. Request to join at no extra cost.",
+    "zh": "{orgName} has a plan that covers you. Request to join at no extra cost.",
+    "reason": "equal"
+  },
+  {
+    "key": "XJNzXIFAPf",
+    "en": "Don't share personal information or third-party content without permission, and see our <usagePolicyLink>Usage Policy</usagePolicyLink>.",
+    "zh": "Don't share personal information or third-party content without permission, and see our <usagePolicyLink>Usage Policy</usagePolicyLink>.",
+    "reason": "equal"
+  },
+  {
+    "key": "XLeVIqXRWV",
+    "en": "Showing {start}-{end} of {total} {users}",
+    "zh": "Showing {start}-{end} of {total} {users}",
+    "reason": "equal"
+  },
+  {
+    "key": "XMcpqMIfN6",
+    "en": "You're now using extra usage ∙ Your Opus limit resets {day} at {time}",
+    "zh": "You're now using extra usage ∙ Your Opus limit resets {day} at {time}",
+    "reason": "equal"
+  },
+  {
+    "key": "XQMkhCNHJI",
+    "en": "{name}'s session is read-only. Ready to build something yourself?",
+    "zh": "{name}'s session is read-only. Ready to build something yourself?",
+    "reason": "equal"
+  },
+  {
+    "key": "XQtHNktA62",
+    "en": "By continuing, you agree to join the Team plan <managedByLink>managed by your Admin</managedByLink>, and acknowledge the Anthropic <privacyLink>Privacy Policy</privacyLink>.",
+    "zh": "By continuing, you agree to join the Team plan <managedByLink>managed by your Admin</managedByLink>, and acknowledge the Anthropic <privacyLink>Privacy Policy</privacyLink>.",
+    "reason": "equal"
+  },
+  {
+    "key": "XTCBvEnqsr",
+    "en": "Current limit: Unlimited ({groupName} group)",
+    "zh": "Current limit: Unlimited ({groupName} group)",
+    "reason": "equal"
+  },
+  {
+    "key": "XTE1al0NDh",
+    "en": "Not seeing the code? <tryAgainLink>Try again</tryAgainLink>",
+    "zh": "Not seeing the code? <tryAgainLink>Try again</tryAgainLink>",
+    "reason": "equal"
+  },
+  {
+    "key": "XYvkVOBv+v",
+    "en": "Style: {name}",
+    "zh": "Style: {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "XaJNl64HuA",
+    "en": "Your subscription includes a time-limited promotional discount. Your subscription will automatically renew at the discounted price of {discountedPrice} / {billingInterval, select, yearly {year} monthly {month} other {month}} (plus applicable taxes) until {promoEndDate} when it will automatically be cancelled.",
+    "zh": "Your subscription includes a time-limited promotional discount. Your subscription will automatically renew at the discounted price of {discountedPrice} / {billingInterval, select, yearly {year} monthly {month} other {month}} (plus applicable taxes) until {promoEndDate} when it will automatically be cancelled.",
+    "reason": "equal"
+  },
+  {
+    "key": "XaMLvdykO6",
+    "en": "{sign}{count, plural, one {# Chat + Claude Code seat} other {# Chat + Claude Code seats}} (pro-rated month)",
+    "zh": "{sign}{count, plural, one {# Chat + Claude Code seat} other {# Chat + Claude Code seats}} (pro-rated month)",
+    "reason": "equal"
+  },
+  {
+    "key": "Xc23rQ+J2R",
+    "en": "Claude will automatically review pull requests, check for bugs, and follow the instructions in your <b>CLAUDE.md</b> and <b>REVIEW.md</b>.",
+    "zh": "Claude will automatically review pull requests, check for bugs, and follow the instructions in your <b>CLAUDE.md</b> and <b>REVIEW.md</b>.",
+    "reason": "equal"
+  },
+  {
+    "key": "Xd19Ci8cHS",
+    "en": "{date} by {email}",
+    "zh": "{date} by {email}",
+    "reason": "equal"
+  },
+  {
+    "key": "XepM9W1Mo/",
+    "en": "No recent {drive} documents",
+    "zh": "No recent {drive} documents",
+    "reason": "equal"
+  },
+  {
+    "key": "Xgl+LpSQ3W",
+    "en": "Keep your {productName} subscription for a special rate. Pay {discountedPrice} per month until {endDate}. After that, you will be charged {regularPrice} per month unless you cancel.",
+    "zh": "Keep your {productName} subscription for a special rate. Pay {discountedPrice} per month until {endDate}. After that, you will be charged {regularPrice} per month unless you cancel.",
+    "reason": "equal"
+  },
+  {
+    "key": "XjOGTwO6rd",
+    "en": "Port {port}",
+    "zh": "Port {port}",
+    "reason": "equal"
+  },
+  {
+    "key": "XkntOc9mAI",
+    "en": "{count, plural, one {# skill} other {# skills}} · {description}",
+    "zh": "{count, plural, one {# skill} other {# skills}} · {description}",
+    "reason": "equal"
+  },
+  {
+    "key": "XkvhWW6l7M",
+    "en": "Delete “{name}”? This will also delete {count}+ past runs. This can't be undone.",
+    "zh": "Delete “{name}”? This will also delete {count}+ past runs. This can't be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "XmEq/z8taa",
+    "en": "Update seat tier for {count} members",
+    "zh": "Update seat tier for {count} members",
+    "reason": "equal"
+  },
+  {
+    "key": "XouOu3cysM",
+    "en": "Subject must be {maxLength} characters or fewer.",
+    "zh": "Subject must be {maxLength} characters or fewer.",
+    "reason": "equal"
+  },
+  {
+    "key": "Xpcy7impfB",
+    "en": "Background task: {description}",
+    "zh": "Background task: {description}",
+    "reason": "equal"
+  },
+  {
+    "key": "XuGv50sPs9",
+    "en": "{title} {action}",
+    "zh": "{title} {action}",
+    "reason": "equal"
+  },
+  {
+    "key": "XvK+6ZXdDr",
+    "en": "Send a guest pass to a friend. They'll get a free week to see what they can build with Claude. <termsLink>Terms apply</termsLink>",
+    "zh": "Send a guest pass to a friend. They'll get a free week to see what they can build with Claude. <termsLink>Terms apply</termsLink>",
+    "reason": "equal"
+  },
+  {
+    "key": "Xy3cGw21wP",
+    "en": "By clicking 'Subscribe', you agree to Anthropic's <terms>Commercial Terms</terms> including any <serviceTerms>Service Specific Terms</serviceTerms>, and you represent that you are authorized to enter this agreement by Customer. Usage is billed based on usage consumed. You can cancel anytime; your team retains access until the end of the current billing period.",
+    "zh": "By clicking 'Subscribe', you agree to Anthropic's <terms>Commercial Terms</terms> including any <serviceTerms>Service Specific Terms</serviceTerms>, and you represent that you are authorized to enter this agreement by Customer. Usage is billed based on usage consumed. You can cancel anytime; your team retains access until the end of the current billing period.",
+    "reason": "equal"
+  },
+  {
+    "key": "XyN2qD283R",
+    "en": "{tokens} tokens",
+    "zh": "{tokens} tokens",
+    "reason": "equal"
+  },
+  {
+    "key": "XzDHJUSy7x",
+    "en": "Q: {questionText}\nA: Ranked: {ranking}",
+    "zh": "Q: {questionText}\nA: Ranked: {ranking}",
+    "reason": "equal"
+  },
+  {
+    "key": "Y5yAIxy/tT",
+    "en": "Learn more about our <policyLink>network policy</policyLink> and <levelsLink>access levels</levelsLink>.",
+    "zh": "Learn more about our <policyLink>network policy</policyLink> and <levelsLink>access levels</levelsLink>.",
+    "reason": "equal"
+  },
+  {
+    "key": "Y7tnLdrXcO",
+    "en": "Select: {name}",
+    "zh": "Select: {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "YAzsgOS3+U",
+    "en": "The Team plan has a {minimum} member minimum. You can remove this member, but your billing will not change.",
+    "zh": "The Team plan has a {minimum} member minimum. You can remove this member, but your billing will not change.",
+    "reason": "equal"
+  },
+  {
+    "key": "YByHQETXDu",
+    "en": "Reload amount must be at least {minDifference} more than the threshold",
+    "zh": "Reload amount must be at least {minDifference} more than the threshold",
+    "reason": "equal"
+  },
+  {
+    "key": "YDeneVI1WZ",
+    "en": "This will remove {serverName} for everyone on your team.",
+    "zh": "This will remove {serverName} for everyone on your team.",
+    "reason": "equal"
+  },
+  {
+    "key": "YGXS6u/rDh",
+    "en": "Replace {skillName}",
+    "zh": "Replace {skillName}",
+    "reason": "equal"
+  },
+  {
+    "key": "YK5wzikI/L",
+    "en": "{credit} in extra usage, {percent}% off",
+    "zh": "{credit} in extra usage, {percent}% off",
+    "reason": "equal"
+  },
+  {
+    "key": "YK7oK/lEWj",
+    "en": "Already failed on {failures, plural, one {# runner} other {# runners}}. Auto-recovery was exhausted — retry instead if you want to keep trying.",
+    "zh": "Already failed on {failures, plural, one {# runner} other {# runners}}. Auto-recovery was exhausted — retry instead if you want to keep trying.",
+    "reason": "equal"
+  },
+  {
+    "key": "YL3kaz513s",
+    "en": "Continue with {count, plural, one {# connector} other {# connectors}}",
+    "zh": "Continue with {count, plural, one {# connector} other {# connectors}}",
+    "reason": "equal"
+  },
+  {
+    "key": "YL8Iq02mJp",
+    "en": "{base} · {count, plural, one {# filter} other {# filters}}",
+    "zh": "{base} · {count, plural, one {# filter} other {# filters}}",
+    "reason": "equal"
+  },
+  {
+    "key": "YR6CGakwNu",
+    "en": "Fetch from {hostname}",
+    "zh": "Fetch from {hostname}",
+    "reason": "equal"
+  },
+  {
+    "key": "YXg5v/Y4g6",
+    "en": "Add a suggestion to lines {startLine}-{endLine}",
+    "zh": "Add a suggestion to lines {startLine}-{endLine}",
+    "reason": "equal"
+  },
+  {
+    "key": "YYeFkrn6t3",
+    "en": "Site-level permissions are inherited from the Chrome extension. <link>Manage permissions</link> in the Chrome extension settings to control which sites Claude can browse, click, and type on.",
+    "zh": "Site-level permissions are inherited from the Chrome extension. <link>Manage permissions</link> in the Chrome extension settings to control which sites Claude can browse, click, and type on.",
+    "reason": "equal"
+  },
+  {
+    "key": "YYeIWoKm4P",
+    "en": "{count, plural, one {# field changed} other {# fields changed}}",
+    "zh": "{count, plural, one {# field changed} other {# fields changed}}",
+    "reason": "equal"
+  },
+  {
+    "key": "YYhpHqCLd5",
+    "en": "Read {count} memories",
+    "zh": "Read {count} memories",
+    "reason": "equal"
+  },
+  {
+    "key": "YbW0yFF7W5",
+    "en": "All {category} events",
+    "zh": "All {category} events",
+    "reason": "equal"
+  },
+  {
+    "key": "YdpVMGOsZi",
+    "en": "Get {planName} for free.",
+    "zh": "Get {planName} for free.",
+    "reason": "equal"
+  },
+  {
+    "key": "YfhDfmSd3m",
+    "en": "Percentage of users who created at least one artifact on {date} (UTC). Change is compared to the same day last week.",
+    "zh": "Percentage of users who created at least one artifact on {date} (UTC). Change is compared to the same day last week.",
+    "reason": "equal"
+  },
+  {
+    "key": "YlYBASRBOt",
+    "en": "Bypass all permission checks and let Claude work uninterrupted. This works well for workflows like fixing lint errors or generating boilerplate code. Letting Claude run arbitrary commands is risky and can result in data loss, system corruption, or data exfiltration (e.g., via prompt injection attacks). <link>See best practices for safe usage</link>",
+    "zh": "Bypass all permission checks and let Claude work uninterrupted. This works well for workflows like fixing lint errors or generating boilerplate code. Letting Claude run arbitrary commands is risky and can result in data loss, system corruption, or data exfiltration (e.g., via prompt injection attacks). <link>See best practices for safe usage</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "YmVN4enJGq",
+    "en": "Scheduled task \"{name}\" could not start. You can try running it manually.",
+    "zh": "Scheduled task \"{name}\" could not start. You can try running it manually.",
+    "reason": "equal"
+  },
+  {
+    "key": "Yq5Oekf1p2",
+    "en": "{sign}{count, plural, one {# Chat + Claude Code seat} other {# Chat + Claude Code seats}} (pro-rated year)",
+    "zh": "{sign}{count, plural, one {# Chat + Claude Code seat} other {# Chat + Claude Code seats}} (pro-rated year)",
+    "reason": "equal"
+  },
+  {
+    "key": "YrswiNGz88",
+    "en": "Collapse folder {name}",
+    "zh": "Collapse folder {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "YvzXG1OhzH",
+    "en": "Lines {start}-{end}",
+    "zh": "Lines {start}-{end}",
+    "reason": "equal"
+  },
+  {
+    "key": "YwAJ6FwWTe",
+    "en": "{emailList} {count, plural, one {is} other {are}} already added.",
+    "zh": "{emailList} {count, plural, one {is} other {are}} already added.",
+    "reason": "equal"
+  },
+  {
+    "key": "YxRxxbySUh",
+    "en": "Email verified as {email}",
+    "zh": "Email verified as {email}",
+    "reason": "equal"
+  },
+  {
+    "key": "YzBWwzLYQJ",
+    "en": "Your trial will be canceled on {cancelDate}.",
+    "zh": "Your trial will be canceled on {cancelDate}.",
+    "reason": "equal"
+  },
+  {
+    "key": "Z/kXN1TcVJ",
+    "en": "Hand off tasks to Claude and come back to finished work.{br}<muted>Get a free {trialDays}-day trial, no credit card required.</muted>",
+    "zh": "Hand off tasks to Claude and come back to finished work.{br}<muted>Get a free {trialDays}-day trial, no credit card required.</muted>",
+    "reason": "equal"
+  },
+  {
+    "key": "Z184O6N3fq",
+    "en": "Show {count} more",
+    "zh": "Show {count} more",
+    "reason": "equal"
+  },
+  {
+    "key": "Z1ssd87d9Y",
+    "en": "Permission mode: {mode}",
+    "zh": "Permission mode: {mode}",
+    "reason": "equal"
+  },
+  {
+    "key": "Z5LOFqMpDF",
+    "en": "<a>Add a setup script</a> to install dependencies and configure your environment.",
+    "zh": "<a>Add a setup script</a> to install dependencies and configure your environment.",
+    "reason": "equal"
+  },
+  {
+    "key": "Z7VR4bz/o8",
+    "en": "Named commands: {ops}",
+    "zh": "Named commands: {ops}",
+    "reason": "equal"
+  },
+  {
+    "key": "Z7a6vkGFmG",
+    "en": "The GitHub connector is not enabled for your organization. Enable it in <link>Connectors settings</link> to connect a GitHub repository.",
+    "zh": "The GitHub connector is not enabled for your organization. Enable it in <link>Connectors settings</link> to connect a GitHub repository.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZE5eWyHC5S",
+    "en": "Add a comment to line {lineNumber}",
+    "zh": "Add a comment to line {lineNumber}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZH6tk+i+u/",
+    "en": "You can also open Claude <link>in your browser</link>.",
+    "zh": "You can also open Claude <link>in your browser</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZJFqju8mhP",
+    "en": "<span1>Accepting as</span1> <span2>{email}</span2>",
+    "zh": "<span1>Accepting as</span1> <span2>{email}</span2>",
+    "reason": "equal"
+  },
+  {
+    "key": "ZLWzKdwOaB",
+    "en": "You agree that Anthropic will charge your card in the amount above on a recurring monthly basis until you cancel in accordance with our {terms}. You can cancel at any time in your account settings.",
+    "zh": "You agree that Anthropic will charge your card in the amount above on a recurring monthly basis until you cancel in accordance with our {terms}. You can cancel at any time in your account settings.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZNLjFNb5bD",
+    "en": "Claude wants to use {toolName}",
+    "zh": "Claude wants to use {toolName}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZQxQtOvD/2",
+    "en": "Toggle {skillName}",
+    "zh": "Toggle {skillName}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZRt7rLtAIh",
+    "en": "Showing {start}-{end} of {total} results",
+    "zh": "Showing {start}-{end} of {total} results",
+    "reason": "equal"
+  },
+  {
+    "key": "ZS3QbATA1D",
+    "en": "You agree that Anthropic will charge your card in the amount above now and on a recurring annual basis until you cancel in accordance with our <terms>terms</terms>.",
+    "zh": "You agree that Anthropic will charge your card in the amount above now and on a recurring annual basis until you cancel in accordance with our <terms>terms</terms>.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZTZBr/f1jP",
+    "en": "{count, plural, one {# request} other {# requests}}",
+    "zh": "{count, plural, one {# request} other {# requests}}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZUk3g7f03I",
+    "en": "Your team has reached its {limit} seat limit. Request an increase to add more members.",
+    "zh": "Your team has reached its {limit} seat limit. Request an increase to add more members.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZVNBBAiaLC",
+    "en": "Review behavior for {name}",
+    "zh": "Review behavior for {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZXRGN6YvqP",
+    "en": "Per seat / month. Minimum {minimumSeatCount, plural, one {# seat} other {# seats}}.",
+    "zh": "Per seat / month. Minimum {minimumSeatCount, plural, one {# seat} other {# seats}}.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZYjYil6r34",
+    "en": "How to enjoy {value} free {unit}{value, plural, one {} other {s}} of {planName}",
+    "zh": "How to enjoy {value} free {unit}{value, plural, one {} other {s}} of {planName}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZcEGX4ZjzJ",
+    "en": "Anyone in {scope} can view",
+    "zh": "Anyone in {scope} can view",
+    "reason": "equal"
+  },
+  {
+    "key": "ZeACTbo6DM",
+    "en": "Learn more {arrow}",
+    "zh": "Learn more {arrow}",
+    "reason": "equal"
+  },
+  {
+    "key": "Zee2CBohZS",
+    "en": "By clicking “Subscribe for free”, you agree to our <termsLink>terms</termsLink>. You can cancel at any time, and Anthropic may revoke or otherwise limit your free subscription at any time.",
+    "zh": "By clicking “Subscribe for free”, you agree to our <termsLink>terms</termsLink>. You can cancel at any time, and Anthropic may revoke or otherwise limit your free subscription at any time.",
+    "reason": "equal"
+  },
+  {
+    "key": "Zkj66eLbbq",
+    "en": "{count, plural, one {# chat} other {# chats}} matching \"{search}\"",
+    "zh": "{count, plural, one {# chat} other {# chats}} matching \"{search}\"",
+    "reason": "equal"
+  },
+  {
+    "key": "Zl3A8XffQW",
+    "en": "Follow the steps below or <link>learn more in docs</link>.",
+    "zh": "Follow the steps below or <link>learn more in docs</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZlvawxNGEr",
+    "en": "All {total, plural, one {# member is} other {# members are}} selected. <link>Clear selection</link>.",
+    "zh": "All {total, plural, one {# member is} other {# members are}} selected. <link>Clear selection</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZmvvDG2jyU",
+    "en": "Increase extra usage limit for {name}",
+    "zh": "Increase extra usage limit for {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "Zs8/26laIu",
+    "en": "Enter the code sent via text to: {phoneNumber}",
+    "zh": "Enter the code sent via text to: {phoneNumber}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZtzR8Q0+qK",
+    "en": "Claude's installation appears to be corrupted. Reinstall Claude to use {featureName}.",
+    "zh": "Claude's installation appears to be corrupted. Reinstall Claude to use {featureName}.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZvhdulgCsq",
+    "en": "You saved {amount}",
+    "zh": "You saved {amount}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZwYGF+rAVA",
+    "en": "Previous sync appears stale (started at {time}). You can retry.",
+    "zh": "Previous sync appears stale (started at {time}). You can retry.",
+    "reason": "equal"
+  },
+  {
+    "key": "ZxNmJFuhor",
+    "en": "Saved skill: {name}",
+    "zh": "Saved skill: {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "ZxvvAg8Pcy",
+    "en": "{count} Research Labs Premium",
+    "zh": "{count} Research Labs Premium",
+    "reason": "equal"
+  },
+  {
+    "key": "ZzEMOJWfNz",
+    "en": "The French legislative elections will be held in two rounds of voting on June 30 and July 7, 2024. Please consult <link>the French Public Administration website</link> for reliable and up-to-date guidance on where and how to vote in the legislative elections in France.",
+    "zh": "The French legislative elections will be held in two rounds of voting on June 30 and July 7, 2024. Please consult <link>the French Public Administration website</link> for reliable and up-to-date guidance on where and how to vote in the legislative elections in France.",
+    "reason": "equal"
+  },
+  {
+    "key": "a0OHAhka77",
+    "en": "Show {count, plural, one {# line} other {# lines}} below",
+    "zh": "Show {count, plural, one {# line} other {# lines}} below",
+    "reason": "equal"
+  },
+  {
+    "key": "a1nh7tJDLk",
+    "en": "Number of sessions started on {date} (UTC). Change is compared to the same day last week.",
+    "zh": "Number of sessions started on {date} (UTC). Change is compared to the same day last week.",
+    "reason": "equal"
+  },
+  {
+    "key": "a1vIScfLTG",
+    "en": "Current custom limit: {amount}",
+    "zh": "Current custom limit: {amount}",
+    "reason": "equal"
+  },
+  {
+    "key": "aAciOOqx3U",
+    "en": "⏎",
+    "zh": "⏎",
+    "reason": "equal"
+  },
+  {
+    "key": "aCn04xdb+0",
+    "en": "We use your chats and coding sessions to train and improve Claude. You can change this setting anytime in your <privacySettingsPage>Privacy Settings</privacySettingsPage>.",
+    "zh": "We use your chats and coding sessions to train and improve Claude. You can change this setting anytime in your <privacySettingsPage>Privacy Settings</privacySettingsPage>.",
+    "reason": "equal"
+  },
+  {
+    "key": "aDHWLhW3QW",
+    "en": "{count, plural, one {# group} other {# groups}}",
+    "zh": "{count, plural, one {# group} other {# groups}}",
+    "reason": "equal"
+  },
+  {
+    "key": "aEFbjmJ+aB",
+    "en": "Started {relativeTime}",
+    "zh": "Started {relativeTime}",
+    "reason": "equal"
+  },
+  {
+    "key": "aFA/A1RYqp",
+    "en": "You need at least {minSeats} seats in total.",
+    "zh": "You need at least {minSeats} seats in total.",
+    "reason": "equal"
+  },
+  {
+    "key": "aKzF7kGp2b",
+    "en": "Switched to {tier}. Refresh the page to see changes.",
+    "zh": "Switched to {tier}. Refresh the page to see changes.",
+    "reason": "equal"
+  },
+  {
+    "key": "aLzfIziOrP",
+    "en": "Wait {count, plural, one {# second} other {# seconds}}",
+    "zh": "Wait {count, plural, one {# second} other {# seconds}}",
+    "reason": "equal"
+  },
+  {
+    "key": "aM+KJv02Ct",
+    "en": "Seat price + usage at <link>API rates</link>",
+    "zh": "Seat price + usage at <link>API rates</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "aMB1+6UDAk",
+    "en": "Running {tool}",
+    "zh": "Running {tool}",
+    "reason": "equal"
+  },
+  {
+    "key": "aQT+klR6gE",
+    "en": "Delete memory {name}",
+    "zh": "Delete memory {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "aQZD5OXkoq",
+    "en": "{formattedUsageAmount} spent",
+    "zh": "{formattedUsageAmount} spent",
+    "reason": "equal"
+  },
+  {
+    "key": "aXXNZnuLGe",
+    "en": "$0 for {weeks, plural, one {# week} other {# weeks}}",
+    "zh": "$0 for {weeks, plural, one {# week} other {# weeks}}",
+    "reason": "equal"
+  },
+  {
+    "key": "aZ1Z6Z/Fgn",
+    "en": "Plugins can be browsed, but are only available for use in the desktop app. <link>Download Claude for Desktop</link>",
+    "zh": "Plugins can be browsed, but are only available for use in the desktop app. <link>Download Claude for Desktop</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "aZHAQmLikT",
+    "en": "{count} to add",
+    "zh": "{count} to add",
+    "reason": "equal"
+  },
+  {
+    "key": "adLRwcgA8H",
+    "en": "{available, number} {tierLabel} seat(s) available",
+    "zh": "{available, number} {tierLabel} seat(s) available",
+    "reason": "equal"
+  },
+  {
+    "key": "ajSxjJuwBd",
+    "en": "Allow Claude to remember relevant context from your chats. This setting controls memory for both chats and projects. <a>Learn more</a>.",
+    "zh": "Allow Claude to remember relevant context from your chats. This setting controls memory for both chats and projects. <a>Learn more</a>.",
+    "reason": "equal"
+  },
+  {
+    "key": "ajnraejh5Q",
+    "en": "{count, plural, one {# key} other {# keys}}",
+    "zh": "{count, plural, one {# key} other {# keys}}",
+    "reason": "equal"
+  },
+  {
+    "key": "akEEBfokFC",
+    "en": "Copy your link and send it off. You'll also get a confirmation at {email}.",
+    "zh": "Copy your link and send it off. You'll also get a confirmation at {email}.",
+    "reason": "equal"
+  },
+  {
+    "key": "amMajn4K3v",
+    "en": "Threshold must be at least {min}",
+    "zh": "Threshold must be at least {min}",
+    "reason": "equal"
+  },
+  {
+    "key": "amlOCFiIxB",
+    "en": "Go to <b>Settings → Options</b> and toggle <b>Connect to Conway</b>",
+    "zh": "Go to <b>Settings → Options</b> and toggle <b>Connect to Conway</b>",
+    "reason": "equal"
+  },
+  {
+    "key": "an9x+mFjI4",
+    "en": "You've hit your usage limit ∙ Resets at {time}",
+    "zh": "You've hit your usage limit ∙ Resets at {time}",
+    "reason": "equal"
+  },
+  {
+    "key": "anyi88s/sW",
+    "en": "Claude would like to <bold>Cowork</bold> in:",
+    "zh": "Claude would like to <bold>Cowork</bold> in:",
+    "reason": "equal"
+  },
+  {
+    "key": "aqGYdSt77W",
+    "en": "File size must be less than {maxSize}MB",
+    "zh": "File size must be less than {maxSize}MB",
+    "reason": "equal"
+  },
+  {
+    "key": "au1WTQvqDg",
+    "en": "A bit more {attribute}",
+    "zh": "A bit more {attribute}",
+    "reason": "equal"
+  },
+  {
+    "key": "auBPa3KDXM",
+    "en": "Scheduled task \"{name}\" missed at {formattedTime}. Running now.",
+    "zh": "Scheduled task \"{name}\" missed at {formattedTime}. Running now.",
+    "reason": "equal"
+  },
+  {
+    "key": "avhJQOl504",
+    "en": "In <link>.env format</link>. These are visible to anyone using this environment — don't add secrets or credentials.",
+    "zh": "In <link>.env format</link>. These are visible to anyone using this environment — don't add secrets or credentials.",
+    "reason": "equal"
+  },
+  {
+    "key": "avmvjXYtv/",
+    "en": "Get a {fieldName} from {serverName}",
+    "zh": "Get a {fieldName} from {serverName}",
+    "reason": "equal"
+  },
+  {
+    "key": "b/yojyMR5Q",
+    "en": "Revoking <b>{label}</b> is immediate and cannot be undone.",
+    "zh": "Revoking <b>{label}</b> is immediate and cannot be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "b2eRiWSxS0",
+    "en": "Loading {skill} skill",
+    "zh": "Loading {skill} skill",
+    "reason": "equal"
+  },
+  {
+    "key": "b36mSZ46cW",
+    "en": "View all {count} files",
+    "zh": "View all {count} files",
+    "reason": "equal"
+  },
+  {
+    "key": "b4a1PYnspq",
+    "en": "Maximum of {max} images allowed.",
+    "zh": "Maximum of {max} images allowed.",
+    "reason": "equal"
+  },
+  {
+    "key": "b5Uf1JSpcI",
+    "en": "Type: \"{text}\"",
+    "zh": "Type: \"{text}\"",
+    "reason": "equal"
+  },
+  {
+    "key": "b6fPz+rhDe",
+    "en": "5-{maxMembers} users",
+    "zh": "5-{maxMembers} users",
+    "reason": "equal"
+  },
+  {
+    "key": "b9l0nHKClh",
+    "en": "<link>Contact our Support team</link> team to request the deletion of your organization and its associated data.",
+    "zh": "<link>Contact our Support team</link> team to request the deletion of your organization and its associated data.",
+    "reason": "equal"
+  },
+  {
+    "key": "bApErctxyt",
+    "en": "Read {fileName}",
+    "zh": "Read {fileName}",
+    "reason": "equal"
+  },
+  {
+    "key": "bAprWTNb2u",
+    "en": "Top off to {amount} when your balance is {threshold}",
+    "zh": "Top off to {amount} when your balance is {threshold}",
+    "reason": "equal"
+  },
+  {
+    "key": "bDQHnNs5ii",
+    "en": "Use {code} to insert the one-time password.",
+    "zh": "Use {code} to insert the one-time password.",
+    "reason": "equal"
+  },
+  {
+    "key": "bF6OwzpSd0",
+    "en": "Allow Claude to <bold>{action}</bold>?",
+    "zh": "Allow Claude to <bold>{action}</bold>?",
+    "reason": "equal"
+  },
+  {
+    "key": "bG2TK5BGJb",
+    "en": "{inviterName} ({inviterEmail}) has invited you to join {organizationName}'s workspace on the Enterprise plan.",
+    "zh": "{inviterName} ({inviterEmail}) has invited you to join {organizationName}'s workspace on the Enterprise plan.",
+    "reason": "equal"
+  },
+  {
+    "key": "bGjN0IjEvE",
+    "en": "This app wants to download {count} files to your device:",
+    "zh": "This app wants to download {count} files to your device:",
+    "reason": "equal"
+  },
+  {
+    "key": "bH47Z4hSE8",
+    "en": "Ask {name}",
+    "zh": "Ask {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "bKysD4NnKp",
+    "en": "{duration} of Claude {tierName}",
+    "zh": "{duration} of Claude {tierName}",
+    "reason": "equal"
+  },
+  {
+    "key": "bMGYSACxEF",
+    "en": "Shared session. Visible to anyone in {orgName} with the link.",
+    "zh": "Shared session. Visible to anyone in {orgName} with the link.",
+    "reason": "equal"
+  },
+  {
+    "key": "bNZdwJJ2yH",
+    "en": "Upload stopped — {remaining, plural, one {# skill was} other {# skills were}} not uploaded",
+    "zh": "Upload stopped — {remaining, plural, one {# skill was} other {# skills were}} not uploaded",
+    "reason": "equal"
+  },
+  {
+    "key": "bPY0siM1l3",
+    "en": "Claude installs packages and libraries to perform advanced data analysis, custom visualizations, and specialized file processing. Allowed domains can be managed in <link>Settings</link>.",
+    "zh": "Claude installs packages and libraries to perform advanced data analysis, custom visualizations, and specialized file processing. Allowed domains can be managed in <link>Settings</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "bQXLvUplFJ",
+    "en": "{title} background animation",
+    "zh": "{title} background animation",
+    "reason": "equal"
+  },
+  {
+    "key": "bQrHWOmwTF",
+    "en": "We're experiencing high demand. Check back soon to claim. Don't worry, your credit's reserved until {date}.",
+    "zh": "We're experiencing high demand. Check back soon to claim. Don't worry, your credit's reserved until {date}.",
+    "reason": "equal"
+  },
+  {
+    "key": "bQuLbzZRDC",
+    "en": "<button>Authenticate</button> to export to Google Drive",
+    "zh": "<button>Authenticate</button> to export to Google Drive",
+    "reason": "equal"
+  },
+  {
+    "key": "bS10BvoB3g",
+    "en": "{count} new",
+    "zh": "{count} new",
+    "reason": "equal"
+  },
+  {
+    "key": "bUsfiLzdZN",
+    "en": "This preview contains {count} changes, which is too many to display in detail. Download the CSV to see all changes.",
+    "zh": "This preview contains {count} changes, which is too many to display in detail. Download the CSV to see all changes.",
+    "reason": "equal"
+  },
+  {
+    "key": "bX4Cnsq29Y",
+    "en": "{partnerName} offer: up to {cap}/month off for {months, plural, one {# month} other {# months}} + {credit} usage credit",
+    "zh": "{partnerName} offer: up to {cap}/month off for {months, plural, one {# month} other {# months}} + {credit} usage credit",
+    "reason": "equal"
+  },
+  {
+    "key": "bXdAR/E39g",
+    "en": "User access for {name}",
+    "zh": "User access for {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "bZMLuJCUfp",
+    "en": "DNS changes may take time to propagate across name servers. You can <link>check the current propagation status</link> to monitor when your record becomes visible.",
+    "zh": "DNS changes may take time to propagate across name servers. You can <link>check the current propagation status</link> to monitor when your record becomes visible.",
+    "reason": "equal"
+  },
+  {
+    "key": "baphi06K/h",
+    "en": "Expand {count, plural, one {# step} other {# steps}}",
+    "zh": "Expand {count, plural, one {# step} other {# steps}}",
+    "reason": "equal"
+  },
+  {
+    "key": "bcyOWcQQZm",
+    "en": "{price}/mo",
+    "zh": "{price}/mo",
+    "reason": "equal"
+  },
+  {
+    "key": "bd3NwKJU1r",
+    "en": "For Team accounts, only Premium seats can access Claude through {clientName}",
+    "zh": "For Team accounts, only Premium seats can access Claude through {clientName}",
+    "reason": "equal"
+  },
+  {
+    "key": "boJw4UzEkA",
+    "en": "{percentOff}% off for {durationInMonths, plural, one {# month} other {# months}}",
+    "zh": "{percentOff}% off for {durationInMonths, plural, one {# month} other {# months}}",
+    "reason": "equal"
+  },
+  {
+    "key": "bzYWNlBFMV",
+    "en": "No projects matching “{search}”",
+    "zh": "No projects matching “{search}”",
+    "reason": "equal"
+  },
+  {
+    "key": "c0GWl4Wvw0",
+    "en": "For other edits or escalations, email {email} or contact an AE. Debugging and alert channels can be set up on demand.",
+    "zh": "For other edits or escalations, email {email} or contact an AE. Debugging and alert channels can be set up on demand.",
+    "reason": "equal"
+  },
+  {
+    "key": "cBaC0sFU98",
+    "en": "Name cannot contain the word “{reservedWord}”.",
+    "zh": "Name cannot contain the word “{reservedWord}”.",
+    "reason": "equal"
+  },
+  {
+    "key": "cEp47b4Rtm",
+    "en": "Updating to macOS 26 or later may resolve this. If it persists, you can <reinstall>reinstall the workspace</reinstall>.",
+    "zh": "Updating to macOS 26 or later may resolve this. If it persists, you can <reinstall>reinstall the workspace</reinstall>.",
+    "reason": "equal"
+  },
+  {
+    "key": "cG2t2HU4x/",
+    "en": "<strong>Note:</strong> Make sure you have permission to record the meeting. Claude will appear as a participant named ‘Claude Assistant’ in the call.",
+    "zh": "<strong>Note:</strong> Make sure you have permission to record the meeting. Claude will appear as a participant named ‘Claude Assistant’ in the call.",
+    "reason": "equal"
+  },
+  {
+    "key": "cPnivFkT6E",
+    "en": "Read {count} files",
+    "zh": "Read {count} files",
+    "reason": "equal"
+  },
+  {
+    "key": "cQaGswkzun",
+    "en": "Attempt {current} of 5",
+    "zh": "Attempt {current} of 5",
+    "reason": "equal"
+  },
+  {
+    "key": "cSQgaqw7TC",
+    "en": "By clicking 'Confirm upgrade', you agree to Anthropic's <terms>Commercial Terms</terms> including any <serviceTerms>Service Specific Terms</serviceTerms>, and you represent that you are authorized to enter this agreement by Customer. Usage is billed based on usage consumed. You can cancel anytime; your team retains access until the end of the current billing period.",
+    "zh": "By clicking 'Confirm upgrade', you agree to Anthropic's <terms>Commercial Terms</terms> including any <serviceTerms>Service Specific Terms</serviceTerms>, and you represent that you are authorized to enter this agreement by Customer. Usage is billed based on usage consumed. You can cancel anytime; your team retains access until the end of the current billing period.",
+    "reason": "equal"
+  },
+  {
+    "key": "cUqr+TG78Q",
+    "en": "Delete {count} plugins",
+    "zh": "Delete {count} plugins",
+    "reason": "equal"
+  },
+  {
+    "key": "cbFBVEIzOr",
+    "en": "{featureName} is not yet available on Windows on Arm devices.",
+    "zh": "{featureName} is not yet available on Windows on Arm devices.",
+    "reason": "equal"
+  },
+  {
+    "key": "ccGmik8Lac",
+    "en": "Unfortunately, {product} is only available in <link>certain regions</link> right now. We’re working hard to expand to other regions soon.",
+    "zh": "Unfortunately, {product} is only available in <link>certain regions</link> right now. We’re working hard to expand to other regions soon.",
+    "reason": "equal"
+  },
+  {
+    "key": "ccWa9UuF17",
+    "en": "{featureName} requires the latest desktop app",
+    "zh": "{featureName} requires the latest desktop app",
+    "reason": "equal"
+  },
+  {
+    "key": "cdIbohtSXq",
+    "en": "Is {name} how I should refer to you? If not, you can change that now.",
+    "zh": "Is {name} how I should refer to you? If not, you can change that now.",
+    "reason": "equal"
+  },
+  {
+    "key": "cdURd8rlnY",
+    "en": "<link>Upgrade</link> to use Claude in Microsoft Office",
+    "zh": "<link>Upgrade</link> to use Claude in Microsoft Office",
+    "reason": "equal"
+  },
+  {
+    "key": "cdXW5etV2O",
+    "en": "{amount} credit added. Auto-reload is on, so you'll be charged automatically once the credit runs out. <a>Manage auto-reload</a>",
+    "zh": "{amount} credit added. Auto-reload is on, so you'll be charged automatically once the credit runs out. <a>Manage auto-reload</a>",
+    "reason": "equal"
+  },
+  {
+    "key": "ceCqKWhDgW",
+    "en": "Gift subscriptions can only be redeemed on the web. You can wait until your mobile subscription ends on {date} to redeem your gift.",
+    "zh": "Gift subscriptions can only be redeemed on the web. You can wait until your mobile subscription ends on {date} to redeem your gift.",
+    "reason": "equal"
+  },
+  {
+    "key": "cgEvS9xlOm",
+    "en": "Connect to {hostname} to access its repositories",
+    "zh": "Connect to {hostname} to access its repositories",
+    "reason": "equal"
+  },
+  {
+    "key": "cgukH1TAVE",
+    "en": "You've been invited to join this organization with your <bold>{email}</bold> address.",
+    "zh": "You've been invited to join this organization with your <bold>{email}</bold> address.",
+    "reason": "equal"
+  },
+  {
+    "key": "ciDIPa9LGz",
+    "en": "By clicking ‘Subscribe’, you agree to Anthropic’s <terms>Commercial Terms</terms> including any <serviceTerms>Service Specific Terms</serviceTerms>, and you represent that you are authorized to enter this agreement by Customer. By providing your payment information, you allow Anthropic to charge your card in the amount above now and monthly until you cancel in accordance with our <cancellation>terms</cancellation>. You can cancel at any time.",
+    "zh": "By clicking ‘Subscribe’, you agree to Anthropic’s <terms>Commercial Terms</terms> including any <serviceTerms>Service Specific Terms</serviceTerms>, and you represent that you are authorized to enter this agreement by Customer. By providing your payment information, you allow Anthropic to charge your card in the amount above now and monthly until you cancel in accordance with our <cancellation>terms</cancellation>. You can cancel at any time.",
+    "reason": "equal"
+  },
+  {
+    "key": "clDCxOIshp",
+    "en": "Custom group access for {name}",
+    "zh": "Custom group access for {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "clNUKmbfPW",
+    "en": "Subscribing to a Team plan creates a new account. Your existing projects & chats won’t carry over, and your existing Pro plan subscription will auto-renew until canceled. <link>Learn more</link>",
+    "zh": "Subscribing to a Team plan creates a new account. Your existing projects & chats won’t carry over, and your existing Pro plan subscription will auto-renew until canceled. <link>Learn more</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "cogCO2arsC",
+    "en": "Current value ({source})",
+    "zh": "Current value ({source})",
+    "reason": "equal"
+  },
+  {
+    "key": "cqCl6ie/BE",
+    "en": "Nice to meet you, {userName}. I'd love to learn more about the way you work. Connect your tools and I'll have a much better sense of what's useful to you.",
+    "zh": "Nice to meet you, {userName}. I'd love to learn more about the way you work. Connect your tools and I'll have a much better sense of what's useful to you.",
+    "reason": "equal"
+  },
+  {
+    "key": "csFwPf3mbj",
+    "en": "Looking for something else? <link>Browse all connectors</link>",
+    "zh": "Looking for something else? <link>Browse all connectors</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "csr9dd5Yrj",
+    "en": "Claude responded: {summary}",
+    "zh": "Claude responded: {summary}",
+    "reason": "equal"
+  },
+  {
+    "key": "cteaXgnqV+",
+    "en": "Archive {numSelected} selected {numSelected, plural, one {item} other {items}}",
+    "zh": "Archive {numSelected} selected {numSelected, plural, one {item} other {items}}",
+    "reason": "equal"
+  },
+  {
+    "key": "cuFp9tvFYL",
+    "en": "SSH · {sshHost}",
+    "zh": "SSH · {sshHost}",
+    "reason": "equal"
+  },
+  {
+    "key": "cuaMuzr//N",
+    "en": "Creating {fileName}",
+    "zh": "Creating {fileName}",
+    "reason": "equal"
+  },
+  {
+    "key": "d/ArudYI03",
+    "en": "<b>Only connect if you just started signing in from Claude for {appName}.</b> This code should match the one shown there. Otherwise, close this tab.",
+    "zh": "<b>Only connect if you just started signing in from Claude for {appName}.</b> This code should match the one shown there. Otherwise, close this tab.",
+    "reason": "equal"
+  },
+  {
+    "key": "d1iFfHCXCd",
+    "en": "Set input to \"{value}\"",
+    "zh": "Set input to \"{value}\"",
+    "reason": "equal"
+  },
+  {
+    "key": "d2M0bIIEQ9",
+    "en": "Resets {time}",
+    "zh": "Resets {time}",
+    "reason": "equal"
+  },
+  {
+    "key": "dAd+Lgzmys",
+    "en": "Cancel to stop recurring billing. Your plan will no longer renew at the end of your pause on {pauseEndDate}.",
+    "zh": "Cancel to stop recurring billing. Your plan will no longer renew at the end of your pause on {pauseEndDate}.",
+    "reason": "equal"
+  },
+  {
+    "key": "dD0IKhlNNz",
+    "en": "Tax: {tax}",
+    "zh": "Tax: {tax}",
+    "reason": "equal"
+  },
+  {
+    "key": "dFZvRHxBd0",
+    "en": "{appName} has a configuration issue on its end — reconnecting may not resolve this.",
+    "zh": "{appName} has a configuration issue on its end — reconnecting may not resolve this.",
+    "reason": "equal"
+  },
+  {
+    "key": "dGCPKb2VtU",
+    "en": "Version {number} — {date}",
+    "zh": "Version {number} — {date}",
+    "reason": "equal"
+  },
+  {
+    "key": "dGGnLapvZE",
+    "en": "You've been invited to join these organizations with your <bold>{email}</bold> address.",
+    "zh": "You've been invited to join these organizations with your <bold>{email}</bold> address.",
+    "reason": "equal"
+  },
+  {
+    "key": "dHNwlP3Db/",
+    "en": "Reset complete — deleted {count} trial(s), onboarding cleared: {cleared}",
+    "zh": "Reset complete — deleted {count} trial(s), onboarding cleared: {cleared}",
+    "reason": "equal"
+  },
+  {
+    "key": "dIbq/Ow8Zn",
+    "en": "Much less {attribute}",
+    "zh": "Much less {attribute}",
+    "reason": "equal"
+  },
+  {
+    "key": "dJyXLA+Nl6",
+    "en": "{count, plural, one {Hook} other {# Hooks}}",
+    "zh": "{count, plural, one {Hook} other {# Hooks}}",
+    "reason": "equal"
+  },
+  {
+    "key": "dMY006ush/",
+    "en": "Unable to merge your changes to the {branch} branch.",
+    "zh": "Unable to merge your changes to the {branch} branch.",
+    "reason": "equal"
+  },
+  {
+    "key": "dOyg7JNugw",
+    "en": "<link>Install the GitHub App on {hostname}</link> to access its private repositories",
+    "zh": "<link>Install the GitHub App on {hostname}</link> to access its private repositories",
+    "reason": "equal"
+  },
+  {
+    "key": "dQ+rhsu82v",
+    "en": "{collapsed, select, yes {On release} other {When a release is {verbs}}}",
+    "zh": "{collapsed, select, yes {On release} other {When a release is {verbs}}}",
+    "reason": "equal"
+  },
+  {
+    "key": "dQCo8WhUpM",
+    "en": "Up to {price}/mo",
+    "zh": "Up to {price}/mo",
+    "reason": "equal"
+  },
+  {
+    "key": "dQalIf3eYu",
+    "en": "Claude can access common package managers plus any additional domains you specify below. <a>View package manager domains</a>.",
+    "zh": "Claude can access common package managers plus any additional domains you specify below. <a>View package manager domains</a>.",
+    "reason": "equal"
+  },
+  {
+    "key": "dS6ebV+vpY",
+    "en": "{collapsedCount, plural, one {# step} other {# steps}}",
+    "zh": "{collapsedCount, plural, one {# step} other {# steps}}",
+    "reason": "equal"
+  },
+  {
+    "key": "dSypWIjtUE",
+    "en": "{count} Chat + Claude Code seats",
+    "zh": "{count} Chat + Claude Code seats",
+    "reason": "equal"
+  },
+  {
+    "key": "dTGOltnc/b",
+    "en": "Allow Claude to <b>use</b> {count} apps?",
+    "zh": "Allow Claude to <b>use</b> {count} apps?",
+    "reason": "equal"
+  },
+  {
+    "key": "dURdJpCNlT",
+    "en": "An unknown error occurred connecting to {serverName}.",
+    "zh": "An unknown error occurred connecting to {serverName}.",
+    "reason": "equal"
+  },
+  {
+    "key": "dUaa/tGqdm",
+    "en": "{prefix, select, first {First, let’s} other {Now, let’s} last {Almost There! Let’s}} connect your work schedule.",
+    "zh": "{prefix, select, first {First, let’s} other {Now, let’s} last {Almost There! Let’s}} connect your work schedule.",
+    "reason": "equal"
+  },
+  {
+    "key": "dUareRZF9G",
+    "en": "Reconnect with {sourceName}",
+    "zh": "Reconnect with {sourceName}",
+    "reason": "equal"
+  },
+  {
+    "key": "dXCzkuzvh2",
+    "en": "Allow Claude to <b>use</b> <meta>{app}</meta>?",
+    "zh": "Allow Claude to <b>use</b> <meta>{app}</meta>?",
+    "reason": "equal"
+  },
+  {
+    "key": "dXJhpHIjV5",
+    "en": "{count, plural, one {# parameter} other {# parameters}}: {preview}",
+    "zh": "{count, plural, one {# parameter} other {# parameters}}: {preview}",
+    "reason": "equal"
+  },
+  {
+    "key": "dYdaV+VR+Z",
+    "en": "\"{name}\" created.",
+    "zh": "\"{name}\" created.",
+    "reason": "equal"
+  },
+  {
+    "key": "dZjZQyzajl",
+    "en": "Happy Monday, {name}",
+    "zh": "Happy Monday, {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "dZmu6Qjv7Z",
+    "en": "Rate limits set to {label}",
+    "zh": "Rate limits set to {label}",
+    "reason": "equal"
+  },
+  {
+    "key": "dc/vp/cKwc",
+    "en": "{minutes}m elapsed",
+    "zh": "{minutes}m elapsed",
+    "reason": "equal"
+  },
+  {
+    "key": "dc10LONq4/",
+    "en": "You've used {surpassedThresholdFormatted} of your usage",
+    "zh": "You've used {surpassedThresholdFormatted} of your usage",
+    "reason": "equal"
+  },
+  {
+    "key": "dhGMfPeh7+",
+    "en": "The desktop app should have downloaded automatically. If not, you can <link>download manually</link>.",
+    "zh": "The desktop app should have downloaded automatically. If not, you can <link>download manually</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "dhkuxTRM33",
+    "en": "({count} connected)",
+    "zh": "({count} connected)",
+    "reason": "equal"
+  },
+  {
+    "key": "dhrkmMWPjv",
+    "en": "Remove {repo}",
+    "zh": "Remove {repo}",
+    "reason": "equal"
+  },
+  {
+    "key": "djpBwGgJiI",
+    "en": "Debug bundle exported — {goLink}",
+    "zh": "Debug bundle exported — {goLink}",
+    "reason": "equal"
+  },
+  {
+    "key": "djtHiJ5aej",
+    "en": "Preview of {fileName}",
+    "zh": "Preview of {fileName}",
+    "reason": "equal"
+  },
+  {
+    "key": "dkOwy9zqc1",
+    "en": "Install the <link>GitHub CLI</link> to enable CI monitoring, auto-fix, and auto-merge.",
+    "zh": "Install the <link>GitHub CLI</link> to enable CI monitoring, auto-fix, and auto-merge.",
+    "reason": "equal"
+  },
+  {
+    "key": "dmNgmd9ixT",
+    "en": "Get started with{br}Claude for free",
+    "zh": "Get started with{br}Claude for free",
+    "reason": "equal"
+  },
+  {
+    "key": "dmsH9KHSSj",
+    "en": "Add Group to {tierName}",
+    "zh": "Add Group to {tierName}",
+    "reason": "equal"
+  },
+  {
+    "key": "dodZw3agKz",
+    "en": "Attachments added to {projectName}",
+    "zh": "Attachments added to {projectName}",
+    "reason": "equal"
+  },
+  {
+    "key": "duAPKIRBH8",
+    "en": "Your subscription includes a time-limited promotional discount. Your subscription will automatically renew at the discounted price of {discountedPrice} / {billingInterval, select, yearly {year} monthly {month} other {month}} (plus applicable taxes) until {promoEndDate} when it will automatically renew at the regular price of {undiscountedPrice} / {billingInterval, select, yearly {year} monthly {month} other {month}} (plus applicable taxes).",
+    "zh": "Your subscription includes a time-limited promotional discount. Your subscription will automatically renew at the discounted price of {discountedPrice} / {billingInterval, select, yearly {year} monthly {month} other {month}} (plus applicable taxes) until {promoEndDate} when it will automatically renew at the regular price of {undiscountedPrice} / {billingInterval, select, yearly {year} monthly {month} other {month}} (plus applicable taxes).",
+    "reason": "equal"
+  },
+  {
+    "key": "dwK5z7Z1HT",
+    "en": "You must verify <strong>{domain}</strong> before enabling discoverability for it.",
+    "zh": "You must verify <strong>{domain}</strong> before enabling discoverability for it.",
+    "reason": "equal"
+  },
+  {
+    "key": "dxr2LTCtta",
+    "en": "<link>Download Git for Windows</link>, or set the {envVar} environment variable to the full path of bash.exe from your Git for Windows install, then restart the app.",
+    "zh": "<link>Download Git for Windows</link>, or set the {envVar} environment variable to the full path of bash.exe from your Git for Windows install, then restart the app.",
+    "reason": "equal"
+  },
+  {
+    "key": "dz3W3oGhje",
+    "en": "Sent to {target}",
+    "zh": "Sent to {target}",
+    "reason": "equal"
+  },
+  {
+    "key": "e/Ma2VO6zk",
+    "en": "Claude wants to send this to <bold>Claude Code</bold>",
+    "zh": "Claude wants to send this to <bold>Claude Code</bold>",
+    "reason": "equal"
+  },
+  {
+    "key": "e5N6FQA9NH",
+    "en": "Allow the use of your chats and coding sessions to train and improve Claude. Change anytime in privacy settings. <learnMoreLink>Learn more</learnMoreLink>",
+    "zh": "Allow the use of your chats and coding sessions to train and improve Claude. Change anytime in privacy settings. <learnMoreLink>Learn more</learnMoreLink>",
+    "reason": "equal"
+  },
+  {
+    "key": "e7pOGY8vB9",
+    "en": "Failed to delete extension version: {error}",
+    "zh": "Failed to delete extension version: {error}",
+    "reason": "equal"
+  },
+  {
+    "key": "e90tCrG7ls",
+    "en": "{learnSafely} or {giveFeedback}.",
+    "zh": "{learnSafely} or {giveFeedback}.",
+    "reason": "equal"
+  },
+  {
+    "key": "e9AbqXpfz3",
+    "en": "Send events from <b>{owner}/{repo}</b> to an external URL. Requests are signed with a per-webhook secret.",
+    "zh": "Send events from <b>{owner}/{repo}</b> to an external URL. Requests are signed with a per-webhook secret.",
+    "reason": "equal"
+  },
+  {
+    "key": "e9BSMWF4Fg",
+    "en": "Anyone with <strong>@{emailDomain}</strong> email addresses can discover your workspace and request to join",
+    "zh": "Anyone with <strong>@{emailDomain}</strong> email addresses can discover your workspace and request to join",
+    "reason": "equal"
+  },
+  {
+    "key": "eBMopzduxX",
+    "en": "{fileName} ({fileSize}) is too large to preview.",
+    "zh": "{fileName} ({fileSize}) is too large to preview.",
+    "reason": "equal"
+  },
+  {
+    "key": "eEGDxclEmy",
+    "en": "Couldn't find plugin \"{pluginName}\". Browse available plugins below.",
+    "zh": "Couldn't find plugin \"{pluginName}\". Browse available plugins below.",
+    "reason": "equal"
+  },
+  {
+    "key": "eHqd0pqgqj",
+    "en": "{count, plural, one {# new message} other {# new messages}}",
+    "zh": "{count, plural, one {# new message} other {# new messages}}",
+    "reason": "equal"
+  },
+  {
+    "key": "eNYssOWMe7",
+    "en": "You already are on the Enterprise plan. If you want to upgrade another organization, try <link>logging in with a different email</link>.",
+    "zh": "You already are on the Enterprise plan. If you want to upgrade another organization, try <link>logging in with a different email</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "eNrOpTAOg1",
+    "en": "Happy Thursday, {name}",
+    "zh": "Happy Thursday, {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "eOtvhn95Bx",
+    "en": "Used {name} integration",
+    "zh": "Used {name} integration",
+    "reason": "equal"
+  },
+  {
+    "key": "eQMrHDwH0A",
+    "en": "Writing {fileName}...",
+    "zh": "Writing {fileName}...",
+    "reason": "equal"
+  },
+  {
+    "key": "eRW5dl5m34",
+    "en": "{ellipsis}More",
+    "zh": "{ellipsis}More",
+    "reason": "equal"
+  },
+  {
+    "key": "eV9++h+qex",
+    "en": "Team plans require a minimum of {minimum} seats",
+    "zh": "Team plans require a minimum of {minimum} seats",
+    "reason": "equal"
+  },
+  {
+    "key": "eVdgwMz2gs",
+    "en": "Not seeing the email in your inbox? <link>Try sending again</link>.",
+    "zh": "Not seeing the email in your inbox? <link>Try sending again</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "eXyHYQMo+6",
+    "en": "File size exceeds {maxMb}MB limit.",
+    "zh": "File size exceeds {maxMb}MB limit.",
+    "reason": "equal"
+  },
+  {
+    "key": "ea4asAMnoo",
+    "en": "{serverName} embed",
+    "zh": "{serverName} embed",
+    "reason": "equal"
+  },
+  {
+    "key": "eamIKTcMDo",
+    "en": "{count, plural, one {# document} other {# documents}}",
+    "zh": "{count, plural, one {# document} other {# documents}}",
+    "reason": "equal"
+  },
+  {
+    "key": "eamPW2sMp7",
+    "en": "Score {score} · Best {best}",
+    "zh": "Score {score} · Best {best}",
+    "reason": "equal"
+  },
+  {
+    "key": "ef0pM+jou0",
+    "en": "This setting can put your data at risk. <link>Learn more</link>",
+    "zh": "This setting can put your data at risk. <link>Learn more</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "egu47Bi+CL",
+    "en": "{index} of {total}",
+    "zh": "{index} of {total}",
+    "reason": "equal"
+  },
+  {
+    "key": "ej3UoNb7rU",
+    "en": "Used {label}",
+    "zh": "Used {label}",
+    "reason": "equal"
+  },
+  {
+    "key": "ekFpe2wLzv",
+    "en": "Claude will take action without asking for permission. This can put your data at risk. <link>Learn more</link>",
+    "zh": "Claude will take action without asking for permission. This can put your data at risk. <link>Learn more</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "entG7nYBfP",
+    "en": "Please reach out to {supportEmailAddress} for assistance. We'll set you up with an API credit package.",
+    "zh": "Please reach out to {supportEmailAddress} for assistance. We'll set you up with an API credit package.",
+    "reason": "equal"
+  },
+  {
+    "key": "euSSdSXcOh",
+    "en": "Managed by your organization — <a>copy details</a> for your IT administrator.",
+    "zh": "Managed by your organization — <a>copy details</a> for your IT administrator.",
+    "reason": "equal"
+  },
+  {
+    "key": "evI17O9JR+",
+    "en": "More information about {label}",
+    "zh": "More information about {label}",
+    "reason": "equal"
+  },
+  {
+    "key": "ewJxSqukl5",
+    "en": "{featureName} requires a newer installation",
+    "zh": "{featureName} requires a newer installation",
+    "reason": "equal"
+  },
+  {
+    "key": "ex7Clidxsc",
+    "en": "Welcome, {name}! I’m Claude.",
+    "zh": "Welcome, {name}! I’m Claude.",
+    "reason": "equal"
+  },
+  {
+    "key": "ez2trTFx1O",
+    "en": "Select {roleLabel} role",
+    "zh": "Select {roleLabel} role",
+    "reason": "equal"
+  },
+  {
+    "key": "ezJzgIP3Yg",
+    "en": "Last {label} sync failed.",
+    "zh": "Last {label} sync failed.",
+    "reason": "equal"
+  },
+  {
+    "key": "ezzgnDUo2C",
+    "en": "Runs on {event}",
+    "zh": "Runs on {event}",
+    "reason": "equal"
+  },
+  {
+    "key": "f/MGGXzEft",
+    "en": "tomorrow at {approx, select, yes {~} other {}}{time}",
+    "zh": "tomorrow at {approx, select, yes {~} other {}}{time}",
+    "reason": "equal"
+  },
+  {
+    "key": "f3FXeCO9EW",
+    "en": "{count, number} {type, select, premium {Premium} chat_code {Chat + Claude Code} ss_ent {Claude Enterprise} chat {Chat} nonprofit {Nonprofit} premium_nonprofit {Premium Nonprofit} labs_standard {Research Labs} labs_premium {Research Labs Premium} other {Standard}}",
+    "zh": "{count, number} {type, select, premium {Premium} chat_code {Chat + Claude Code} ss_ent {Claude Enterprise} chat {Chat} nonprofit {Nonprofit} premium_nonprofit {Premium Nonprofit} labs_standard {Research Labs} labs_premium {Research Labs Premium} other {Standard}}",
+    "reason": "equal"
+  },
+  {
+    "key": "f3kY6+YiOY",
+    "en": "Showing {start}–{end} of {total} connectors",
+    "zh": "Showing {start}–{end} of {total} connectors",
+    "reason": "equal"
+  },
+  {
+    "key": "f4KzfWNxJ1",
+    "en": "Dispatch shows you the highlights. This background conversation is where Claude does the thinking. {goBack}",
+    "zh": "Dispatch shows you the highlights. This background conversation is where Claude does the thinking. {goBack}",
+    "reason": "equal"
+  },
+  {
+    "key": "f6LKettcaF",
+    "en": "{toolName} · {count, plural, one {# tool call} other {# tool calls}}",
+    "zh": "{toolName} · {count, plural, one {# tool call} other {# tool calls}}",
+    "reason": "equal"
+  },
+  {
+    "key": "f71p0V/TAo",
+    "en": "You’re currently using a trial version of Pro. You’ll lose access on {trialEndDate}. Upgrade to keep these features.",
+    "zh": "You’re currently using a trial version of Pro. You’ll lose access on {trialEndDate}. Upgrade to keep these features.",
+    "reason": "equal"
+  },
+  {
+    "key": "fAJSdV+tag",
+    "en": "Hey Claude, could you {prompt}? Use any connector that would be helpful, and get started once you've gathered enough info.\n\nIf it makes sense, create something we can look at together—like a visual, a checklist, or something interactive.",
+    "zh": "Hey Claude, could you {prompt}? Use any connector that would be helpful, and get started once you've gathered enough info.\n\nIf it makes sense, create something we can look at together—like a visual, a checklist, or something interactive.",
+    "reason": "equal"
+  },
+  {
+    "key": "fAf4mXUOTX",
+    "en": "Are you sure you want to remove verification for <strong>{domain}</strong>? This will disable SSO for users with this domain.",
+    "zh": "Are you sure you want to remove verification for <strong>{domain}</strong>? This will disable SSO for users with this domain.",
+    "reason": "equal"
+  },
+  {
+    "key": "fBb7PGbjH8",
+    "en": "\"{name}\" started.",
+    "zh": "\"{name}\" started.",
+    "reason": "equal"
+  },
+  {
+    "key": "fComFhc1xv",
+    "en": "More options for {extensionName}",
+    "zh": "More options for {extensionName}",
+    "reason": "equal"
+  },
+  {
+    "key": "fD+KDranx2",
+    "en": "{value} (median)",
+    "zh": "{value} (median)",
+    "reason": "equal"
+  },
+  {
+    "key": "fDfP0nOB7o",
+    "en": "<b>Limited support.</b> Project memory and synced files (like Google Drive and GitHub files) won't be included.",
+    "zh": "<b>Limited support.</b> Project memory and synced files (like Google Drive and GitHub files) won't be included.",
+    "reason": "equal"
+  },
+  {
+    "key": "fEaBDnBMx7",
+    "en": "Connect {serverName}",
+    "zh": "Connect {serverName}",
+    "reason": "equal"
+  },
+  {
+    "key": "fFiWmaVjHR",
+    "en": "As the primary owner, {fullName} will be able to:",
+    "zh": "As the primary owner, {fullName} will be able to:",
+    "reason": "equal"
+  },
+  {
+    "key": "fJ9fYL9WW/",
+    "en": "Current limit: {amount} ({groupName} group)",
+    "zh": "Current limit: {amount} ({groupName} group)",
+    "reason": "equal"
+  },
+  {
+    "key": "fJHdaZIRcd",
+    "en": "“{fileName}” is too large. Choose a smaller file.",
+    "zh": "“{fileName}” is too large. Choose a smaller file.",
+    "reason": "equal"
+  },
+  {
+    "key": "fJgU6tOB8e",
+    "en": "Created by {author}",
+    "zh": "Created by {author}",
+    "reason": "equal"
+  },
+  {
+    "key": "fNixZ9n/2R",
+    "en": "Tap into {name}’s collective wisdom",
+    "zh": "Tap into {name}’s collective wisdom",
+    "reason": "equal"
+  },
+  {
+    "key": "fQAh8hXoyO",
+    "en": "Install the <link>GitHub App</link> to enable auto-fix and auto-merge.",
+    "zh": "Install the <link>GitHub App</link> to enable auto-fix and auto-merge.",
+    "reason": "equal"
+  },
+  {
+    "key": "fQaLKf/zDg",
+    "en": "Anyone in {orgName} with repo access and the link can view",
+    "zh": "Anyone in {orgName} with repo access and the link can view",
+    "reason": "equal"
+  },
+  {
+    "key": "fR1vbR3YPG",
+    "en": "Type <code>{poolName}</code> to confirm",
+    "zh": "Type <code>{poolName}</code> to confirm",
+    "reason": "equal"
+  },
+  {
+    "key": "fTohtPHu9K",
+    "en": "failed on {failures}/3 {failures, plural, one {runner} other {runners}}, auto-recovering",
+    "zh": "failed on {failures}/3 {failures, plural, one {runner} other {runners}}, auto-recovering",
+    "reason": "equal"
+  },
+  {
+    "key": "fXh1H+ISdM",
+    "en": "Authorizing for {orgName}",
+    "zh": "Authorizing for {orgName}",
+    "reason": "equal"
+  },
+  {
+    "key": "feJmoih1Ds",
+    "en": "Using {extraUsageLink} for routine runs until limits reset.",
+    "zh": "Using {extraUsageLink} for routine runs until limits reset.",
+    "reason": "equal"
+  },
+  {
+    "key": "febCGTUpcY",
+    "en": "They’ll be able to continue previous chats referencing {serverName} content, but Claude won’t be able to access new content or perform new tasks.",
+    "zh": "They’ll be able to continue previous chats referencing {serverName} content, but Claude won’t be able to access new content or perform new tasks.",
+    "reason": "equal"
+  },
+  {
+    "key": "fepA/hMcTZ",
+    "en": "<bold>Review this prompt and its length carefully before approving.</bold>",
+    "zh": "<bold>Review this prompt and its length carefully before approving.</bold>",
+    "reason": "equal"
+  },
+  {
+    "key": "feqFzhfeGC",
+    "en": "{completed} of {total} steps complete",
+    "zh": "{completed} of {total} steps complete",
+    "reason": "equal"
+  },
+  {
+    "key": "fjW4Khd1vb",
+    "en": "Are you sure you want to dismiss this extra usage request from {name}? This action cannot be undone.",
+    "zh": "Are you sure you want to dismiss this extra usage request from {name}? This action cannot be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "fkB/zSNjus",
+    "en": "Continue with {short}",
+    "zh": "Continue with {short}",
+    "reason": "equal"
+  },
+  {
+    "key": "fkNzoubYp3",
+    "en": "Define permissions, allowed directories and more for your entire org. This will override user and project settings and only applies to Claude Code in CLI and IDE. <link>Learn more</link>",
+    "zh": "Define permissions, allowed directories and more for your entire org. This will override user and project settings and only applies to Claude Code in CLI and IDE. <link>Learn more</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "flLEnDzvfG",
+    "en": "What’s up next, {name}?",
+    "zh": "What’s up next, {name}?",
+    "reason": "equal"
+  },
+  {
+    "key": "fmPmOHSd9m",
+    "en": "Synced commit: {sha}",
+    "zh": "Synced commit: {sha}",
+    "reason": "equal"
+  },
+  {
+    "key": "fnIWMKGn1A",
+    "en": "{count, plural, one {Tool} other {# Tools}}",
+    "zh": "{count, plural, one {Tool} other {# Tools}}",
+    "reason": "equal"
+  },
+  {
+    "key": "fnMll/YbJZ",
+    "en": "Collapse {count, plural, one {# permission} other {# permissions}}",
+    "zh": "Collapse {count, plural, one {# permission} other {# permissions}}",
+    "reason": "equal"
+  },
+  {
+    "key": "fnele5rhmY",
+    "en": "Let members choose \"Always allow\" when approving connector tools in Cowork. This increases risk from prompt injection — content from connected apps could cause Claude to take unintended actions without per-use approval. <learnMoreLink>Learn more</learnMoreLink>",
+    "zh": "Let members choose \"Always allow\" when approving connector tools in Cowork. This increases risk from prompt injection — content from connected apps could cause Claude to take unintended actions without per-use approval. <learnMoreLink>Learn more</learnMoreLink>",
+    "reason": "equal"
+  },
+  {
+    "key": "frVAUh0ODW",
+    "en": "Remove review comment for {document}",
+    "zh": "Remove review comment for {document}",
+    "reason": "equal"
+  },
+  {
+    "key": "fuoi35GbI+",
+    "en": "Click: \"{target}\"",
+    "zh": "Click: \"{target}\"",
+    "reason": "equal"
+  },
+  {
+    "key": "fzCeeOLRpx",
+    "en": "Allow Claude to access common package managers to install packages and libraries for data analysis, visualizations, and file processing. <a>View package manager domains</a>. Monitor chats closely as this comes with <b>security risks</b>.",
+    "zh": "Allow Claude to access common package managers to install packages and libraries for data analysis, visualizations, and file processing. <a>View package manager domains</a>. Monitor chats closely as this comes with <b>security risks</b>.",
+    "reason": "equal"
+  },
+  {
+    "key": "g+MrC+X/VV",
+    "en": "Upgrade 1 seat to {tier}?",
+    "zh": "Upgrade 1 seat to {tier}?",
+    "reason": "equal"
+  },
+  {
+    "key": "g0plFfAZAH",
+    "en": "Connected to {integrationName}",
+    "zh": "Connected to {integrationName}",
+    "reason": "equal"
+  },
+  {
+    "key": "g4stbS35YP",
+    "en": "Are you sure you want to dismiss {count, plural, one {this join request} other {all join requests}}? This action cannot be undone.",
+    "zh": "Are you sure you want to dismiss {count, plural, one {this join request} other {all join requests}}? This action cannot be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "g84bsjVtN2",
+    "en": "Allow Claude to search for relevant details in past chats. <a>Learn more</a>.",
+    "zh": "Allow Claude to search for relevant details in past chats. <a>Learn more</a>.",
+    "reason": "equal"
+  },
+  {
+    "key": "gLQmklVrcb",
+    "en": "{count} members{domains}",
+    "zh": "{count} members{domains}",
+    "reason": "equal"
+  },
+  {
+    "key": "gMG1vLql9e",
+    "en": "Scan · {date}",
+    "zh": "Scan · {date}",
+    "reason": "equal"
+  },
+  {
+    "key": "gW9VfAFGQw",
+    "en": "We emailed {name}'s gift to {toEmail}. You'll also get a confirmation at {fromEmail}.",
+    "zh": "We emailed {name}'s gift to {toEmail}. You'll also get a confirmation at {fromEmail}.",
+    "reason": "equal"
+  },
+  {
+    "key": "gbNumd3Yx/",
+    "en": "✓",
+    "zh": "✓",
+    "reason": "equal"
+  },
+  {
+    "key": "gbon2GuE3X",
+    "en": "<name>Try {feature}</name> — {description}",
+    "zh": "<name>Try {feature}</name> — {description}",
+    "reason": "equal"
+  },
+  {
+    "key": "gcZsjEP/3M",
+    "en": "Premium Nonprofit: {before, number} → {after, number}",
+    "zh": "Premium Nonprofit: {before, number} → {after, number}",
+    "reason": "equal"
+  },
+  {
+    "key": "geaB9Q6Iz9",
+    "en": "Commit: {sha}",
+    "zh": "Commit: {sha}",
+    "reason": "equal"
+  },
+  {
+    "key": "ggyRyYqxG6",
+    "en": "Are you sure you want to dismiss {count, plural, one {this extra usage request} other {all extra usage requests}}? This action cannot be undone.",
+    "zh": "Are you sure you want to dismiss {count, plural, one {this extra usage request} other {all extra usage requests}}? This action cannot be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "ghbYuVoMj1",
+    "en": "You're almost out of usage ∙ Resets at {time}",
+    "zh": "You're almost out of usage ∙ Resets at {time}",
+    "reason": "equal"
+  },
+  {
+    "key": "gi4CWKm5IU",
+    "en": "Routine created, but the GitHub trigger couldn't be enabled for {count, plural, one {{repos}} other {{repos}}}. You can retry from the routine details page.",
+    "zh": "Routine created, but the GitHub trigger couldn't be enabled for {count, plural, one {{repos}} other {{repos}}}. You can retry from the routine details page.",
+    "reason": "equal"
+  },
+  {
+    "key": "gjpwlvCQlD",
+    "en": "{count} projects",
+    "zh": "{count} projects",
+    "reason": "equal"
+  },
+  {
+    "key": "gltmHPfviz",
+    "en": "Your message will exceed the <link>maximum image count</link> for this chat. Try uploading {count, plural, one {# document} other {# documents}} with fewer pages, removing images, <newChatLink>or starting a new conversation.</newChatLink>{upgradeInstructions}",
+    "zh": "Your message will exceed the <link>maximum image count</link> for this chat. Try uploading {count, plural, one {# document} other {# documents}} with fewer pages, removing images, <newChatLink>or starting a new conversation.</newChatLink>{upgradeInstructions}",
+    "reason": "equal"
+  },
+  {
+    "key": "gnS//E/+Zn",
+    "en": "Your team's initial pool of usage. {editLink}",
+    "zh": "Your team's initial pool of usage. {editLink}",
+    "reason": "equal"
+  },
+  {
+    "key": "gntxUaB8qO",
+    "en": "Avoid financial transactions, password management, or anything involving sensitive personal data. Start with trusted sites and familiar workflows where you're comfortable having Claude take actions. Never use it for high-stakes decisions without careful supervision. And, of course, make sure your use complies with our <aupLink>acceptable use policy</aupLink>. <learnMore>Learn more</learnMore>",
+    "zh": "Avoid financial transactions, password management, or anything involving sensitive personal data. Start with trusted sites and familiar workflows where you're comfortable having Claude take actions. Never use it for high-stakes decisions without careful supervision. And, of course, make sure your use complies with our <aupLink>acceptable use policy</aupLink>. <learnMore>Learn more</learnMore>",
+    "reason": "equal"
+  },
+  {
+    "key": "gqupQTNMYN",
+    "en": "Expand {name}",
+    "zh": "Expand {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "gw58gsizUG",
+    "en": "{s}s",
+    "zh": "{s}s",
+    "reason": "equal"
+  },
+  {
+    "key": "gwg9H7kFgp",
+    "en": "Return to your chats or <link>learn more about our research</link>.",
+    "zh": "Return to your chats or <link>learn more about our research</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "gwpwB/JF8V",
+    "en": "{amount} in extra usage, on us",
+    "zh": "{amount} in extra usage, on us",
+    "reason": "equal"
+  },
+  {
+    "key": "h3J3E4bRfj",
+    "en": "Add from {github}",
+    "zh": "Add from {github}",
+    "reason": "equal"
+  },
+  {
+    "key": "h3OmfpzpuG",
+    "en": "Move {count, plural, one {# chat} other {# chats}}",
+    "zh": "Move {count, plural, one {# chat} other {# chats}}",
+    "reason": "equal"
+  },
+  {
+    "key": "h4P9ubPLmp",
+    "en": "Also allows any {cliName} command that isn't listed separately in your connector settings",
+    "zh": "Also allows any {cliName} command that isn't listed separately in your connector settings",
+    "reason": "equal"
+  },
+  {
+    "key": "h4eYOo40bH",
+    "en": "Additional runs will use {extraUsageLink}.",
+    "zh": "Additional runs will use {extraUsageLink}.",
+    "reason": "equal"
+  },
+  {
+    "key": "h83zI2tjCt",
+    "en": "${amount}",
+    "zh": "${amount}",
+    "reason": "equal"
+  },
+  {
+    "key": "h8u1GJ6wFK",
+    "en": "Add skills to extend Claude's capabilities. <link>Learn more</link>",
+    "zh": "Add skills to extend Claude's capabilities. <link>Learn more</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "hAJUzRkjfh",
+    "en": "{name} returns!",
+    "zh": "{name} returns!",
+    "reason": "equal"
+  },
+  {
+    "key": "hFr1Flg9GJ",
+    "en": "Projects will be deleted after {count, plural, one {# month} other {# months}} of inactivity",
+    "zh": "Projects will be deleted after {count, plural, one {# month} other {# months}} of inactivity",
+    "reason": "equal"
+  },
+  {
+    "key": "hHHVXQS6EX",
+    "en": "There was an error logging in. If you believe you received this message in error, please <link>contact support</link>.",
+    "zh": "There was an error logging in. If you believe you received this message in error, please <link>contact support</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "hHjgxLbOa2",
+    "en": "{sign}{count, plural, one {# premium seat} other {# premium seats}} (pro-rated year)",
+    "zh": "{sign}{count, plural, one {# premium seat} other {# premium seats}} (pro-rated year)",
+    "reason": "equal"
+  },
+  {
+    "key": "hKNwlNeKOf",
+    "en": "Exporting: {numExported} / {totalConversations} ({numFailed} failed)",
+    "zh": "Exporting: {numExported} / {totalConversations} ({numFailed} failed)",
+    "reason": "equal"
+  },
+  {
+    "key": "hPkxBxCj2O",
+    "en": "{pluginName} has been uninstalled.",
+    "zh": "{pluginName} has been uninstalled.",
+    "reason": "equal"
+  },
+  {
+    "key": "hY8Ga9kf76",
+    "en": "Your first {n, plural, one {# Standard seat is} other {# Standard seats are}} free for {days} days. Premium and additional Standard seats are billed from today, prorated for the trial period — {dueToday} due now. After {date}, your total will be {recurring}/{interval} for {seatCount} seats (not including tax).",
+    "zh": "Your first {n, plural, one {# Standard seat is} other {# Standard seats are}} free for {days} days. Premium and additional Standard seats are billed from today, prorated for the trial period — {dueToday} due now. After {date}, your total will be {recurring}/{interval} for {seatCount} seats (not including tax).",
+    "reason": "equal"
+  },
+  {
+    "key": "hYbuk57KUB",
+    "en": "Next run {date}",
+    "zh": "Next run {date}",
+    "reason": "equal"
+  },
+  {
+    "key": "hafITO45MF",
+    "en": "{price} /mo when billed monthly",
+    "zh": "{price} /mo when billed monthly",
+    "reason": "equal"
+  },
+  {
+    "key": "hf6gd7mSSw",
+    "en": "{count, plural, one {Refresh your repository} other {Refresh your # repositories}}",
+    "zh": "{count, plural, one {Refresh your repository} other {Refresh your # repositories}}",
+    "reason": "equal"
+  },
+  {
+    "key": "hiC8I+PyBe",
+    "en": "Claude Enterprise: {before, number} → {after, number}",
+    "zh": "Claude Enterprise: {before, number} → {after, number}",
+    "reason": "equal"
+  },
+  {
+    "key": "hjZiOewGta",
+    "en": "{pluginName} plugin",
+    "zh": "{pluginName} plugin",
+    "reason": "equal"
+  },
+  {
+    "key": "hjoZxGW1z1",
+    "en": "Seats can be set up for extra usage once rate limits are hit. Extra usage is billed at API rates on an additional invoice. Admins can enable this and set spend limits in Settings. <link>Token pricing can be found here.</link>",
+    "zh": "Seats can be set up for extra usage once rate limits are hit. Extra usage is billed at API rates on an additional invoice. Admins can enable this and set spend limits in Settings. <link>Token pricing can be found here.</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "hkclihVpsD",
+    "en": "Allow Claude to permanently delete files in your {folderName} folder during this task?",
+    "zh": "Allow Claude to permanently delete files in your {folderName} folder during this task?",
+    "reason": "equal"
+  },
+  {
+    "key": "ho+6IO9tKV",
+    "en": "{pricing} per seat /month",
+    "zh": "{pricing} per seat /month",
+    "reason": "equal"
+  },
+  {
+    "key": "hoyRntdXbn",
+    "en": "Your Microsoft Entra Admin must complete setup steps before team members can connect their Microsoft 365 accounts. <link>View the full setup guide</link> for step-by-step instructions.",
+    "zh": "Your Microsoft Entra Admin must complete setup steps before team members can connect their Microsoft 365 accounts. <link>View the full setup guide</link> for step-by-step instructions.",
+    "reason": "equal"
+  },
+  {
+    "key": "hqEeUhB+XW",
+    "en": "Skipping in {seconds}s...",
+    "zh": "Skipping in {seconds}s...",
+    "reason": "equal"
+  },
+  {
+    "key": "hqXe+IkKch",
+    "en": "{minimum, plural, one {# seat} other {# seats}} minimum",
+    "zh": "{minimum, plural, one {# seat} other {# seats}} minimum",
+    "reason": "equal"
+  },
+  {
+    "key": "hsYvnBc6s2",
+    "en": "Thanks for subscribing to Max, {name}",
+    "zh": "Thanks for subscribing to Max, {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "hsjwvY2a0X",
+    "en": "{featureName} supports Intel-based Macs in a newer release. Please update Claude Desktop.",
+    "zh": "{featureName} supports Intel-based Macs in a newer release. Please update Claude Desktop.",
+    "reason": "equal"
+  },
+  {
+    "key": "hts4ct5WaZ",
+    "en": "Settings must follow the <link>Claude Code settings schema</link>. Invalid settings may disable Claude Code for your organization.",
+    "zh": "Settings must follow the <link>Claude Code settings schema</link>. Invalid settings may disable Claude Code for your organization.",
+    "reason": "equal"
+  },
+  {
+    "key": "hwJ50OkM/9",
+    "en": "Add from {drive}",
+    "zh": "Add from {drive}",
+    "reason": "equal"
+  },
+  {
+    "key": "hyfwl4pfKG",
+    "en": "{action} folder {name}",
+    "zh": "{action} folder {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "i+Jica+WPg",
+    "en": "Failed to add {count, plural, one {# repository} other {# repositories}}. You can try again.",
+    "zh": "Failed to add {count, plural, one {# repository} other {# repositories}}. You can try again.",
+    "reason": "equal"
+  },
+  {
+    "key": "i+duKCSWRi",
+    "en": "{count, number} custom roles",
+    "zh": "{count, number} custom roles",
+    "reason": "equal"
+  },
+  {
+    "key": "i2Hv8h4sF/",
+    "en": "No {orgType} organizations available with matching domains",
+    "zh": "No {orgType} organizations available with matching domains",
+    "reason": "equal"
+  },
+  {
+    "key": "i3PWqA7qmH",
+    "en": "<b>{sessions, plural, one {# active session} other {# active sessions}}</b> on this runner will be interrupted and returned to the queue with a failure status.",
+    "zh": "<b>{sessions, plural, one {# active session} other {# active sessions}}</b> on this runner will be interrupted and returned to the queue with a failure status.",
+    "reason": "equal"
+  },
+  {
+    "key": "i4eua7X5CN",
+    "en": "You're now using extra usage ∙ Your cowork limit resets {day} at {time}",
+    "zh": "You're now using extra usage ∙ Your cowork limit resets {day} at {time}",
+    "reason": "equal"
+  },
+  {
+    "key": "i4i7ItTb79",
+    "en": "You’re currently using a trial version of Pro. You’ll be billed at the standard Pro rate on {billingStartDate}.",
+    "zh": "You’re currently using a trial version of Pro. You’ll be billed at the standard Pro rate on {billingStartDate}.",
+    "reason": "equal"
+  },
+  {
+    "key": "i5Y0M3/GLr",
+    "en": "Runs as {email}",
+    "zh": "Runs as {email}",
+    "reason": "equal"
+  },
+  {
+    "key": "i6ZaoBZNFQ",
+    "en": "<b>Press ⌥ option twice</b> to type to Claude",
+    "zh": "<b>Press ⌥ option twice</b> to type to Claude",
+    "reason": "equal"
+  },
+  {
+    "key": "i7OsuHlq9d",
+    "en": "You can <link>delete your conversations with Claude</link>, which will also delete any Gmail data Claude used in that conversation",
+    "zh": "You can <link>delete your conversations with Claude</link>, which will also delete any Gmail data Claude used in that conversation",
+    "reason": "equal"
+  },
+  {
+    "key": "i7ng2h0aNF",
+    "en": "Need one? <link>Create a token on github.com</link>",
+    "zh": "Need one? <link>Create a token on github.com</link>",
+    "reason": "equal"
+  },
+  {
+    "key": "i95zKrHN9F",
+    "en": "your plan will renew on {pauseDate}",
+    "zh": "your plan will renew on {pauseDate}",
+    "reason": "equal"
+  },
+  {
+    "key": "iAjUOOFB7k",
+    "en": "Commit to {base}",
+    "zh": "Commit to {base}",
+    "reason": "equal"
+  },
+  {
+    "key": "iCnomYj4pc",
+    "en": "Delete “{name}”? This will also delete {count} past runs. This can't be undone.",
+    "zh": "Delete “{name}”? This will also delete {count} past runs. This can't be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "iD8OPfwR7g",
+    "en": "Stop {serverName}",
+    "zh": "Stop {serverName}",
+    "reason": "equal"
+  },
+  {
+    "key": "iGUAuyO/Ax",
+    "en": "Before you create your {planName}",
+    "zh": "Before you create your {planName}",
+    "reason": "equal"
+  },
+  {
+    "key": "iHiRQwF9js",
+    "en": "The amount you paid for unused extra usage ({amount}, before tax) will be refunded to your card.",
+    "zh": "The amount you paid for unused extra usage ({amount}, before tax) will be refunded to your card.",
+    "reason": "equal"
+  },
+  {
+    "key": "iIRt2SpXyz",
+    "en": "←",
+    "zh": "←",
+    "reason": "equal"
+  },
+  {
+    "key": "iIz80hRyzR",
+    "en": "Last synced: {date} at {time}",
+    "zh": "Last synced: {date} at {time}",
+    "reason": "equal"
+  },
+  {
+    "key": "iJuCvdH/LC",
+    "en": "(from project \"{spaceName}\")",
+    "zh": "(from project \"{spaceName}\")",
+    "reason": "equal"
+  },
+  {
+    "key": "iLA+XvyW//",
+    "en": "Deleted {count} trial row(s)",
+    "zh": "Deleted {count} trial row(s)",
+    "reason": "equal"
+  },
+  {
+    "key": "iLEfi5T2Lv",
+    "en": "Open GitHub App settings on {host}",
+    "zh": "Open GitHub App settings on {host}",
+    "reason": "equal"
+  },
+  {
+    "key": "iLy5GkeHBh",
+    "en": "Updated from {oldVersion} to {newVersion}.",
+    "zh": "Updated from {oldVersion} to {newVersion}.",
+    "reason": "equal"
+  },
+  {
+    "key": "iMMX+ZCJ/I",
+    "en": "Version {versionNum}",
+    "zh": "Version {versionNum}",
+    "reason": "equal"
+  },
+  {
+    "key": "iOLQK+1gwY",
+    "en": "Please try again. If that doesn't work, contact your account administrator or <link>Anthropic support</link>.",
+    "zh": "Please try again. If that doesn't work, contact your account administrator or <link>Anthropic support</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "iRLrjfjaTR",
+    "en": "Always allowing these actions carries risks. Content from files, emails, and the web can contain malicious instructions. Reviewing each action helps you catch Claude errors and malicious actions. <a>Learn about safety risks</a>.",
+    "zh": "Always allowing these actions carries risks. Content from files, emails, and the web can contain malicious instructions. Reviewing each action helps you catch Claude errors and malicious actions. <a>Learn about safety risks</a>.",
+    "reason": "equal"
+  },
+  {
+    "key": "iRjE9wDA7H",
+    "en": "{count}/{max}",
+    "zh": "{count}/{max}",
+    "reason": "equal"
+  },
+  {
+    "key": "iUmBQcu1nR",
+    "en": "Step {number}",
+    "zh": "Step {number}",
+    "reason": "equal"
+  },
+  {
+    "key": "iV4Dr6hiS+",
+    "en": "Length is about {length} characters",
+    "zh": "Length is about {length} characters",
+    "reason": "equal"
+  },
+  {
+    "key": "iZw0MmGxIe",
+    "en": "Install the Claude GitHub App on {repo} to use webhook triggers, or pick a different repository.",
+    "zh": "Install the Claude GitHub App on {repo} to use webhook triggers, or pick a different repository.",
+    "reason": "equal"
+  },
+  {
+    "key": "ibUSAQhOt1",
+    "en": "Question {current} of {total}",
+    "zh": "Question {current} of {total}",
+    "reason": "equal"
+  },
+  {
+    "key": "ie70bxkDd8",
+    "en": "Your Claude {tier} plan is good through {endDate}.",
+    "zh": "Your Claude {tier} plan is good through {endDate}.",
+    "reason": "equal"
+  },
+  {
+    "key": "iePW5084V8",
+    "en": "yesterday at {time}",
+    "zh": "yesterday at {time}",
+    "reason": "equal"
+  },
+  {
+    "key": "iezAjNRKVQ",
+    "en": "{n, plural, one {a memory} other {# memories}}",
+    "zh": "{n, plural, one {a memory} other {# memories}}",
+    "reason": "equal"
+  },
+  {
+    "key": "ig8B3bgm/r",
+    "en": "Switch artifact version, currently version {versionNum}",
+    "zh": "Switch artifact version, currently version {versionNum}",
+    "reason": "equal"
+  },
+  {
+    "key": "ikd2/eAYSH",
+    "en": "{sign}{count, plural, one {# Chat seat} other {# Chat seats}} (pro-rated month)",
+    "zh": "{sign}{count, plural, one {# Chat seat} other {# Chat seats}} (pro-rated month)",
+    "reason": "equal"
+  },
+  {
+    "key": "ikvQ0fXpha",
+    "en": "Showing {start}-{end} of {total, plural, one {# member} other {# members}}. <link>Load all {serverTotal, number} members</link>.",
+    "zh": "Showing {start}-{end} of {total, plural, one {# member} other {# members}}. <link>Load all {serverTotal, number} members</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "im6PDQPyfi",
+    "en": "Last message {relativeTime} in {projectName}",
+    "zh": "Last message {relativeTime} in {projectName}",
+    "reason": "equal"
+  },
+  {
+    "key": "imesHMuX3j",
+    "en": "You've used {surpassedThresholdFormatted} of your weekly limit",
+    "zh": "You've used {surpassedThresholdFormatted} of your weekly limit",
+    "reason": "equal"
+  },
+  {
+    "key": "intXekHoi3",
+    "en": "Duplicated as {pluginName}",
+    "zh": "Duplicated as {pluginName}",
+    "reason": "equal"
+  },
+  {
+    "key": "ipYtl3IVht",
+    "en": "Uncommitted changes on <b>{currentBranch}</b>",
+    "zh": "Uncommitted changes on <b>{currentBranch}</b>",
+    "reason": "equal"
+  },
+  {
+    "key": "iqoUYjV/Te",
+    "en": "To move {memberCount, plural, one {# member} other {# members}} to {tierLabel}, you need {seatsText}.",
+    "zh": "To move {memberCount, plural, one {# member} other {# members}} to {tierLabel}, you need {seatsText}.",
+    "reason": "equal"
+  },
+  {
+    "key": "issdfvcX3E",
+    "en": "PR #{prNumber}",
+    "zh": "PR #{prNumber}",
+    "reason": "equal"
+  },
+  {
+    "key": "ivDQpdUyMs",
+    "en": "Expand {count, plural, one {# hidden line} other {# hidden lines}}",
+    "zh": "Expand {count, plural, one {# hidden line} other {# hidden lines}}",
+    "reason": "equal"
+  },
+  {
+    "key": "j+ddXN8ELA",
+    "en": "Happy Saturday, {name}",
+    "zh": "Happy Saturday, {name}",
+    "reason": "equal"
+  },
+  {
+    "key": "j03hgMq2xY",
+    "en": "{sign}{count, plural, one {# Claude Enterprise seat} other {# Claude Enterprise seats}} (pro-rated month)",
+    "zh": "{sign}{count, plural, one {# Claude Enterprise seat} other {# Claude Enterprise seats}} (pro-rated month)",
+    "reason": "equal"
+  },
+  {
+    "key": "j161zhmrWT",
+    "en": "Download {filename}",
+    "zh": "Download {filename}",
+    "reason": "equal"
+  },
+  {
+    "key": "j7FYfvI8ml",
+    "en": "Sent by {serverName}",
+    "zh": "Sent by {serverName}",
+    "reason": "equal"
+  },
+  {
+    "key": "j8QaRaIVzm",
+    "en": "The amount you paid for unused extra usage ({amount}, before tax) will also be refunded to your card.",
+    "zh": "The amount you paid for unused extra usage ({amount}, before tax) will also be refunded to your card.",
+    "reason": "equal"
+  },
+  {
+    "key": "jBKx0o6pov",
+    "en": "Failed to delete extension: {error}",
+    "zh": "Failed to delete extension: {error}",
+    "reason": "equal"
+  },
+  {
+    "key": "jBShxq3Rqb",
+    "en": "<b>{keyCount, plural, one {# key} other {# keys}}</b> will be permanently revoked.",
+    "zh": "<b>{keyCount, plural, one {# key} other {# keys}}</b> will be permanently revoked.",
+    "reason": "equal"
+  },
+  {
+    "key": "jCbLlyuKeZ",
+    "en": "GitHub app required.{br}Install the {link} to view.",
+    "zh": "GitHub app required.{br}Install the {link} to view.",
+    "reason": "equal"
+  },
+  {
+    "key": "jD4dNe0L5n",
+    "en": "{partnerName} offer: {months, plural, one {# month} other {# months}} free",
+    "zh": "{partnerName} offer: {months, plural, one {# month} other {# months}} free",
+    "reason": "equal"
+  },
+  {
+    "key": "jDH/vSi1ah",
+    "en": "Can't reach your inference provider ({host}) from Claude's workspace.",
+    "zh": "Can't reach your inference provider ({host}) from Claude's workspace.",
+    "reason": "equal"
+  },
+  {
+    "key": "jFKCFx5Zsz",
+    "en": "Are you sure you want to dismiss {count, plural, one {this seat upgrade request} other {all seat upgrade requests}}? This action cannot be undone.",
+    "zh": "Are you sure you want to dismiss {count, plural, one {this seat upgrade request} other {all seat upgrade requests}}? This action cannot be undone.",
+    "reason": "equal"
+  },
+  {
+    "key": "jFMy00zVQ3",
+    "en": "Network access to {hostname} is blocked by egress settings. Plugins from this marketplace won't receive updates. Update <link>capabilities settings</link>.",
+    "zh": "Network access to {hostname} is blocked by egress settings. Plugins from this marketplace won't receive updates. Update <link>capabilities settings</link>.",
+    "reason": "equal"
+  },
+  {
+    "key": "jGBYn1q7Ts",
+    "en": "Handle them before switching to <b>{targetBranch}</b>.",
+    "zh": "Handle them before switching to <b>{targetBranch}</b>.",
+    "reason": "equal"
+  },
+  {
+    "key": "jNJRxPKuXP",
+    "en": "+{count}",
+    "zh": "+{count}",
+    "reason": "equal"
+  },
+  {
+    "key": "jNq3qiS+ss",
+    "en": "You are about to renew the {planName} subscription for {organizationName} as a <bold>monthly</bold> plan.",
+    "zh": "You are about to renew the {planName} subscription for {organizationName} as a <bold>monthly</bold> plan.",
+    "reason": "equal"
+  },
+  {
+    "key": "jP39fxH3/G",
+    "en": "Your organization's access policy blocks {serverName}. Contact your IT admin to adjust the policy for this connector.",
+    "zh": "Your organization's access policy blocks {serverName}. Contact your IT admin to adjust the policy for this connector.",
+    "reason": "equal"
+  },
+  {
+    "key": "jVeyPROIGw",
+    "en": "You have {count, plural, one {# pending comment} other {# pending comments}} that haven't been addressed yet.",
+    "zh": "You have {count, plural, one {# pending comment} other {# pending comments}} that haven't been addressed yet.",
+    "reason": "equal"
+  },
+  {
+    "key": "jW4QyS3E3d",
+    "en": "{stepNum} of {totalSteps}",
+    "zh": "{stepNum} of {totalSteps}",
+    "reason": "equal"
+  },
+  {
+    "key": "jZehqP2Llj",
+    "en": "Preview size: {device}. Click to cycle.",
+    "zh": "Preview size: {device}. Click to cycle.",
+    "reason": "equal"
+  },
+  {
+    "key": "ji7UcoyzI6",
+    "en": "Pay annually to save {savings}%.",
+    "zh": "Pay annually to save {savings}%.",
+    "reason": "equal"
+  },
+  {
+    "key": "jinCYfdfFK",
+    "en": "This connector is required by the following {count, plural, one {plugin} other {plugins}}:",
+    "zh": "This connector is required by the following {count, plural, one {plugin} other {plugins}}:",
+    "reason": "equal"
+  },
+  {
+    "key": "jj12V/FtWN",
+    "en": "Open in {editorName}",
+    "zh": "Open in {editorName}",
+    "reason": "equal"
+  },
+  {
+    "key": "jlH2vcMSip",
+    "en": "Organizations requesting to join your parent organization, {organizationName}",
+    "zh": "Organizations requesting to join your parent organization, {organizationName}",
+    "reason": "equal"
+  },
+  {
+    "key": "jlfF0c1+Z/",
+    "en": "Created artifact: {id}",
+    "zh": "Created artifact: {id}",
+    "reason": "equal"
+  },
+  {
+    "key": "jlzBakbito",
+    "en": "{count, plural, one {# day ago} other {# days ago}}",
+    "zh": "{count, plural, one {# day ago} other {# days ago}}",
+    "reason": "equal"
+  },
+  {
+    "key": "jmBc8Q3rGp",
+    "en": "Enter the code shown in Claude for {appName}.",
+    "zh": "Enter the code shown in Claude for {appName}.",
+    "reason": "equal"
+  }
+]

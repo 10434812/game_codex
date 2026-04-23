@@ -43,16 +43,28 @@
     <view class="goods-grid">
       <view wx:for="{{ goods }}" wx:key="id" class="goods-card cursor-hover">
         <view class="goods-head">
-          <view class="goods-badge">{{ item.category == 'skin' ? '装扮' : '灵宠' }}</view>
+          <view class="goods-badge">{{ item.category == 'skin' ? item.rarityLabel : '灵宠' }}</view>
           <view class="goods-price">
             <text class="price-num">{{ item.price == 0 ? '免费' : item.price }}</text>
             <text class="price-unit" wx:if="{{item.price != 0}}">金</text>
           </view>
         </view>
         
-        <view class="goods-visual {{item.skinClass || item.id}}">
-          <view class="visual-placeholder">
-             {{ item.category == 'skin' ? item.skinIcon : item.petIcon }}
+        <view class="goods-visual {{ item.category == 'skin' ? 'skin-photo' : 'pet-photo' }}">
+          <image
+            wx:if="{{ item.category == 'pet' && item.petImage }}"
+            class="pet-cover"
+            src="{{ item.petImage }}"
+            mode="aspectFit"
+          ></image>
+          <image
+            wx:elif="{{ item.category == 'skin' && item.skinImage }}"
+            class="skin-cover"
+            src="{{ item.skinImage }}"
+            mode="aspectFit"
+          ></image>
+          <view wx:else class="visual-placeholder">
+            {{ item.category == 'skin' ? item.skinIcon : item.petIcon }}
           </view>
         </view>
 

@@ -37,7 +37,7 @@ test('purchaseItem 会扣除金币并加入已拥有皮肤', () => {
   const state = shopStore.getStoreState();
 
   assert.equal(result.ok, true);
-  assert.equal(state.coins, 7140);
+  assert.equal(state.coins, 6540);
   assert.deepEqual(state.ownedSkins, ['skin-default', 'skin-sakura']);
 });
 
@@ -67,7 +67,7 @@ test('purchaseItem 对已拥有商品不会重复扣费', () => {
   assert.equal(first.ok, true);
   assert.equal(second.ok, false);
   assert.equal(second.code, 'ALREADY_OWNED');
-  assert.equal(state.coins, 7840);
+  assert.equal(state.coins, 7932);
   assert.deepEqual(state.ownedPets, ['pet-luckycat']);
 });
 

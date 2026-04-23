@@ -169,68 +169,27 @@
   filter: drop-shadow(0 4rpx 8rpx rgba(0,0,0,0.15));
 }
 
-/* Skins Backgrounds */
-.goods-visual.skin-default {
-  background: linear-gradient(135deg, #e8d0a9 0%, #b89365 100%);
-  border: 4rpx solid #c19b6c;
-}
-.goods-visual.skin-default::before {
-  content: '';
-  position: absolute;
-  width: 100%; height: 100%;
-  background: repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0, rgba(255,255,255,0.1) 4rpx, transparent 4rpx, transparent 16rpx);
+.pet-cover,
+.skin-cover {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 16rpx;
 }
 
-.goods-visual.skin-sakura {
-  background: linear-gradient(135deg, #fce4eb 0%, #f4b6c2 100%);
-  border: 4rpx solid #e7aab8;
-}
-.goods-visual.skin-sakura::before {
-  content: '';
-  position: absolute;
-  width: 140%; height: 140%;
-  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 60%);
-  top: -20%; left: -20%;
-}
-
-.goods-visual.skin-storm {
-  background: linear-gradient(135deg, #5b7b9e 0%, #293f54 100%);
-  border: 4rpx solid #435e77;
-}
-.goods-visual.skin-storm::before {
-  content: '';
-  position: absolute;
-  width: 100%; height: 100%;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
-}
-
-.goods-visual.skin-sunrise {
-  background: linear-gradient(135deg, #f5b971 0%, #e27d32 100%);
-  border: 4rpx solid #d17531;
-}
-.goods-visual.skin-sunrise::before {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  width: 200rpx; height: 200rpx;
-  background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
-  bottom: -50rpx; right: -50rpx;
+.goods-visual.skin-photo {
+  width: 280rpx;
+  height: 280rpx;
+  align-self: center;
+  background: #efe5d3;
+  border: 2rpx solid #dbc7a1;
 }
 
 /* Pets Backgrounds */
-.goods-visual.pet-luckycat {
-  background: linear-gradient(135deg, #ffe0b2 0%, #ffb74d 100%);
-  border: 4rpx solid #f5a623;
-}
-
-.goods-visual.pet-fox {
-  background: linear-gradient(135deg, #ffcdd2 0%, #e57373 100%);
-  border: 4rpx solid #ef5350;
-}
-
-.goods-visual.pet-dragon {
-  background: linear-gradient(135deg, #b2dfdb 0%, #4db6ac 100%);
-  border: 4rpx solid #26a69a;
+.goods-visual.pet-photo {
+  height: 330rpx;
+  background: #efe5d3;
+  border: 2rpx solid #dbc7a1;
 }
 
 .goods-info {
