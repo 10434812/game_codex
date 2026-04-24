@@ -132,6 +132,23 @@ test('home 页面在没有结算结果时点击历史 Tab 不会误跳转', () =
   assert.equal(calls.showToast.length, 1);
 });
 
+test('home 页面在零经验时也会显示轻微进度填充', () => {
+  createWxStub();
+  const gameStore = require('../utils/game-store');
+  const shopStore = require('../utils/shop-store');
+  const playerStats = require('../utils/player-stats');
+
+  gameStore.__resetForTests();
+  shopStore.__resetForTests();
+  playerStats.__resetForTests();
+
+  const homePage = createPageInstance(loadPage('../pages/home/index.js'));
+  homePage.syncOverview();
+
+  assert.equal(homePage.data.progressPercent, 0);
+  assert.equal(homePage.data.progressVisualPercent, 10);
+});
+
 test('room 页面在没有结算结果时点击历史 Tab 不会误跳转', () => {
   const calls = createWxStub();
   const gameStore = require('../utils/game-store');

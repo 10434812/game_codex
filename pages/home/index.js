@@ -8,6 +8,16 @@ const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency} = require('../../utils/format');
 
+const MIN_VISIBLE_PROGRESS_PERCENT = 10;
+
+function getProgressVisualPercent(percent) {
+  const normalized = Math.max(0, Math.min(100, Number(percent) || 0));
+  if (normalized >= 100 || normalized <= 0) {
+    return normalized === 0 ? MIN_VISIBLE_PROGRESS_PERCENT : 100;
+  }
+  return Math.max(normalized, MIN_VISIBLE_PROGRESS_PERCENT);
+}
+
 Page({
   data: {
     nav: {
@@ -22,8 +32,8 @@ Page({
     stages: STAGES,
     balanceText: '¥0',
     levelText: 'Lv.1',
-    progressText: '0 / 120',
     progressPercent: 0,
+    progressVisualPercent: MIN_VISIBLE_PROGRESS_PERCENT,
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
   },
@@ -91,8 +101,8 @@ Page({
     this.setData({
       balanceText: formatCurrency(shopState.coins),
       levelText: `Lv.${progress.level}`,
-      progressText: `${progress.current} / ${progress.required}`,
       progressPercent: progress.percent,
+      progressVisualPercent: getProgressVisualPercent(progress.percent),
     });
   },
   onTapProfile() {
