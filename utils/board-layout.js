@@ -4,6 +4,16 @@ const BOARD_LAYOUT = {
   centerX: 360,
   centerY: 320,
   radius: 235,
+  radiusX: 235,
+  radiusY: 235,
+  startAngle: -90,
+};
+
+const DENSE_BOARD_LAYOUT = {
+  centerX: 360,
+  centerY: 390,
+  radiusX: 270,
+  radiusY: 330,
   startAngle: -90,
 };
 
@@ -20,12 +30,41 @@ function randomInt(min, max, random = Math.random) {
   return min + Math.floor(random() * (max - min + 1));
 }
 
+function getLayoutForPlayerCount(count) {
+  if (count >= 8) {
+    return DENSE_BOARD_LAYOUT;
+  }
+  return BOARD_LAYOUT;
+}
+
+function resolveNamePosition(x, y, layout, isDense) {
+  if (isDense && y > layout.centerY - 40) {
+    if (x < layout.centerX - 72) {
+      return 'lower-left';
+    }
+    if (x > layout.centerX + 72) {
+      return 'lower-right';
+    }
+    return 'lower-center';
+  }
+
+  if (x < 150) {
+    return 'right';
+  }
+  if (x > 570) {
+    return 'left';
+  }
+  return 'center';
+}
+
 function buildBoardPlayers(players, emoteMap = {}, visibleScoreIdSet = new Set()) {
   const list = players || [];
   if (!list.length) {
     return [];
   }
 
+  const layout = getLayoutForPlayerCount(list.length);
+  const isDense = list.length >= 8;
   const step = 360 / list.length;
   const maxScore = Math.max(
     ...list.map((player) => {
@@ -36,14 +75,10 @@ function buildBoardPlayers(players, emoteMap = {}, visibleScoreIdSet = new Set()
   );
 
   return list.map((player, index) => {
-    const x = BOARD_LAYOUT.centerX + BOARD_LAYOUT.radius * Math.cos(((BOARD_LAYOUT.startAngle + step * index) * Math.PI) / 180);
-    const y = BOARD_LAYOUT.centerY + BOARD_LAYOUT.radius * Math.sin(((BOARD_LAYOUT.startAngle + step * index) * Math.PI) / 180);
-    let namePos = 'center';
-    if (x < 150) {
-      namePos = 'right';
-    } else if (x > 570) {
-      namePos = 'left';
-    }
+    const angle = ((layout.startAngle + step * index) * Math.PI) / 180;
+    const x = layout.centerX + layout.radiusX * Math.cos(angle);
+    const y = layout.centerY + layout.radiusY * Math.sin(angle);
+    const namePos = resolveNamePosition(x, y, layout, isDense);
     const showScore = !!player.isSelf || visibleScoreIdSet.has(player.id);
     const safeScore = Number(player.score) || 0;
     return {

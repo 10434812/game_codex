@@ -40,9 +40,9 @@
 
 .board {
   position: relative;
-  margin: 2rpx auto 0;
+  margin: 0 auto;
   width: 720rpx;
-  height: 820rpx;
+  height: 900rpx;
 }
 
 .link-layer {
@@ -124,6 +124,19 @@
   z-index: 6;
 }
 
+.player-name-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.player-label-anchor {
+  position: absolute;
+  width: 126rpx;
+  transform: translateX(-50%);
+}
+
 .avatar-shell {
   width: 120rpx;
   height: 120rpx;
@@ -193,18 +206,22 @@
   top: 128rpx;
   left: 50%;
   transform: translateX(-50%);
-  min-width: 132rpx;
-  height: 40rpx;
+  min-width: 142rpx;
+  max-width: 218rpx;
+  height: 42rpx;
   border-radius: 999rpx;
   background: #b38643;
   color: #fff4dc;
   font-weight: 700;
-  font-size: 22rpx;
-  line-height: 40rpx;
+  font-size: 23rpx;
+  line-height: 42rpx;
   text-align: center;
-  padding: 0 14rpx;
+  padding: 0 18rpx;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: 0 4rpx 10rpx rgba(132, 89, 30, 0.2);
+  box-sizing: border-box;
 }
 
 .node-name.name-left {
@@ -216,6 +233,42 @@
 .node-name.name-right {
   left: 0;
   transform: none;
+}
+
+.node-name.name-upper-center {
+  top: -46rpx;
+}
+
+.node-name.name-upper-left {
+  top: -42rpx;
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.node-name.name-upper-right {
+  top: -42rpx;
+  left: 0;
+  transform: none;
+}
+
+.node-name.name-lower-center {
+  top: 130rpx;
+}
+
+.node-name.name-lower-left {
+  top: 124rpx;
+  left: auto;
+  right: -10rpx;
+  transform: none;
+  max-width: 188rpx;
+}
+
+.node-name.name-lower-right {
+  top: 124rpx;
+  left: -10rpx;
+  transform: none;
+  max-width: 188rpx;
 }
 
 .self-node-name {

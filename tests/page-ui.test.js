@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const storage = new Map();
 
@@ -165,4 +167,13 @@ test('room 页面在没有结算结果时点击历史 Tab 不会误跳转', () =
 
   assert.equal(calls.redirectTo.length, 0);
   assert.equal(calls.showToast.length, 1);
+});
+
+test('arena 页面把玩家名字渲染在头像之后的独立层，避免被头像遮挡', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
+  const playerNodeIndex = wxml.indexOf('class="player-node');
+  const nameLayerIndex = wxml.indexOf('class="player-name-layer"');
+
+  assert.ok(playerNodeIndex >= 0);
+  assert.ok(nameLayerIndex > playerNodeIndex);
 });

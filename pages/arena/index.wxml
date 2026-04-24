@@ -52,7 +52,12 @@
         </view>
         <view class="emote-bubble" wx:if="{{ item.emoteText }}">{{ item.emoteText }}</view>
         <view class="self-tag" wx:if="{{ item.isSelf }}">我</view>
-        <view class="node-name name-{{ item.namePos || 'center' }} {{ item.isSelf ? 'self-node-name' : '' }}">{{ item.scoreLabel }}</view>
+      </view>
+
+      <view class="player-name-layer">
+        <view class="player-label-anchor" wx:for="{{ players }}" wx:key="id" style="left: {{ item.x }}rpx; top: {{ item.y }}rpx;">
+          <view class="node-name name-{{ item.namePos || 'center' }} {{ item.isSelf ? 'self-node-name' : '' }}">{{ item.scoreLabel }}</view>
+        </view>
       </view>
     </view>
 
