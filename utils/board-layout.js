@@ -2,16 +2,16 @@ const {formatScore} = require('./game-engine');
 
 const BOARD_LAYOUT = {
   centerX: 360,
-  centerY: 370,
-  radius: 270,
+  centerY: 320,
+  radius: 235,
   startAngle: -90,
 };
 
 const BAG_SPAWN_BOUNDS = {
   minX: 120,
   maxX: 600,
-  minY: 170,
-  maxY: 610,
+  minY: 150,
+  maxY: 540,
 };
 
 const BAG_SAFE_RADIUS = 152;

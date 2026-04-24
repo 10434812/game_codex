@@ -17,6 +17,7 @@ global.wx = {
 
 const store = require('../utils/game-store');
 const shopStore = require('../utils/shop-store');
+const playerStats = require('../utils/player-stats');
 
 function createRandom(...values) {
   let index = 0;
@@ -30,6 +31,7 @@ function createRandom(...values) {
 test.beforeEach(() => {
   storage.clear();
   shopStore.__resetForTests();
+  playerStats.__resetForTests();
   store.__resetForTests();
 });
 
@@ -82,13 +84,17 @@ test('finishGame 会把金币收益写入商城余额', () => {
 
   const self = store.getState().players.find((player) => player.isSelf);
   const beforeCoins = shopStore.getStoreState().coins;
+  const beforeSummary = playerStats.getSummary();
   store.applyPlayerScoreDelta(self.id, 100, {scoreType: 'investment'});
   const finished = store.finishGame();
   const afterCoins = shopStore.getStoreState().coins;
+  const afterSummary = playerStats.getSummary();
 
   assert.equal(finished.result.gain, 100);
   assert.equal(finished.result.coins, 300);
   assert.equal(afterCoins - beforeCoins, 300);
+  assert.equal(afterSummary.totalIncome - beforeSummary.totalIncome, 300);
+  assert.equal(afterSummary.totalExp - beforeSummary.totalExp, 100);
 });
 
 test('finishGame 会聚合真实 scoreLog 到结算明细', () => {

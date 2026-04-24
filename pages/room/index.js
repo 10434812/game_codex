@@ -120,10 +120,10 @@ Page({
     const state = gameStore.inviteHumanPlayer();
     if (state.players.length > before.players.length) {
       playCue('inviteSuccess', {volume: 0.8});
-      wx.showToast({title: '邀请成功', icon: 'none'});
+      wx.showToast({title: '邀请已发送', icon: 'none'});
     } else {
       playCue('actionFail', {volume: 0.7});
-      wx.showToast({title: '房间已满', icon: 'none'});
+      wx.showToast({title: '房间人数已满', icon: 'none'});
     }
     this.observeState(state);
   },
@@ -141,7 +141,7 @@ Page({
     }
     if (!this.data.selfReady) {
       playCue('actionFail', {volume: 0.7});
-      wx.showToast({title: '请先点击准备', icon: 'none'});
+      wx.showToast({title: '请先完成准备', icon: 'none'});
       return;
     }
     playCue('tap', {volume: 0.75});
@@ -202,10 +202,17 @@ Page({
     if (!page || page === '/pages/room/index') {
       return;
     }
+    if (page === '/pages/result/index') {
+      const snapshot = gameStore.getState();
+      if (snapshot.status !== 'finished' || !snapshot.result) {
+        wx.showToast({title: '暂无历史结算', icon: 'none'});
+        return;
+      }
+    }
     if (page === '/pages/arena/index') {
       const snapshot = gameStore.getState();
       if (snapshot.status !== 'playing') {
-        wx.showToast({title: '请先开始游戏', icon: 'none'});
+        wx.showToast({title: '请先开启对局', icon: 'none'});
         return;
       }
     }

@@ -14,17 +14,16 @@
 .hero-title {
   margin-top: 4rpx;
   color: #d4373f;
-  font-size: 100rpx;
-  font-weight: 400;
+  font-size: 72rpx;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: 0;
-  font-family: "STXinwei", "STXingkai", "Kaiti SC", "KaiTi", "DFKai-SB", cursive;
   text-shadow: 0 2rpx 0 rgba(182, 40, 44, 0.15);
 }
 
 .subtitle {
   margin-top: 18rpx;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #443a33;
   line-height: 1.45;
   font-weight: 600;
@@ -47,7 +46,7 @@
 
 .name {
   margin: 10rpx 0;
-  font-size: 54rpx;
+  font-size: 48rpx;
   font-weight: 800;
   color: #3a281a;
 }
@@ -66,30 +65,70 @@
 .stat-row {
   margin-top: 20rpx;
   display: flex;
+  gap: 10rpx;
 }
 
 .stat {
-  width: 50%;
+  width: calc(50% - 5rpx);
+}
+
+.stat.single {
+  width: 100%;
+}
+
+.stat.clickable {
+  padding: 8rpx 10rpx 10rpx;
+  border-radius: 16rpx;
+  background: rgba(255, 246, 228, 0.65);
 }
 
 .label {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #9c7a4f;
 }
 
 .value {
   margin-top: 8rpx;
   display: block;
-  font-size: 52rpx;
+  font-size: 56rpx;
   font-weight: 800;
-}
-
-.pink {
-  color: #c54543;
+  line-height: 1.05;
 }
 
 .gold {
   color: #a17a2b;
+}
+
+.jump-hint {
+  display: block;
+  margin-top: 6rpx;
+  color: #9f7d56;
+  font-size: 22rpx;
+}
+
+.exp-progress {
+  margin-top: 16rpx;
+}
+
+.exp-track {
+  width: 100%;
+  height: 16rpx;
+  border-radius: 999rpx;
+  padding: 2rpx;
+  box-sizing: border-box;
+  background: rgba(214, 186, 138, 0.42);
+}
+
+.exp-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e95c4f, #c92b2b);
+}
+
+.exp-text {
+  margin-top: 8rpx;
+  color: #8d6b43;
+  font-size: 24rpx;
 }
 
 .section-head {

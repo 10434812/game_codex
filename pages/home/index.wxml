@@ -23,19 +23,22 @@
 
     <view class="card profile-card">
       <view>
-        <view class="minor">当前状态</view>
+        <view class="minor">当前等级</view>
         <view class="name">登峰造极</view>
-        <view class="minor">LV.24 持续旅行者</view>
+        <view class="minor">{{levelText}} 持续旅行者</view>
       </view>
       <view class="badge">高级</view>
-      <view class="stat-row">
-        <view class="stat">
-          <text class="label">累计收益</text>
-          <text class="value pink">128,490</text>
+      <view class="exp-progress">
+        <view class="exp-track">
+          <view class="exp-fill" style="width: {{progressPercent}}%;"></view>
         </view>
-        <view class="stat">
-          <text class="label">幸运金币</text>
-          <text class="value gold">{{coinText}}</text>
+        <view class="exp-text">经验进度 {{progressText}}</view>
+      </view>
+      <view class="stat-row">
+        <view class="stat single clickable" bindtap="onTapIncome">
+          <text class="label">统一资金账户</text>
+          <text class="value gold">{{balanceText}}</text>
+          <text class="jump-hint">查看资金明细 ></text>
         </view>
       </view>
     </view>

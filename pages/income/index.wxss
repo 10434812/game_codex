@@ -1,0 +1,107 @@
+.income-page {
+  min-height: 100vh;
+  padding: 12rpx 24rpx 28rpx;
+  box-sizing: border-box;
+}
+
+.summary-card {
+  margin-top: 12rpx;
+  padding: 28rpx;
+  border-radius: 30rpx;
+}
+
+.summary-main {
+  color: #be3f33;
+  font-size: 56rpx;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.summary-sub {
+  margin-top: 8rpx;
+  color: #8d6b43;
+  font-size: 24rpx;
+}
+
+.summary-meta {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #6d4a29;
+  font-size: 24rpx;
+}
+
+.exp-track {
+  margin-top: 10rpx;
+  width: 100%;
+  height: 16rpx;
+  border-radius: 999rpx;
+  background: rgba(212, 181, 132, 0.38);
+  padding: 2rpx;
+  box-sizing: border-box;
+}
+
+.exp-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e95c4f, #c92b2b);
+}
+
+.exp-text {
+  margin-top: 8rpx;
+  color: #8f6d45;
+  font-size: 24rpx;
+}
+
+.list-head {
+  margin-top: 22rpx;
+  color: #6d4a29;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.record-list {
+  margin-top: 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.record-item {
+  border-radius: 22rpx;
+  padding: 20rpx;
+  background: rgba(255, 251, 241, 0.92);
+  border: 2rpx solid rgba(220, 194, 150, 0.66);
+}
+
+.record-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14rpx;
+  color: #5d3b22;
+  font-size: 30rpx;
+  line-height: 1.4;
+}
+
+.record-row.sub {
+  margin-top: 6rpx;
+  color: #8a6b46;
+  font-size: 24rpx;
+}
+
+.record-stage {
+  font-weight: 700;
+}
+
+.record-income {
+  color: #c44438;
+  font-weight: 800;
+}
+
+.empty-state {
+  margin-top: 40rpx;
+  text-align: center;
+  color: #92724b;
+  font-size: 24rpx;
+}

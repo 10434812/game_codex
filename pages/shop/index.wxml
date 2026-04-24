@@ -18,12 +18,11 @@
   <view class="page-content">
     <view class="asset-card">
       <view class="asset-header">
-        <text class="asset-label">当前幸运金币</text>
-        <text class="asset-tip">购买后可在对局页展示特效</text>
+        <text class="asset-label">当前账户余额</text>
+        <text class="asset-tip">购买后可在对局页展示效果</text>
       </view>
       <view class="asset-body">
-        <text class="asset-value">{{ coins }}</text>
-        <text class="asset-currency">枚</text>
+        <text class="asset-value">{{ balanceText }}</text>
       </view>
     </view>
 
@@ -45,8 +44,7 @@
         <view class="goods-head">
           <view class="goods-badge">{{ item.category == 'skin' ? item.rarityLabel : '灵宠' }}</view>
           <view class="goods-price">
-            <text class="price-num">{{ item.price == 0 ? '免费' : item.price }}</text>
-            <text class="price-unit" wx:if="{{item.price != 0}}">金</text>
+            <text class="price-num">{{ item.priceText }}</text>
           </view>
         </view>
         

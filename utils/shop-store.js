@@ -6,7 +6,9 @@ const DEFAULT_STATE = {
   ownedPets: [],
   equippedSkinId: 'skin-default',
   equippedPetId: '',
+  records: [],
 };
+const MAX_RECORDS = 120;
 
 const SKIN_RARITY_META = {
   base: {rank: 0, label: '基础'},
@@ -438,6 +440,34 @@ function normalizeArray(list) {
   return Array.from(new Set(list.map((item) => String(item || '').trim()).filter(Boolean)));
 }
 
+function normalizeRecords(list) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+  return list
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+      const amount = Math.floor(Number(item.amount) || 0);
+      const balanceAfter = Math.max(0, Math.floor(Number(item.balanceAfter) || 0));
+      const title = String(item.title || '').trim();
+      if (!title) {
+        return null;
+      }
+      return {
+        id: String(item.id || `ledger-${index}`),
+        type: String(item.type || 'unknown'),
+        title,
+        amount,
+        balanceAfter,
+        createdAt: Number(item.createdAt) || Date.now(),
+      };
+    })
+    .filter(Boolean)
+    .slice(0, MAX_RECORDS);
+}
+
 function getSkinById(id) {
   return GOODS.skin.find((item) => item.id === id) || null;
 }
@@ -454,6 +484,7 @@ function normalizeState(raw) {
   next.coins = Number.isFinite(Number(next.coins)) ? Math.max(0, Number(next.coins)) : DEFAULT_STATE.coins;
   next.ownedSkins = normalizeArray(next.ownedSkins);
   next.ownedPets = normalizeArray(next.ownedPets);
+  next.records = normalizeRecords(next.records);
   if (!next.ownedSkins.includes('skin-default')) {
     next.ownedSkins.unshift('skin-default');
   }
@@ -485,6 +516,26 @@ function saveState(state) {
 
 function getStoreState() {
   return clone(loadState());
+}
+
+function buildLedgerRecord({type, title, amount, balanceAfter}) {
+  return {
+    id: `ledger-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+    type: String(type || 'unknown'),
+    title: String(title || '资金变动'),
+    amount: Math.floor(Number(amount) || 0),
+    balanceAfter: Math.max(0, Math.floor(Number(balanceAfter) || 0)),
+    createdAt: Date.now(),
+  };
+}
+
+function appendLedger(state, payload) {
+  const current = normalizeState(state);
+  const record = buildLedgerRecord(payload);
+  return {
+    ...current,
+    records: [record, ...current.records].slice(0, MAX_RECORDS),
+  };
 }
 
 function getCatalog() {
@@ -553,20 +604,26 @@ function purchaseItem(category, itemId) {
     return {
       ok: false,
       code: 'INSUFFICIENT_COINS',
-      message: '幸运金币不足',
+      message: '账户余额不足',
       state: clone(state),
     };
   }
 
-  const nextState = saveState({
+  const nextCoins = state.coins - item.price;
+  const nextState = saveState(appendLedger({
     ...state,
-    coins: state.coins - item.price,
+    coins: nextCoins,
     [ownedKey]: [...state[ownedKey], itemId],
-  });
+  }, {
+    type: 'purchase',
+    title: `购买${item.name}`,
+    amount: -item.price,
+    balanceAfter: nextCoins,
+  }));
   return {
     ok: true,
     code: 'PURCHASED',
-    message: '购买成功',
+    message: '购买成功，已入库',
     item: clone(item),
     state: clone(nextState),
   };
@@ -582,7 +639,7 @@ function equipItem(category, itemId) {
       ...state,
       equippedPetId: itemId,
     });
-    return {ok: true, code: 'EQUIPPED', message: '宠物已装备', state: clone(nextState)};
+    return {ok: true, code: 'EQUIPPED', message: '宠物已启用', state: clone(nextState)};
   }
 
   if (!state.ownedSkins.includes(itemId)) {
@@ -592,7 +649,7 @@ function equipItem(category, itemId) {
     ...state,
     equippedSkinId: itemId,
   });
-  return {ok: true, code: 'EQUIPPED', message: '皮肤已装备', state: clone(nextState)};
+  return {ok: true, code: 'EQUIPPED', message: '皮肤已启用', state: clone(nextState)};
 }
 
 function getEquippedDisplay() {
@@ -610,17 +667,57 @@ function getEquippedDisplay() {
   };
 }
 
-function addCoins(amount) {
-  const delta = Math.floor(Number(amount) || 0);
-  if (delta <= 0) {
-    return clone(loadState());
-  }
-  const state = loadState();
-  const nextState = saveState({
-    ...state,
-    coins: state.coins + delta,
+function addCoins(amount, meta = {}) {
+  const result = applyCoinsDelta(amount, {
+    type: meta.type || 'game_reward',
+    title: meta.title || '对局结算奖励',
   });
-  return clone(nextState);
+  return clone(result.state || loadState());
+}
+
+function applyCoinsDelta(amount, meta = {}) {
+  const delta = Math.floor(Number(amount) || 0);
+  const state = loadState();
+  if (!delta) {
+    return {
+      ok: false,
+      code: 'NO_CHANGE',
+      message: '资金未变化',
+      state: clone(state),
+    };
+  }
+
+  const nextCoins = state.coins + delta;
+  if (nextCoins < 0) {
+    return {
+      ok: false,
+      code: 'INSUFFICIENT_COINS',
+      message: '账户余额不足',
+      state: clone(state),
+    };
+  }
+
+  const nextState = saveState(appendLedger({
+    ...state,
+    coins: nextCoins,
+  }, {
+    type: meta.type || (delta > 0 ? 'income' : 'expense'),
+    title: meta.title || (delta > 0 ? '资金入账' : '资金支出'),
+    amount: delta,
+    balanceAfter: nextCoins,
+  }));
+
+  return {
+    ok: true,
+    code: 'UPDATED',
+    message: delta > 0 ? '已入账' : '已扣款',
+    delta,
+    state: clone(nextState),
+  };
+}
+
+function getCoinRecords() {
+  return clone(loadState().records);
 }
 
 function __resetForTests() {
@@ -634,8 +731,10 @@ module.exports = {
   getCatalog,
   getGoodsByCategory,
   getStoreState,
+  getCoinRecords,
   buildGoodsView,
   addCoins,
+  applyCoinsDelta,
   purchaseItem,
   equipItem,
   getEquippedDisplay,

@@ -51,12 +51,12 @@ Page({
   },
   onSaveProfile() {
     if (!this.data.canSave) {
-      wx.showToast({title: '请先选择头像并填写昵称', icon: 'none'});
+      wx.showToast({title: '请先完善头像和昵称', icon: 'none'});
       return;
     }
     const profile = updateProfile(this.data.draft);
     this.setData({draft: profile, canSave: hasValidProfile(profile)});
-    wx.showToast({title: '资料已更新', icon: 'none'});
+    wx.showToast({title: '资料保存成功', icon: 'none'});
     setTimeout(() => {
       wx.navigateBack({delta: 1});
     }, 300);

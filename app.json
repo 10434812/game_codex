@@ -5,7 +5,8 @@
     "pages/room/index",
     "pages/result/index",
     "pages/profile/index",
-    "pages/shop/index"
+    "pages/shop/index",
+    "pages/income/index"
   ],
   "window": {
     "navigationStyle": "custom",

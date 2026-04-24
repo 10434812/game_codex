@@ -8,30 +8,30 @@
 }
 
 .timer {
-  width: 380rpx;
-  margin: 16rpx auto 18rpx;
-  height: 286rpx;
+  width: 372rpx;
+  margin: 12rpx auto 8rpx;
+  height: 240rpx;
   box-sizing: border-box;
   border-radius: 78rpx;
   text-align: center;
-  padding: 28rpx 20rpx 24rpx;
+  padding: 20rpx 20rpx 18rpx;
   background: linear-gradient(180deg, #d9bc86 0%, #cba56b 100%);
   border: 4rpx solid #b48d54;
   box-shadow: 0 16rpx 32rpx rgba(118, 84, 38, 0.2);
 }
 
 .time {
-  font-size: 116rpx;
+  font-size: 102rpx;
   line-height: 1;
   font-weight: 900;
   color: #4a2f17;
 }
 
 .hint {
-  margin-top: 8rpx;
-  height: 84rpx;
-  font-size: 32rpx;
-  line-height: 42rpx;
+  margin-top: 6rpx;
+  height: 72rpx;
+  font-size: 30rpx;
+  line-height: 36rpx;
   font-weight: 700;
   color: #6c4a23;
   overflow: hidden;
@@ -40,9 +40,9 @@
 
 .board {
   position: relative;
-  margin: 8rpx auto 0;
+  margin: 2rpx auto 0;
   width: 720rpx;
-  height: 960rpx;
+  height: 820rpx;
 }
 
 .link-layer {
@@ -172,7 +172,7 @@
   top: -56rpx;
   left: 50%;
   transform: translateX(-50%);
-  max-width: 184rpx;
+  max-width: 228rpx;
   min-height: 40rpx;
   padding: 6rpx 14rpx;
   border-radius: 20rpx;
@@ -183,9 +183,8 @@
   line-height: 28rpx;
   text-align: center;
   box-shadow: 0 6rpx 14rpx rgba(124, 92, 50, 0.22);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
   z-index: 7;
 }
 
@@ -387,7 +386,7 @@
 .quick-emote {
   position: fixed;
   right: 24rpx;
-  bottom: 218rpx;
+  bottom: 382rpx;
   width: 88rpx;
   height: 88rpx;
   border-radius: 10rpx;
@@ -404,7 +403,7 @@
 .shop-entry {
   position: fixed;
   left: 24rpx;
-  bottom: 218rpx;
+  bottom: 382rpx;
   min-width: 116rpx;
   height: 88rpx;
   padding: 0 18rpx;
@@ -429,7 +428,7 @@
 .quick-emote-panel {
   position: fixed;
   right: 24rpx;
-  bottom: 320rpx;
+  bottom: 484rpx;
   width: 180rpx;
   padding: 12rpx 10rpx;
   border-radius: 16rpx;
@@ -449,6 +448,111 @@
   font-weight: 700;
   line-height: 54rpx;
   text-align: center;
+}
+
+.message-reply-card {
+  position: fixed;
+  left: 22rpx;
+  right: 22rpx;
+  bottom: 176rpx;
+  border-radius: 20rpx;
+  padding: 10rpx 14rpx 10rpx;
+  background: rgba(255, 248, 232, 0.95);
+  border: 2rpx solid rgba(205, 171, 114, 0.58);
+  box-shadow: 0 10rpx 20rpx rgba(123, 87, 41, 0.16);
+  z-index: 9;
+}
+
+.message-reply-card.collapsed {
+  padding-top: 8rpx;
+}
+
+.message-reply-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38rpx;
+}
+
+.message-reply-title {
+  color: #734b25;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.message-reply-toggle {
+  min-width: 80rpx;
+  height: 34rpx;
+  padding: 0 12rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid rgba(198, 163, 110, 0.66);
+  background: rgba(236, 216, 180, 0.76);
+  color: #7e5630;
+  font-size: 20rpx;
+  line-height: 30rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.message-reply-list {
+  margin-top: 6rpx;
+  height: 74rpx;
+}
+
+.message-empty {
+  color: #9b7a53;
+  font-size: 22rpx;
+  line-height: 36rpx;
+}
+
+.message-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 4rpx;
+  margin-bottom: 6rpx;
+  color: #603c21;
+  font-size: 22rpx;
+  line-height: 1.35;
+}
+
+.message-item.self {
+  color: #b03a35;
+}
+
+.message-name {
+  font-weight: 700;
+}
+
+.message-text {
+  flex: 1;
+  word-break: break-all;
+  white-space: normal;
+}
+
+.quick-reply-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 6rpx;
+}
+
+.message-reply-card.collapsed .quick-reply-row {
+  margin-top: 8rpx;
+}
+
+.quick-reply-chip {
+  min-width: 88rpx;
+  height: 44rpx;
+  padding: 0 12rpx;
+  border-radius: 999rpx;
+  background: rgba(233, 210, 171, 0.86);
+  color: #734b25;
+  font-size: 22rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 @keyframes invitePulse {

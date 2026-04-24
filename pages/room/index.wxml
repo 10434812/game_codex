@@ -19,7 +19,7 @@
     <view class="big-title">{{stageName}}</view>
     <view class="tags">
       <text class="tag">房间 #{{roomId}}</text>
-      <text class="tag">经典模式</text>
+      <text class="tag">{{modeText}}</text>
     </view>
 
     <view class="slot-grid">

@@ -8,7 +8,7 @@
     </view>
     <view class="app-header-right">
       <view class="app-status-pill">
-        <text class="app-status-text">个人信息</text>
+        <text class="app-status-text">个人资料</text>
       </view>
       <view class="app-gear">⚙</view>
     </view>

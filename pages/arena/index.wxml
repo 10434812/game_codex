@@ -71,7 +71,7 @@
       </view>
     </view>
 
-    <view class="quick-emote-panel" wx:if="{{ emotePanelVisible }}">
+    <view class="quick-emote-panel" wx:if="{{ emotePanelVisible }}" style="bottom: {{ messageCardCollapsed ? 388 : 484 }}rpx;">
       <view
         class="quick-emote-item"
         wx:for="{{ quickEmotes }}"
@@ -83,12 +83,37 @@
       </view>
     </view>
 
-    <view class="shop-entry" bindtap="onTapShop">
+    <view class="message-reply-card {{ messageCardCollapsed ? 'collapsed' : '' }}">
+      <view class="message-reply-head" bindtap="onToggleMessageCard">
+        <view class="message-reply-title">消息回复</view>
+        <view class="message-reply-toggle">{{ messageCardCollapsed ? '展开' : '收起' }}</view>
+      </view>
+      <scroll-view wx:if="{{ !messageCardCollapsed }}" class="message-reply-list" scroll-y="{{true}}">
+        <view wx:if="{{!chatMessages.length}}" class="message-empty">点击右侧按钮发送快捷回复</view>
+        <view wx:for="{{ chatMessages }}" wx:key="id" class="message-item {{ item.isSelf ? 'self' : '' }}">
+          <text class="message-name">{{item.sender}}：</text>
+          <text class="message-text">{{item.text}}</text>
+        </view>
+      </scroll-view>
+      <view class="quick-reply-row">
+        <view
+          class="quick-reply-chip"
+          wx:for="{{quickReplyOptions}}"
+          wx:key="key"
+          data-key="{{ item.key }}"
+          bindtap="onSendQuickEmote"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+
+    <view class="shop-entry" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onTapShop">
       <text class="shop-entry-icon">✦</text>
       <text>商城</text>
     </view>
 
-    <view class="quick-emote" bindtap="onToggleEmotePanel">☺</view>
+    <view class="quick-emote" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onToggleEmotePanel">☺</view>
   </view>
 
   <view class="bottom-nav">

@@ -2,8 +2,11 @@ const {getNavLayout} = require('../../utils/nav');
 const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, STAGES} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
+const playerStats = require('../../utils/player-stats');
 const {playCue} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
+const {buildExpProgress} = require('../../utils/progression');
+const {formatCurrency} = require('../../utils/format');
 
 Page({
   data: {
@@ -17,7 +20,10 @@ Page({
     activeTab: 'explore',
     activeStage: 0,
     stages: STAGES,
-    coinText: '0',
+    balanceText: '¥0',
+    levelText: 'Lv.1',
+    progressText: '0 / 120',
+    progressPercent: 0,
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
   },
@@ -28,13 +34,21 @@ Page({
   },
   onShow() {
     this.syncUserProfile();
-    this.syncCoins();
+    this.syncOverview();
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
     const page = e.currentTarget.dataset.page;
     if (!page || page === '/pages/home/index') {
       return;
+    }
+
+    if (page === '/pages/result/index') {
+      const snapshot = gameStore.getState();
+      if (snapshot.status !== 'finished' || !snapshot.result) {
+        wx.showToast({title: '暂无历史结算', icon: 'none'});
+        return;
+      }
     }
 
     const stage = this.data.stages[this.data.activeStage] || DEFAULT_STAGE;
@@ -70,13 +84,22 @@ Page({
       userAuthorized: hasValidProfile(cached),
     });
   },
-  syncCoins() {
-    const state = shopStore.getStoreState();
+  syncOverview() {
+    const shopState = shopStore.getStoreState();
+    const summary = playerStats.getSummary();
+    const progress = buildExpProgress(summary.totalExp);
     this.setData({
-      coinText: Number(state.coins || 0).toLocaleString('en-US'),
+      balanceText: formatCurrency(shopState.coins),
+      levelText: `Lv.${progress.level}`,
+      progressText: `${progress.current} / ${progress.required}`,
+      progressPercent: progress.percent,
     });
   },
   onTapProfile() {
     wx.navigateTo({url: '/pages/profile/index'});
+  },
+  onTapIncome() {
+    playCue('tap', {volume: 0.75});
+    wx.navigateTo({url: '/pages/income/index'});
   },
 });

@@ -47,8 +47,18 @@
     <view class="meta-row">
       <view class="card meta-card">
         <view class="meta-title">本局收益</view>
-        <view class="meta-line gain">+{{gainText}} <text class="meta-label">经验值</text></view>
-        <view class="meta-line coin">{{coinText}}</view>
+        <view class="income-main">{{incomeText}}</view>
+        <view class="income-sub">已完成入账</view>
+        <view class="exp-module">
+          <view class="exp-head">
+            <text>经验进度 Lv.{{expProgress.level}}</text>
+            <text>+{{gainText}} EXP</text>
+          </view>
+          <view class="exp-track">
+            <view class="exp-fill" style="width: {{expProgress.percent}}%;"></view>
+          </view>
+          <view class="exp-foot">{{expProgress.current}} / {{expProgress.required}} · 距下一级 {{expProgress.left}}</view>
+        </view>
       </view>
       <view class="card meta-card">
         <view class="meta-title tag">新成就</view>

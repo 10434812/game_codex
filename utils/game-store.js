@@ -8,6 +8,7 @@ const {
 } = require('./constants');
 const engine = require('./game-engine');
 const shopStore = require('./shop-store');
+const playerStats = require('./player-stats');
 
 let state = createEmptyState();
 const listeners = new Set();
@@ -273,8 +274,20 @@ function finishGame() {
   stopTimer();
   const result = buildFinishedResult(state);
   if (result.coins > 0) {
-    shopStore.addCoins(result.coins);
+    shopStore.addCoins(result.coins, {
+      type: 'game_reward',
+      title: `对局结算·${state.stage && state.stage.name ? state.stage.name : '未知场景'}`,
+    });
   }
+  playerStats.recordSettlement({
+    resultId: result.resultId,
+    stageName: state.stage && state.stage.name ? state.stage.name : '',
+    achievement: result.achievement,
+    income: result.coins,
+    exp: result.gain,
+    modeText: state.modeText || MATCH_MODE_TEXT,
+    createdAt: Date.now(),
+  });
   state = {
     ...state,
     status: 'finished',

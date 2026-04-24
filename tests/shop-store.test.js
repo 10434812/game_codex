@@ -30,6 +30,7 @@ test('getStoreState 会返回默认商城状态', () => {
   assert.deepEqual(state.ownedPets, []);
   assert.equal(state.equippedSkinId, 'skin-default');
   assert.equal(state.equippedPetId, '');
+  assert.deepEqual(state.records, []);
 });
 
 test('purchaseItem 会扣除金币并加入已拥有皮肤', () => {
@@ -93,4 +94,17 @@ test('addCoins 会累加金币余额', () => {
 
   assert.equal(next.coins, before.coins + 560);
   assert.equal(shopStore.getStoreState().coins, before.coins + 560);
+});
+
+test('applyCoinsDelta 会记录统一资金流水', () => {
+  const buyResult = shopStore.applyCoinsDelta(-300, {type: 'trade_buy', title: '买入测试机会'});
+  const sellResult = shopStore.applyCoinsDelta(520, {type: 'trade_sell', title: '卖出测试机会'});
+  const state = shopStore.getStoreState();
+
+  assert.equal(buyResult.ok, true);
+  assert.equal(sellResult.ok, true);
+  assert.equal(state.coins, 9040);
+  assert.equal(state.records.length, 2);
+  assert.equal(state.records[0].type, 'trade_sell');
+  assert.equal(state.records[1].type, 'trade_buy');
 });

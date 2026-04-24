@@ -46,6 +46,9 @@ Page({
     successToast: null,
     emotePanelVisible: false,
     quickEmotes: QUICK_EMOTES,
+    quickReplyOptions: QUICK_EMOTES.slice(0, 3),
+    chatMessages: [],
+    messageCardCollapsed: true,
     fortuneBag: null,
     activeOpportunity: null,
     activePosition: null,
@@ -242,6 +245,12 @@ Page({
     playCue('tap', {volume: 0.72});
     this.setData({emotePanelVisible: !this.data.emotePanelVisible});
   },
+  onToggleMessageCard() {
+    playCue('tap', {volume: 0.72});
+    this.setData({
+      messageCardCollapsed: !this.data.messageCardCollapsed,
+    });
+  },
   onSendQuickEmote(e) {
     const key = e.currentTarget.dataset.key;
     const option = (this.data.quickEmotes || []).find((item) => item.key === key);
@@ -256,7 +265,7 @@ Page({
     this.setPlayerEmote(selfPlayer.id, option.text);
     this.setData({
       emotePanelVisible: false,
-      actionHintText: `你发送了互动：${option.label}`,
+      actionHintText: `你发送了消息：${option.label}`,
     });
   },
   setPlayerEmote(playerId, text) {
@@ -264,6 +273,9 @@ Page({
       return;
     }
     this.emoteMap[playerId] = text || '';
+    if (this.emoteMap[playerId]) {
+      this.appendChatMessage(playerId, this.emoteMap[playerId]);
+    }
     const players = (this.data.players || []).map((player) =>
       player.id === playerId ? {...player, emoteText: this.emoteMap[playerId]} : player
     );
@@ -279,6 +291,25 @@ Page({
       );
       this.setData({players: nextPlayers});
     }, 2200);
+  },
+  appendChatMessage(playerId, text) {
+    const content = String(text || '').trim();
+    if (!content) {
+      return;
+    }
+    const players = this.data.players || [];
+    const sender = players.find((player) => player.id === playerId);
+    const senderName = sender ? (sender.isSelf ? '我' : sender.name) : '队友';
+    const nextMessage = {
+      id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      sender: senderName,
+      text: content,
+      isSelf: !!(sender && sender.isSelf),
+    };
+    const current = Array.isArray(this.data.chatMessages) ? this.data.chatMessages : [];
+    this.setData({
+      chatMessages: [...current, nextMessage].slice(-8),
+    });
   },
   scheduleRemoteEmote() {
     this.clearRemoteEmoteTimer();
@@ -330,7 +361,7 @@ Page({
     }
     if (targetPlayer.showScore) {
       playCue('actionFail', {volume: 0.72});
-      this.setData({actionHintText: '该玩家分数已暴露，不能发起组队'});
+      this.setData({actionHintText: '该玩家已公开分数，暂不可发起组队'});
       return;
     }
 
@@ -347,10 +378,10 @@ Page({
       const nextTargetId = targetPlayer.id;
       const nextTargetName = targetPlayer.name;
       wx.showModal({
-        title: '切换组队',
-        content: `当前已与${currentMateName}组队，是否先解除并向${nextTargetName}发起邀请？`,
-        confirmText: '确认切换',
-        cancelText: '取消',
+        title: '组队调整',
+        content: `当前已与${currentMateName}组队，是否解除后向${nextTargetName}发起邀请？`,
+        confirmText: '继续',
+        cancelText: '暂不',
         success: (res) => {
           if (!res.confirm) {
             return;
@@ -374,7 +405,7 @@ Page({
         title: '解除组队',
         content: `确定解除与${targetPlayer.name}的组队吗？`,
         confirmText: '解除',
-        cancelText: '取消',
+        cancelText: '保留',
         success: (res) => {
           if (!res.confirm) {
             return;
@@ -402,7 +433,7 @@ Page({
     }
     playCue('remoteDissolve', {volume: 0.68});
     this.setData({
-      actionHintText: `已解除与 ${mateName || '队友'} 的组队`,
+      actionHintText: `已解除与${mateName || '队友'}的组队关系`,
       teamLinks: mergeTeamLinks(this.latestStateTeamLinks, this.manualTeamLinkMap, this.hiddenStatePairKeys),
       inviteLink: null,
       successLink: null,
@@ -415,7 +446,7 @@ Page({
     }
     if (targetPlayer.showScore) {
       playCue('actionFail', {volume: 0.72});
-      this.setData({actionHintText: '该玩家分数已暴露，不能发起组队'});
+      this.setData({actionHintText: '该玩家已公开分数，暂不可发起组队'});
       return;
     }
     const pairKey = [selfPlayer.id, targetPlayer.id].sort().join('::');
@@ -423,7 +454,7 @@ Page({
       delete this.manualTeamLinkMap[pairKey];
       playCue('remoteDissolve', {volume: 0.68});
       this.setData({
-        actionHintText: `已取消与 ${targetPlayer.name} 的组队`,
+        actionHintText: `已取消向${targetPlayer.name}发起的组队`,
         teamLinks: mergeTeamLinks(this.latestStateTeamLinks, this.manualTeamLinkMap, this.hiddenStatePairKeys),
         inviteLink: null,
         successLink: null,
@@ -439,7 +470,7 @@ Page({
       style: buildLinkStyle(selfPlayer, targetPlayer),
     };
     this.playInviteAnimation(manualLink, {
-      inviteText: `向 ${targetPlayer.name} 发起组队邀请（模拟握手）...`,
+      inviteText: `向${targetPlayer.name}发起组队邀请...`,
       successText: `${selfPlayer.name} 与 ${targetPlayer.name} 组队成功`,
       persistOnSuccess: true,
     });
@@ -458,7 +489,7 @@ Page({
       this.setData({
         fortuneBag: null,
         emotePanelVisible: false,
-        actionHintText: `发现卖出机会：${position.name}`,
+        actionHintText: `检测到卖出机会：${position.name}`,
       });
       this.onSellPosition();
       return;
@@ -472,7 +503,7 @@ Page({
       fortuneBag: null,
       activeOpportunity: opportunity,
       emotePanelVisible: false,
-      actionHintText: `发现福袋机会：${opportunity.category}`,
+      actionHintText: `检测到新机会：${opportunity.category}`,
     });
   },
   onCloseOpportunity() {
@@ -492,14 +523,17 @@ Page({
       return;
     }
 
-    const currentScore = Number(selfPlayer.score || 0);
     const cost = Number(opportunity.cost || 0);
     if (cost <= 0) {
       return;
     }
-    if (currentScore < cost) {
+    const debitResult = shopStore.applyCoinsDelta(-cost, {
+      type: 'trade_buy',
+      title: `买入${opportunity.name}`,
+    });
+    if (!debitResult.ok) {
       playCue('actionFail', {volume: 0.74});
-      wx.showToast({title: '分数不足，无法买入', icon: 'none'});
+      wx.showToast({title: debitResult.message || '账户余额不足', icon: 'none'});
       return;
     }
     gameStore.applyPlayerScoreDelta(selfPlayer.id, -cost, {
@@ -520,7 +554,7 @@ Page({
     this.setData({
       activeOpportunity: null,
       activePosition: position,
-      actionHintText: `已买入${opportunity.name}，等待下次福袋出现后卖出`,
+      actionHintText: `已买入${opportunity.name}，等待下一次卖出时机`,
       successToast: {
         text: `买入-${cost}`,
         x: BOARD_LAYOUT.centerX,
@@ -539,6 +573,10 @@ Page({
       return;
     }
     const result = settlePosition(position);
+    shopStore.applyCoinsDelta(result.proceeds, {
+      type: 'trade_sell',
+      title: `卖出${position.name}`,
+    });
     gameStore.applyPlayerScoreDelta(position.ownerId, result.proceeds, {
       feedText: `卖出(${position.name}) +${result.proceeds}，净${result.pnlText}`,
       scoreType: 'investment',
@@ -550,7 +588,7 @@ Page({
     }
     this.setData({
       activePosition: null,
-      actionHintText: `卖出已结算，净收益 ${result.pnlText}`,
+      actionHintText: `卖出完成，净收益 ${result.pnlText}`,
       successToast: {
         text: `卖出${result.pnlText}`,
         x: BOARD_LAYOUT.centerX,
@@ -601,7 +639,7 @@ Page({
       return;
     }
     this.playInviteAnimation(link, {
-      inviteText: `${link.fromName} 向 ${link.toName} 发起组队邀请（模拟握手）...`,
+      inviteText: `${link.fromName} 向 ${link.toName} 发起组队邀请...`,
       successText: `${link.fromName} 与 ${link.toName} 组队成功`,
       persistOnSuccess: false,
     });

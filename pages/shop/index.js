@@ -1,6 +1,7 @@
 const {getNavLayout} = require('../../utils/nav');
 const shopStore = require('../../utils/shop-store');
 const userProfile = require('../../utils/user-profile');
+const {formatCurrency} = require('../../utils/format');
 
 const CATEGORY_OPTIONS = [
   {key: 'skin', label: '皮肤'},
@@ -22,8 +23,15 @@ function buildStatus(item) {
       disabled: false,
     };
   }
+  if (item.price === 0) {
+    return {
+      text: '免费领取',
+      action: 'buy',
+      disabled: false,
+    };
+  }
   return {
-    text: `${item.price} 金币购买`,
+    text: `${formatCurrency(item.price)} 购买`,
     action: 'buy',
     disabled: false,
   };
@@ -32,6 +40,7 @@ function buildStatus(item) {
 function buildGoods(category) {
   return shopStore.buildGoodsView(category).map((item) => ({
     ...item,
+    priceText: item.price === 0 ? '免费' : formatCurrency(item.price),
     status: buildStatus(item),
   }));
 }
@@ -46,6 +55,7 @@ Page({
     categories: CATEGORY_OPTIONS,
     activeCategory: 'skin',
     coins: 0,
+    balanceText: '¥0',
     goods: [],
     avatarUrl: '',
   },
@@ -64,6 +74,7 @@ Page({
     const activeCategory = this.data.activeCategory || 'skin';
     this.setData({
       coins: state.coins,
+      balanceText: formatCurrency(state.coins),
       goods: buildGoods(activeCategory),
       avatarUrl: profile.avatarUrl,
     });
@@ -90,11 +101,11 @@ Page({
       action === 'buy' ? shopStore.purchaseItem(category, itemId) : shopStore.equipItem(category, itemId);
 
     if (!result.ok) {
-      wx.showToast({title: result.message || '操作失败', icon: 'none'});
+      wx.showToast({title: result.message || '操作未完成', icon: 'none'});
       return;
     }
 
-    wx.showToast({title: result.message || '操作成功', icon: 'none'});
+    wx.showToast({title: result.message || '操作已完成', icon: 'none'});
     this.syncPage();
   },
   onBack() {

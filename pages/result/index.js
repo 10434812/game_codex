@@ -1,8 +1,11 @@
 const {getNavLayout} = require('../../utils/nav');
 const {MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
+const playerStats = require('../../utils/player-stats');
 const {playCue} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
+const {buildExpProgress} = require('../../utils/progression');
+const {formatCurrency, formatNumber} = require('../../utils/format');
 
 const RESULT_FIREWORK_MS = 8000;
 const RESULT_FIREWORK_STEP_MS = 1800;
@@ -25,10 +28,6 @@ function createEmptyTop3() {
       avatar: '/assets/bg/avatars/avatar_03.png',
     },
   };
-}
-
-function formatNumber(value) {
-  return Number(value || 0).toLocaleString('en-US');
 }
 
 function formatSigned(value) {
@@ -56,9 +55,16 @@ Page({
     activeTab: 'history',
     resultId: '',
     gainText: '0',
-    coinText: '0',
+    incomeText: '¥0',
     achievementText: '--',
     totalText: '总计 0 玩家',
+    expProgress: {
+      level: 1,
+      current: 0,
+      required: 120,
+      left: 120,
+      percent: 0,
+    },
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
     showScorePopup: false,
@@ -121,11 +127,12 @@ Page({
       top3: state.result.top3,
       rankList: state.result.rest,
       gainText: formatNumber(state.result.gain),
-      coinText: formatNumber(state.result.coins),
+      incomeText: formatCurrency(state.result.coins),
       achievementText: state.result.achievement,
       modeText: state.modeText || MATCH_MODE_TEXT,
       resultId: state.result.resultId || '',
       totalText: `总计 ${state.result.ranking.length} 玩家`,
+      expProgress: buildExpProgress(playerStats.getSummary().totalExp),
     });
   },
   replay() {

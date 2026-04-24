@@ -1,11 +1,11 @@
 const MIN_PLAYERS = 4;
 const MAX_PLAYERS = 10;
-const ROOM_UI_LIMIT = 9;
+const ROOM_UI_LIMIT = MAX_PLAYERS;
 const GAME_DURATION_SECONDS = 180;
 const ROUND_INTERVAL_SECONDS = 3;
 const TEAM_SIZE = 2;
-const ROOM_PLAYER_COUNT_OPTIONS = [4, 5, 6, 7, 8, 9];
-const MATCH_MODE_TEXT = '本地模拟';
+const ROOM_PLAYER_COUNT_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
+const MATCH_MODE_TEXT = '本地体验';
 
 const INITIAL_SCORE_RANGE = {min: 80, max: 220};
 const POSITIVE_SCORE_RANGE = {min: 20, max: 80};
@@ -69,6 +69,24 @@ const STAGES = [
     income: '+126%',
     online: '2.9k',
     image: '/assets/stages/taj-mahal-bg.jpg',
+  },
+  {
+    id: 6,
+    code: '06',
+    name: '西湖夜游',
+    hot: true,
+    income: '+142%',
+    online: '4.6k',
+    image: '/assets/stages/xihhu.png',
+  },
+  {
+    id: 7,
+    code: '07',
+    name: '鼓浪屿',
+    hot: false,
+    income: '+118%',
+    online: '2.4k',
+    image: '/assets/stages/gulangyu.png',
   },
 ];
 
