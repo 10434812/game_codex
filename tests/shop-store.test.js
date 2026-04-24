@@ -33,6 +33,21 @@ test('getStoreState 会返回默认商城状态', () => {
   assert.deepEqual(state.records, []);
 });
 
+test('buildGoodsView 不展示重复头像旧款皮肤', () => {
+  const duplicateLegacyIds = [
+    'skin-panda-scholar',
+    'skin-antler-spirit',
+    'skin-jade-lion',
+    'skin-golden-monkey',
+    'skin-koi-lotus',
+    'skin-crane-maiden',
+  ];
+  const goods = shopStore.buildGoodsView('skin');
+  const ids = goods.map((item) => item.id);
+
+  duplicateLegacyIds.forEach((id) => assert.equal(ids.includes(id), false));
+});
+
 test('purchaseItem 会扣除金币并加入已拥有皮肤', () => {
   const result = shopStore.purchaseItem('skin', 'skin-sakura');
   const state = shopStore.getStoreState();
