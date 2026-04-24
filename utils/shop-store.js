@@ -662,6 +662,7 @@ function getEquippedDisplay() {
     equippedPetId: state.equippedPetId,
     skinClass: skin && skin.skinClass ? skin.skinClass : 'skin-default',
     skinName: skin && skin.name ? skin.name : '旅人本色',
+    skinImage: skin && skin.skinImage ? skin.skinImage : '',
     petIcon: pet && pet.petIcon ? pet.petIcon : '',
     petLabel: pet && pet.petLabel ? pet.petLabel : '',
   };

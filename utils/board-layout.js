@@ -107,7 +107,9 @@ function applySelfDecorations(players, display) {
     }
     return {
       ...player,
+      avatar: display && display.skinImage ? display.skinImage : player.avatar,
       skinClass: display && display.skinClass ? display.skinClass : 'skin-default',
+      skinName: display && display.skinName ? display.skinName : '',
       petIcon: display && display.petIcon ? display.petIcon : '',
       petLabel: display && display.petLabel ? display.petLabel : '',
     };
