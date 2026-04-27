@@ -1,6 +1,6 @@
 /* ============================================
    Design Tokens — 东方纸张主题色系
-   主色: 朱砂红  辅色: 暖金棕  背景: 米纸黄
+   主色: 橘黄  辅色: 暖金棕  背景: 米纸黄
    ============================================ */
 page {
   /* 背景 */
@@ -8,11 +8,11 @@ page {
   --bg-card: rgba(255, 251, 241, 0.9);
   --bg-panel: rgba(255, 248, 234, 0.93);
 
-  /* 主色 · 朱砂红 */
-  --red-primary: #c92b2b;
-  --red-bright:  #e95c4f;
-  --red-deep:    #9e2820;
-  --red-ink:     #581f1c;
+  /* 主色 · 橘黄 */
+  --red-primary: #e57c1f;
+  --red-bright:  #f4b24a;
+  --red-deep:    #c96a10;
+  --red-ink:     #5d3615;
 
   /* 辅色 · 暖金棕 */
   --gold-warm:   #d2a45a;
@@ -143,7 +143,7 @@ page {
 .primary-btn {
   border: 0;
   border-radius: 999rpx;
-  background: linear-gradient(135deg, #e95c4f, #c92b2b);
+  background: linear-gradient(135deg, #f4b24a, #e57c1f);
   color: #fff7e5;
   font-weight: 700;
 }
@@ -202,13 +202,13 @@ page {
 }
 
 .nav-item.active {
-  color: #d2493f;
+  color: #d97a12;
   font-weight: 600;
 }
 
 .nav-item.active .nav-dot {
-  background: linear-gradient(160deg, #ef5d50, #cf2f2f);
-  border-color: rgba(188, 49, 49, 0.72);
+  background: linear-gradient(160deg, #f5b95a, #e57c1f);
+  border-color: rgba(206, 115, 19, 0.72);
   color: #fff5e5;
-  box-shadow: 0 6rpx 14rpx rgba(180, 49, 49, 0.24);
+  box-shadow: 0 6rpx 14rpx rgba(183, 102, 18, 0.24);
 }

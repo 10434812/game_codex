@@ -132,7 +132,7 @@
 .percent {
   font-size: 52rpx;
   line-height: 1;
-  color: #ab3a34;
+  color: #dd7b15;
   font-weight: 900;
   text-shadow: 0 2rpx 0 #eed9bf;
 }
@@ -150,7 +150,7 @@
 .bar {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #e95c4f, #c92b2b);
+  background: linear-gradient(90deg, #f4b24a, #e57c1f);
   box-shadow: 0 2rpx 8rpx rgba(171, 58, 52, 0.3);
 }
 
@@ -169,8 +169,8 @@
   border-radius: 999rpx;
   border: 3rpx solid #cc8a45;
   box-shadow: inset 0 0 0 2rpx rgba(239, 178, 99, 0.35);
-  background: linear-gradient(180deg, #cc3b31, #b42b24);
-  color: #f3ce8d;
+  background: linear-gradient(180deg, #f4b24a, #e57c1f);
+  color: #fff6dd;
   font-size: 46rpx;
   font-weight: 700;
   display: flex;
@@ -185,12 +185,12 @@
   margin: 20rpx auto 0;
   border-radius: 999rpx;
   height: 96rpx;
-  border: 3rpx solid rgba(180, 60, 55, 0.45);
-  box-shadow: 0 8rpx 20rpx rgba(171, 58, 52, 0.28);
+  border: 3rpx solid rgba(204, 120, 22, 0.45);
+  box-shadow: 0 8rpx 20rpx rgba(179, 101, 24, 0.28);
   font-size: 38rpx;
   font-weight: 700;
   color: #fff7e5;
-  background: linear-gradient(135deg, #e95c4f, #c92b2b);
+  background: linear-gradient(135deg, #f5bc60, #e57c1f);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -208,7 +208,7 @@
   font-size: 34rpx;
   font-weight: 700;
   color: #fff7e5;
-  background: linear-gradient(135deg, #c79a5f, #a9783f);
+  background: linear-gradient(135deg, #f5bc60, #e57c1f);
   display: flex;
   align-items: center;
   justify-content: center;

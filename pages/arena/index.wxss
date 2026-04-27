@@ -73,8 +73,8 @@
 
 .success-link {
   height: 8rpx;
-  background: linear-gradient(90deg, rgba(245, 93, 86, 0.95), rgba(236, 62, 78, 0.95));
-  box-shadow: 0 0 22rpx rgba(240, 72, 79, 0.55);
+  background: linear-gradient(90deg, rgba(245, 180, 70, 0.95), rgba(230, 122, 31, 0.95));
+  box-shadow: 0 0 22rpx rgba(233, 137, 42, 0.55);
   animation: successFlash 0.28s ease-in-out 4;
 }
 
@@ -337,8 +337,8 @@
 .score-visible-blood-fill {
   height: 100%;
   border-radius: 999rpx;
-  background: linear-gradient(90deg, #f26f56 0%, #db2f39 100%);
-  box-shadow: 0 0 10rpx rgba(226, 55, 63, 0.28);
+  background: linear-gradient(90deg, #f5bc60 0%, #e57c1f 100%);
+  box-shadow: 0 0 10rpx rgba(233, 137, 42, 0.28);
 }
 
 .team-success-toast {
@@ -353,8 +353,8 @@
   font-size: 24rpx;
   font-weight: 700;
   border-radius: 999rpx;
-  background: linear-gradient(135deg, #ed5b4b, #d43b43);
-  box-shadow: 0 10rpx 20rpx rgba(209, 56, 62, 0.34);
+  background: linear-gradient(135deg, #f5bc60, #e57c1f);
+  box-shadow: 0 10rpx 20rpx rgba(179, 101, 24, 0.34);
   z-index: 5;
   animation: toastPop 1.2s ease-out forwards;
 }

@@ -12,7 +12,7 @@
   text-align: center;
   font-size: 76rpx;
   line-height: 1.04;
-  color: #581f1c;
+  color: #7b4314;
   font-weight: 900;
   letter-spacing: 1rpx;
   text-shadow: 0 5rpx 0 #f2debb, 0 10rpx 14rpx rgba(85, 35, 30, 0.22);
@@ -29,7 +29,7 @@
 .crown-mark {
   margin-top: 14rpx;
   text-align: center;
-  color: #d7a019;
+  color: #d98a12;
   font-size: 42rpx;
   line-height: 1;
 }
@@ -60,7 +60,7 @@
 .podium-avatar.champion {
   width: 130rpx;
   height: 130rpx;
-  border: 6rpx solid #f2c453;
+  border: 6rpx solid #f3b64f;
   box-shadow: 0 0 0 6rpx rgba(253, 223, 143, 0.24), 0 14rpx 24rpx rgba(93, 67, 35, 0.2);
 }
 
@@ -84,7 +84,7 @@
 .podium-rank.gold {
   top: 86rpx;
   right: 42rpx;
-  background: #f8bc12;
+  background: #e57c1f;
 }
 
 .podium-rank.silver {
@@ -108,9 +108,9 @@
   min-height: 292rpx;
   border-radius: 24rpx;
   padding: 22rpx 16rpx 20rpx;
-  background: linear-gradient(160deg, #c93e35 0%, #9e2820 60%, #7d1c18 100%);
-  border: 3rpx solid rgba(242, 195, 100, 0.78);
-  box-shadow: 0 14rpx 30rpx rgba(120, 30, 30, 0.38), inset 0 2rpx 0 rgba(255, 235, 180, 0.22);
+  background: linear-gradient(160deg, #f5bc60 0%, #e57c1f 60%, #c96a10 100%);
+  border: 3rpx solid rgba(242, 189, 82, 0.78);
+  box-shadow: 0 14rpx 30rpx rgba(146, 86, 20, 0.34), inset 0 2rpx 0 rgba(255, 235, 180, 0.22);
 }
 
 .winner-badge {
@@ -119,7 +119,7 @@
   left: 50%;
   transform: translateX(-50%);
   font-size: 30rpx;
-  color: #f5c34a;
+  color: #ffe09b;
 }
 
 .podium-name {
@@ -176,7 +176,7 @@
 
 .income-main {
   margin-top: 12rpx;
-  color: #bd4034;
+  color: #e57c1f;
   font-size: 56rpx;
   font-weight: 900;
   line-height: 1.05;
@@ -213,7 +213,7 @@
 .exp-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #e95c4f, #c92b2b);
+  background: linear-gradient(90deg, #f4b24a, #e57c1f);
 }
 
 .exp-foot {
@@ -433,7 +433,7 @@
 
 .score-popup-total .highlight {
   font-size: 36rpx;
-  color: #c74b3e;
+  color: #e57c1f;
   font-weight: 900;
   margin-left: 8rpx;
 }
@@ -471,7 +471,7 @@
 }
 
 .score-value.bonus {
-  color: #c74b3e;
+  color: #e57c1f;
 }
 
 .score-value.penalty {

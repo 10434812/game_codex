@@ -9,11 +9,11 @@ The system breaks the "standard app template" by treating every screen as a scro
 ---
 
 ## 2. Colors: Tonal Depth & Warmth
-The palette is rooted in Earth, Ink, and Vermilion. We move beyond flat blocks of color by utilizing a sophisticated tier of surfaces that mimic the natural variations in handmade paper.
+The palette is rooted in Earth, Ink, and Warm Amber. We move beyond flat blocks of color by utilizing a sophisticated tier of surfaces that mimic the natural variations in handmade paper.
 
 ### Core Palette
-- **Primary (`#a6242d`)**: A deep, scholarly red used for high-impact brand moments.
-- **Primary Container (`#c83d43`)**: Our active vermilion for CTAs and primary actions.
+- **Primary (`#e57c1f`)**: A deep amber-orange used for high-impact brand moments.
+- **Primary Container (`#f4b24a`)**: Our active warm orange for CTAs and primary actions.
 - **Secondary (`#7b5800`)**: A refined bronze for ornamentation and secondary interactive elements.
 - **Background (`#fff9ed`)**: The "Aged Parchment" base. All screens must start here.
 
@@ -25,7 +25,7 @@ The palette is rooted in Earth, Ink, and Vermilion. We move beyond flat blocks o
 ### Glass & Gradient (The Soul of the UI)
 To avoid a "flat" historical look, use **Glassmorphism** for floating elements.
 - **Floating Cards:** Use `surface-container-lowest` at 60-80% opacity with a `backdrop-blur` of 12px-20px.
-- **Signature Gradients:** Primary buttons must utilize a subtle gradient from `primary` to `primary-container` (red-to-subtle-orange) to provide a "lit from within" glow reminiscent of traditional lanterns.
+- **Signature Gradients:** Primary buttons must utilize a subtle gradient from `primary` to `primary-container` (amber-to-subtle-orange) to provide a "lit from within" glow reminiscent of traditional lanterns.
 
 ---
 
@@ -57,9 +57,9 @@ In this design system, elevation is not achieved through height, but through **m
 ## 5. Components: The Physical Artifacts
 
 ### Buttons
-- **Primary:** Rounded (`radius-full`), featuring a Red-to-Orange gradient (`primary` to `primary-container`). White text.
+- **Primary:** Rounded (`radius-full`), featuring an Amber-to-Orange gradient (`primary` to `primary-container`). White text.
 - **Secondary:** Bronze outline (`secondary`) with no fill, or a soft glass background.
-- **Tertiary:** Text-only in `primary` red, using `title-sm` for an authoritative yet minimal feel.
+- **Tertiary:** Text-only in `primary` amber, using `title-sm` for an authoritative yet minimal feel.
 
 ### Cards & Surfaces
 - **Rules:** Never use dividers. Separation is achieved through `xl` (1.5rem) or `lg` (1rem) corner rounding and background tonal shifts.

@@ -50,7 +50,7 @@
 }
 
 .asset-value {
-  color: #ab3a34;
+  color: #dd7b15;
   font-size: 74rpx;
   font-weight: 900;
   line-height: 1;
@@ -76,7 +76,7 @@
 }
 
 .tab-item.active {
-  color: #822220;
+  color: #c96a10;
   font-weight: 800;
 }
 
@@ -87,7 +87,7 @@
   transform: translateX(-50%);
   width: 48rpx;
   height: 6rpx;
-  background: #ab3a34;
+  background: #e57c1f;
   border-radius: 4rpx;
 }
 
@@ -127,7 +127,7 @@
 }
 
 .goods-price {
-  color: #ab3a34;
+  color: #dd7b15;
   display: flex;
   align-items: baseline;
 }
@@ -213,8 +213,8 @@
   align-items: center;
   justify-content: center;
   color: #fdf9f1;
-  background: #c34d46;
-  box-shadow: 0 4rpx 12rpx rgba(171, 58, 52, 0.2);
+  background: linear-gradient(135deg, #f4b24a, #e57c1f);
+  box-shadow: 0 4rpx 12rpx rgba(179, 101, 24, 0.2);
   box-sizing: border-box;
   white-space: nowrap;
 }

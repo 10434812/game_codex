@@ -13,12 +13,12 @@
 
 .hero-title {
   margin-top: 4rpx;
-  color: #d4373f;
+  color: #e57c1f;
   font-size: 72rpx;
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0;
-  text-shadow: 0 2rpx 0 rgba(182, 40, 44, 0.15);
+  text-shadow: 0 2rpx 0 rgba(181, 102, 19, 0.16);
 }
 
 .subtitle {
@@ -119,7 +119,7 @@
 }
 
 .gold {
-  color: #c9413a;
+  color: #d97712;
 }
 
 .jump-hint {
@@ -146,7 +146,7 @@
 .exp-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #ef7a67, #d6453b 58%, #c92b2b);
+  background: linear-gradient(90deg, #f5bc60, #eb9230 58%, #e57c1f);
 }
 
 .section-head {
@@ -196,7 +196,7 @@
   z-index: 2;
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
-  background: #df4f4c;
+  background: #e78a20;
   color: #fff6ea;
   font-size: 20rpx;
 }
@@ -218,14 +218,14 @@
 
 .dest-meta {
   font-size: 20rpx;
-  color: #d54a3d;
+  color: #e08a18;
   letter-spacing: 4rpx;
 }
 
 .dest-name {
   margin-top: 6rpx;
   font-size: 78rpx;
-  color: #cf4338;
+  color: #c76d11;
   font-weight: 900;
   line-height: 1.08;
 }
