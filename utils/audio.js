@@ -10,7 +10,7 @@ const SOURCES = {
   countdown2: '/assets/audio/battle/countdown-2.wav',
   countdown1: '/assets/audio/battle/countdown-1.wav',
   gameStart: '/assets/audio/battle/countdown-go.wav',
-  resultWin: '/assets/audio/result/firework-burst.wav',
+  resultWin: '/assets/audio/result/yanhua.wav',
 };
 
 let initialized = false;

@@ -80,10 +80,10 @@
 
 .fortune-bag-wrap {
   position: absolute;
-  width: 118rpx;
-  height: 136rpx;
+  width: 148rpx;
+  min-height: 214rpx;
   transform: translate(-50%, -50%);
-  z-index: 8;
+  z-index: 12;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -91,9 +91,22 @@
 }
 
 .fortune-bag-image {
-  width: 102rpx;
-  height: 102rpx;
+  width: 118rpx;
+  height: 118rpx;
+  flex-shrink: 0;
   filter: drop-shadow(0 8rpx 16rpx rgba(185, 108, 42, 0.34));
+}
+
+.fortune-bag-shell {
+  margin-top: 8rpx;
+  width: 130rpx;
+  height: 130rpx;
+  padding: 4rpx;
+  box-sizing: border-box;
+  border-radius: 34rpx;
+  background: linear-gradient(145deg, rgba(255, 251, 238, 0.98), rgba(245, 199, 98, 0.92));
+  border: 3rpx solid rgba(193, 139, 56, 0.78);
+  box-shadow: 0 12rpx 24rpx rgba(157, 101, 28, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.72);
 }
 
 .fortune-bag-label {
@@ -108,6 +121,21 @@
   font-size: 20rpx;
   font-weight: 700;
   background: #be8c45;
+}
+
+.fortune-bag-countdown {
+  margin-top: 4rpx;
+  min-width: 70rpx;
+  height: 28rpx;
+  padding: 0 10rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 250, 241, 0.94);
+  border: 2rpx solid rgba(182, 137, 71, 0.72);
+  color: #8a5f2b;
+  font-size: 18rpx;
+  line-height: 24rpx;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .player-node {
@@ -182,23 +210,42 @@
 
 .emote-bubble {
   position: absolute;
-  top: -56rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 228rpx;
+  top: -60rpx;
+  min-width: 96rpx;
+  max-width: 240rpx;
   min-height: 40rpx;
-  padding: 6rpx 14rpx;
+  padding: 6rpx 18rpx;
   border-radius: 20rpx;
   background: rgba(255, 252, 245, 0.95);
   border: 2rpx solid rgba(204, 171, 116, 0.72);
   color: #704727;
   font-size: 22rpx;
-  line-height: 28rpx;
+  line-height: 1.2;
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 6rpx 14rpx rgba(124, 92, 50, 0.22);
-  white-space: normal;
-  word-break: break-all;
+  white-space: nowrap;
+  word-break: keep-all;
   z-index: 7;
+}
+
+.emote-bubble.emote-upper-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.emote-bubble.emote-upper-left,
+.emote-bubble.emote-left {
+  left: 0;
+  transform: translate(-6rpx, 0);
+}
+
+.emote-bubble.emote-upper-right,
+.emote-bubble.emote-right {
+  right: 0;
+  transform: translate(6rpx, 0);
 }
 
 .node-name {
@@ -293,26 +340,44 @@
   box-shadow: 0 6rpx 12rpx rgba(181, 36, 45, 0.35);
 }
 
-.pet-badge {
+.pet-follower {
   position: absolute;
-  top: 86rpx;
-  left: 84rpx;
-  min-width: 88rpx;
-  height: 38rpx;
-  padding: 0 12rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 248, 229, 0.96);
-  border: 2rpx solid rgba(203, 171, 118, 0.78);
-  color: #734b25;
-  font-size: 20rpx;
-  line-height: 38rpx;
-  font-weight: 700;
-  white-space: nowrap;
-  box-shadow: 0 4rpx 10rpx rgba(132, 89, 30, 0.18);
+  top: 2rpx;
+  left: 124rpx;
+  width: 78rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 6;
+  animation: petFloat 2.6s ease-in-out infinite;
 }
 
-.pet-icon {
-  margin-right: 6rpx;
+.pet-avatar-shell {
+  width: 66rpx;
+  height: 66rpx;
+  padding: 2rpx;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  box-shadow: 0 10rpx 18rpx rgba(130, 87, 36, 0.2);
+}
+
+.pet-avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 20rpx;
+  background: rgba(255, 250, 240, 0.9);
+}
+
+.pet-emoji {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 20rpx;
+  background: rgba(255, 250, 240, 0.9);
+  text-align: center;
+  line-height: 60rpx;
+  font-size: 36rpx;
 }
 
 .score-visible-tag {
@@ -372,6 +437,10 @@
   z-index: 10;
 }
 
+.fortune-panel {
+  padding-bottom: 16rpx;
+}
+
 .invest-head {
   display: flex;
   justify-content: space-between;
@@ -394,6 +463,10 @@
   color: #4f2f1f;
   font-size: 30rpx;
   font-weight: 700;
+}
+
+.fortune-panel .invest-line {
+  display: block;
 }
 
 .invest-line {
@@ -651,5 +724,17 @@
   100% {
     opacity: 0;
     transform: translate(-50%, -118rpx) scale(0.98);
+  }
+}
+
+@keyframes petFloat {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate3d(0, -10rpx, 0) rotate(2deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-2deg);
   }
 }

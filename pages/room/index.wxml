@@ -17,6 +17,7 @@
 
   <view class="page-content">
     <view class="big-title">{{stageName}}</view>
+    <view class="room-hint">{{roomHintText}}</view>
     <view class="tags">
       <text class="tag">房间 #{{roomId}}</text>
       <text class="tag">{{modeText}}</text>

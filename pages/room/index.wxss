@@ -29,6 +29,14 @@
   color: #2f1c12;
 }
 
+.room-hint {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.4;
+  color: #7f5a32;
+  font-weight: 600;
+}
+
 .tags {
   margin-top: 12rpx;
   display: flex;

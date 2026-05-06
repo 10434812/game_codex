@@ -8,8 +8,7 @@ const INVESTMENT_POOL = [
 ];
 
 const FORTUNE_BAG_ASSETS = [
-  '/assets/iocns/2657.png_300.png',
-  '/assets/iocns/2657.png_30012.png',
+  '/assets/iocns/fudai.png',
 ];
 
 function randomInt(min, max, random = Math.random) {

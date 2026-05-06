@@ -26,6 +26,14 @@ function formatTimeLeft(timeLeft) {
   return `${Math.max(0, Number(timeLeft) || 0)}s`;
 }
 
+function formatHoldTime(position) {
+  if (!position || !position.buyAt) {
+    return '0秒';
+  }
+  const holdSeconds = Math.max(0, Math.floor((Date.now() - Number(position.buyAt)) / 1000));
+  return holdSeconds < 60 ? `${holdSeconds}秒` : `${Math.floor(holdSeconds / 60)}分${holdSeconds % 60}秒`;
+}
+
 function parseScoreText(scoreText) {
   const value = Number(String(scoreText || '').replace(/,/g, ''));
   return Number.isFinite(value) ? value : 0;
@@ -52,9 +60,12 @@ Page({
     fortuneBag: null,
     activeOpportunity: null,
     activePosition: null,
+    activePositionHoldText: '0秒',
     timeText: '180s',
     hintText: '等待开始',
     actionHintText: '',
+    fortunePanelVisible: false,
+    fortuneBagCountdownText: '10s',
     tabs: NAV_TABS,
     activeTab: 'play',
     userProfile: getCachedProfile(),
@@ -117,7 +128,9 @@ Page({
     this.setData({
       fortuneBag: null,
       activeOpportunity: null,
+      fortunePanelVisible: false,
       emotePanelVisible: false,
+      fortuneBagCountdownText: '10s',
     });
     this.unsubscribeStore();
   },
@@ -206,6 +219,7 @@ Page({
       timeText: formatTimeLeft(state.timeLeft),
       hintText: state.feedText || `等待下一轮事件（${state.modeText || MATCH_MODE_TEXT}）`,
       modeText: state.modeText || MATCH_MODE_TEXT,
+      activePositionHoldText: formatHoldTime(this.data.activePosition),
     });
 
     if (newRemoteLinks.length) {
@@ -482,33 +496,24 @@ Page({
     if (!bag || !players.length) {
       return;
     }
-
-    if (this.data.activePosition) {
-      const position = this.data.activePosition;
-      this.clearBagTimers();
-      this.setData({
-        fortuneBag: null,
-        emotePanelVisible: false,
-        actionHintText: `检测到卖出机会：${position.name}`,
-      });
-      this.onSellPosition();
-      return;
-    }
-
     const selfPlayer = players.find((player) => player.isSelf) || players[0];
     const selfScore = parseScoreText(selfPlayer ? selfPlayer.score : 0);
-    const opportunity = buildOpportunity(selfScore);
-    this.clearBagTimers();
+    const opportunity = this.data.activePosition ? null : (this.data.activeOpportunity || buildOpportunity(selfScore));
     this.setData({
-      fortuneBag: null,
       activeOpportunity: opportunity,
+      fortunePanelVisible: true,
+      activePositionHoldText: formatHoldTime(this.data.activePosition),
       emotePanelVisible: false,
-      actionHintText: `检测到新机会：${opportunity.category}`,
+      actionHintText: this.data.activePosition
+        ? `当前持仓可卖出：${this.data.activePosition.name}`
+        : `检测到新机会：${opportunity.category}`,
     });
   },
   onCloseOpportunity() {
-    this.setData({activeOpportunity: null, actionHintText: ''});
-    this.scheduleNextBagDrop();
+    this.setData({
+      fortunePanelVisible: false,
+      actionHintText: '',
+    });
   },
   onConfirmOpportunity() {
     const opportunity = this.data.activeOpportunity;
@@ -554,7 +559,9 @@ Page({
     this.setData({
       activeOpportunity: null,
       activePosition: position,
-      actionHintText: `已买入${opportunity.name}，等待下一次卖出时机`,
+      fortunePanelVisible: true,
+      activePositionHoldText: formatHoldTime(position),
+      actionHintText: `已买入${opportunity.name}，当前可直接卖出`,
       successToast: {
         text: `买入-${cost}`,
         x: BOARD_LAYOUT.centerX,
@@ -565,7 +572,6 @@ Page({
       this.setData({successToast: null, actionHintText: ''});
       this.successTimer = null;
     }, 1300);
-    this.scheduleNextBagDrop();
   },
   onSellPosition() {
     const position = this.data.activePosition;
@@ -588,6 +594,8 @@ Page({
     }
     this.setData({
       activePosition: null,
+      activeOpportunity: null,
+      fortunePanelVisible: false,
       actionHintText: `卖出完成，净收益 ${result.pnlText}`,
       successToast: {
         text: `卖出${result.pnlText}`,
@@ -599,6 +607,8 @@ Page({
       this.setData({successToast: null, actionHintText: ''});
       this.successTimer = null;
     }, 1400);
+    this.clearBagTimers();
+    this.setData({fortuneBag: null, fortuneBagCountdownText: '10s'});
     this.scheduleNextBagDrop();
   },
   scheduleNextBagDrop() {
@@ -614,15 +624,52 @@ Page({
         return;
       }
       const bag = buildFortuneBagByPlayers(this.data.timeText || 't', this.data.players || [], FORTUNE_BAG_ASSETS);
-      this.setData({fortuneBag: bag});
+      this.fortuneBagExpiresAt = Date.now() + 10000;
+      this.setData({
+        fortuneBag: bag,
+        fortuneBagCountdownText: formatTimeLeft(10),
+      });
       playCue('invite', {volume: 0.58});
+      this.startFortuneBagCountdown();
       this.bagExpireTimer = setTimeout(() => {
-        this.setData({fortuneBag: null});
-        this.bagExpireTimer = null;
+        const hasActivePosition = !!this.data.activePosition;
+        this.clearBagTimers();
+        this.setData({
+          fortuneBag: null,
+          activeOpportunity: null,
+          fortunePanelVisible: false,
+          fortuneBagCountdownText: '10s',
+          actionHintText: hasActivePosition ? '当前持仓已保留，等待下一次红包' : '本次红包已结束',
+        });
         this.scheduleNextBagDrop();
-      }, 8000);
+      }, 10000);
       this.bagSpawnTimer = null;
     }, delay);
+  },
+  startFortuneBagCountdown() {
+    if (this.bagCountdownTimer) {
+      clearInterval(this.bagCountdownTimer);
+    }
+    this.bagCountdownTimer = setInterval(() => {
+      const expiresAt = Number(this.fortuneBagExpiresAt || 0);
+      if (!expiresAt || !this.data.fortuneBag) {
+        this.clearFortuneBagCountdown();
+        return;
+      }
+      const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+      if (remaining <= 0) {
+        this.setData({fortuneBagCountdownText: '0s'});
+        this.clearFortuneBagCountdown();
+        return;
+      }
+      this.setData({fortuneBagCountdownText: formatTimeLeft(remaining)});
+    }, 1000);
+  },
+  clearFortuneBagCountdown() {
+    if (this.bagCountdownTimer) {
+      clearInterval(this.bagCountdownTimer);
+      this.bagCountdownTimer = null;
+    }
   },
   clearBagTimers() {
     if (this.bagSpawnTimer) {
@@ -633,6 +680,8 @@ Page({
       clearTimeout(this.bagExpireTimer);
       this.bagExpireTimer = null;
     }
+    this.clearFortuneBagCountdown();
+    this.fortuneBagExpiresAt = 0;
   },
   playRemoteTeamAnimation(link) {
     if (!link) {

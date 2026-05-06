@@ -57,6 +57,16 @@ function resolveNamePosition(x, y, layout, isDense) {
   return 'center';
 }
 
+function resolveSpeechPosition(x, layout) {
+  if (x < layout.centerX - 24) {
+    return 'upper-left';
+  }
+  if (x > layout.centerX + 24) {
+    return 'upper-right';
+  }
+  return 'upper-center';
+}
+
 function buildBoardPlayers(players, emoteMap = {}, visibleScoreIdSet = new Set()) {
   const list = players || [];
   if (!list.length) {
@@ -79,6 +89,7 @@ function buildBoardPlayers(players, emoteMap = {}, visibleScoreIdSet = new Set()
     const x = layout.centerX + layout.radiusX * Math.cos(angle);
     const y = layout.centerY + layout.radiusY * Math.sin(angle);
     const namePos = resolveNamePosition(x, y, layout, isDense);
+    const chatPos = resolveSpeechPosition(x, layout);
     const showScore = !!player.isSelf || visibleScoreIdSet.has(player.id);
     const safeScore = Number(player.score) || 0;
     return {
@@ -86,6 +97,7 @@ function buildBoardPlayers(players, emoteMap = {}, visibleScoreIdSet = new Set()
       x: Math.round(x),
       y: Math.round(y),
       namePos,
+      chatPos,
       emoteText: emoteMap[player.id] || '',
       score: formatScore(player.score),
       revealHpPercent: Math.max(18, Math.min(100, Math.round((safeScore / maxScore) * 100))),
@@ -103,6 +115,8 @@ function applySelfDecorations(players, display) {
         skinClass: '',
         petIcon: '',
         petLabel: '',
+        petImage: '',
+        petAccent: '',
       };
     }
     return {
@@ -112,6 +126,8 @@ function applySelfDecorations(players, display) {
       skinName: display && display.skinName ? display.skinName : '',
       petIcon: display && display.petIcon ? display.petIcon : '',
       petLabel: display && display.petLabel ? display.petLabel : '',
+      petImage: display && display.petImage ? display.petImage : '',
+      petAccent: display && display.petAccent ? display.petAccent : '',
     };
   });
 }
@@ -161,4 +177,5 @@ module.exports = {
   buildBoardPlayers,
   buildFortuneBagByPlayers,
   getNodeCenter,
+  resolveSpeechPosition,
 };

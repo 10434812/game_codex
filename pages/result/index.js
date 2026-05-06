@@ -7,7 +7,7 @@ const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency, formatNumber} = require('../../utils/format');
 
-const RESULT_FIREWORK_MS = 8000;
+const RESULT_FIREWORK_MS = 5000;
 const RESULT_FIREWORK_STEP_MS = 1800;
 
 function createEmptyTop3() {

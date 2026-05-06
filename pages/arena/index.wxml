@@ -29,8 +29,11 @@
       </view>
 
       <view class="fortune-bag-wrap" wx:if="{{ fortuneBag }}" style="left: {{ fortuneBag.x }}rpx; top: {{ fortuneBag.y }}rpx;" bindtap="onTapFortuneBag">
-        <image class="fortune-bag-image" src="{{ fortuneBag.asset }}" mode="aspectFit"></image>
         <view class="fortune-bag-label">{{ activePosition ? '卖出' : '买入' }}</view>
+        <view class="fortune-bag-countdown">{{ fortuneBagCountdownText }}</view>
+        <view class="fortune-bag-shell">
+          <image class="fortune-bag-image" src="{{ fortuneBag.asset }}" mode="aspectFit"></image>
+        </view>
       </view>
 
       <view class="team-success-toast" wx:if="{{ successToast }}" style="left: {{ successToast.x }}rpx; top: {{ successToast.y }}rpx;">
@@ -41,16 +44,21 @@
         <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }}">
           <image class="avatar" src="{{ item.avatar || '/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill"></image>
         </view>
-        <view class="pet-badge" wx:if="{{ item.isSelf && item.petLabel }}">
-          <text class="pet-icon">{{ item.petIcon }}</text>
-          <text>{{ item.petLabel }}</text>
+        <view
+          class="pet-follower"
+          wx:if="{{ item.isSelf && item.petLabel }}"
+        >
+          <view class="pet-avatar-shell" style="background: linear-gradient(145deg, #fff8ec 0%, {{ item.petAccent || '#d8a062' }} 100%);">
+            <image wx:if="{{ item.petImage }}" class="pet-avatar" src="{{ item.petImage }}" mode="aspectFill"></image>
+            <text wx:else class="pet-emoji">{{ item.petIcon }}</text>
+          </view>
         </view>
         <view class="score-visible-tag" wx:if="{{ item.showScore && !item.isSelf }}">
           <view class="score-visible-blood">
             <view class="score-visible-blood-fill" style="width: {{ item.revealHpPercent }}%;"></view>
           </view>
         </view>
-        <view class="emote-bubble" wx:if="{{ item.emoteText }}">{{ item.emoteText }}</view>
+        <view class="emote-bubble emote-{{ item.chatPos || 'upper-center' }}" wx:if="{{ item.emoteText }}">{{ item.emoteText }}</view>
         <view class="self-tag" wx:if="{{ item.isSelf }}">我</view>
       </view>
 
@@ -61,18 +69,26 @@
       </view>
     </view>
 
-    <view class="invest-panel" wx:if="{{ activeOpportunity }}">
+    <view class="invest-panel fortune-panel" wx:if="{{ fortunePanelVisible }}">
       <view class="invest-head">
-        <text class="invest-type">{{ activeOpportunity.category }}</text>
-        <text class="invest-risk">{{ activeOpportunity.riskText }}</text>
+        <text class="invest-type">{{ activePosition ? '卖出窗口' : activeOpportunity.category }}</text>
+        <text class="invest-risk">{{ activePosition ? activePosition.riskText : activeOpportunity.riskText }}</text>
       </view>
-      <view class="invest-title">{{ activeOpportunity.name }}</view>
-      <view class="invest-line">投入成本：{{ activeOpportunity.cost }}</view>
-      <view class="invest-line">预计波动：{{ activeOpportunity.floatRangeText }}</view>
-      <view class="invest-line">{{ activeOpportunity.summary }}</view>
+      <view class="invest-title">{{ activePosition ? activePosition.name : activeOpportunity.name }}</view>
+      <view wx:if="{{ activePosition }}">
+        <view class="invest-line">持仓成本：{{ activePosition.cost }}</view>
+        <view class="invest-line">持有时间：{{ activePositionHoldText }}</view>
+        <view class="invest-line">再次弹出会提示卖出当前持仓</view>
+      </view>
+      <view wx:else>
+        <view class="invest-line">投入成本：{{ activeOpportunity.cost }}</view>
+        <view class="invest-line">预计波动：{{ activeOpportunity.floatRangeText }}</view>
+        <view class="invest-line">{{ activeOpportunity.summary }}</view>
+      </view>
       <view class="invest-actions">
         <button class="invest-btn ghost" bindtap="onCloseOpportunity">先放弃</button>
-        <button class="invest-btn primary-btn" bindtap="onConfirmOpportunity">立即买入</button>
+        <button wx:if="{{ !activePosition }}" class="invest-btn primary-btn" bindtap="onConfirmOpportunity">立即买入</button>
+        <button wx:else class="invest-btn primary-btn" bindtap="onSellPosition">确认卖出</button>
       </view>
     </view>
 

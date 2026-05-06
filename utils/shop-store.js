@@ -587,6 +587,8 @@ function getEquippedDisplay() {
     skinImage: skin && skin.skinImage ? skin.skinImage : '',
     petIcon: pet && pet.petIcon ? pet.petIcon : '',
     petLabel: pet && pet.petLabel ? pet.petLabel : '',
+    petImage: pet && pet.petImage ? pet.petImage : '',
+    petAccent: pet && pet.accent ? pet.accent : '',
   };
 }
 

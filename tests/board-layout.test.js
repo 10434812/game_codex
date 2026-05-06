@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const {buildBoardPlayers} = require('../utils/board-layout');
+const {applySelfDecorations, buildBoardPlayers} = require('../utils/board-layout');
 
 function makePlayers(count) {
   return Array.from({length: count}, (_, index) => ({
@@ -42,4 +42,32 @@ test('多人棋盘下半圈玩家标签会向下外扩避让', () => {
       return player.namePos === 'lower-center';
     })
   );
+});
+
+test('自己节点的宠物装饰会携带图像与主题色，其他玩家不会误带上', () => {
+  const decorated = applySelfDecorations(makePlayers(3), {
+    skinImage: '/assets/skins/skin-06.png',
+    skinClass: 'skin-storm',
+    petIcon: '🦊',
+    petLabel: '灵狐',
+    petImage: '/assets/111/pets/linghu.png',
+    petAccent: '#de6a45',
+  });
+
+  assert.equal(decorated[0].petLabel, '灵狐');
+  assert.equal(decorated[0].petImage, '/assets/111/pets/linghu.png');
+  assert.equal(decorated[0].petAccent, '#de6a45');
+  assert.equal(decorated[1].petLabel, '');
+  assert.equal(decorated[1].petImage, '');
+});
+
+test('聊天气泡会按左右侧锚定到头像上方的外侧', () => {
+  const players = buildBoardPlayers(makePlayers(4));
+  const leftPlayer = players.find((player) => player.x < 360);
+  const rightPlayer = players.find((player) => player.x > 360);
+
+  assert.ok(leftPlayer);
+  assert.ok(rightPlayer);
+  assert.equal(leftPlayer.chatPos, 'upper-left');
+  assert.equal(rightPlayer.chatPos, 'upper-right');
 });
