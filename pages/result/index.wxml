@@ -1,5 +1,5 @@
 <view class="paper-bg result-page">
-  <image class="global-bg-image" src="/assets/bg/bg.png" mode="scaleToFill"></image>
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
 
   <!-- 烟花特效容器 -->
   <view class="fireworks-container" wx:if="{{showFireworks}}">
@@ -8,7 +8,7 @@
     </view>
   </view>
   <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
-    <view class="app-user" bindtap="onTapProfile">
+    <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
       <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
       <view wx:else class="app-user-avatar"></view>
       <text class="app-user-name">{{userProfile.nickName}}</text>
@@ -18,7 +18,7 @@
         <text class="app-status-dot">●</text>
         <text class="app-status-text">{{modeText}}</text>
       </view>
-      <view class="app-gear">⚙</view>
+      <view class="app-gear" hover-class="clickable-hover">⚙</view>
     </view>
   </view>
 
@@ -28,14 +28,14 @@
 
     <view class="crown-mark">♛</view>
     <view class="podium-wrap">
-      <view class="podium side left" bindtap="onTapPlayer" data-player="{{top3.second}}">
+      <view class="podium side left" bindtap="onTapPlayer" data-player="{{top3.second}}" hover-class="clickable-hover">
         <image class="podium-avatar" src="{{top3.second.avatar}}" mode="aspectFill"></image>
         <text class="podium-rank silver">2</text>
         <view class="podium-name">{{top3.second.name}}</view>
         <view class="podium-score">{{top3.second.score}}</view>
       </view>
 
-      <view class="podium winner" bindtap="onTapPlayer" data-player="{{top3.first}}">
+      <view class="podium winner" bindtap="onTapPlayer" data-player="{{top3.first}}" hover-class="clickable-hover">
         <view class="winner-badge">♕</view>
         <image class="podium-avatar champion" src="{{top3.first.avatar}}" mode="aspectFill"></image>
         <text class="podium-rank gold">1</text>
@@ -43,7 +43,7 @@
         <view class="podium-score self">{{top3.first.score}}</view>
       </view>
 
-      <view class="podium side right" bindtap="onTapPlayer" data-player="{{top3.third}}">
+      <view class="podium side right" bindtap="onTapPlayer" data-player="{{top3.third}}" hover-class="clickable-hover">
         <image class="podium-avatar third" src="{{top3.third.avatar}}" mode="aspectFill"></image>
         <text class="podium-rank bronze">3</text>
         <view class="podium-name">{{top3.third.name}}</view>
@@ -80,7 +80,7 @@
     </view>
 
     <view class="rank-list">
-      <view class="rank-item" wx:for="{{rankList}}" wx:key="rank" bindtap="onTapPlayer" data-player="{{item}}">
+      <view class="rank-item" wx:for="{{rankList}}" wx:key="rank" bindtap="onTapPlayer" data-player="{{item}}" hover-class="clickable-hover">
         <text class="rank">{{item.rank}}</text>
         <image class="avatar sm" src="{{item.avatar}}" mode="aspectFill"></image>
         <text class="player">{{item.name}}</text>
@@ -88,15 +88,15 @@
       </view>
     </view>
 
-    <view class="view-all">查看完整榜单</view>
+    <view class="view-all" hover-class="clickable-hover">查看完整榜单</view>
 
     <view class="action-row">
-      <button class="primary-btn action-btn" bindtap="replay">↻ 再来一局</button>
-      <button class="action-btn ghost-btn" bindtap="goHome">⌂ 返回首页</button>
+      <button class="primary-btn action-btn" bindtap="replay" hover-class="btn-hover">↻ 再来一局</button>
+      <button class="action-btn ghost-btn" bindtap="goHome" hover-class="btn-hover">⌂ 返回首页</button>
     </view>
 
     <view class="bottom-nav result-nav">
-      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab">
+      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
         <view class="nav-dot">
           <image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image>
         </view>

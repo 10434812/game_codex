@@ -3,7 +3,7 @@ const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constant
 const {buildVisibleScoreState} = require('../../utils/game-engine');
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
-const {playCue} = require('../../utils/audio');
+const {playCue, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {
   BOARD_LAYOUT,
@@ -157,6 +157,7 @@ Page({
   },
   onTapShop() {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     wx.navigateTo({url: '/pages/shop/index'});
   },
   ensureArenaState() {
@@ -257,10 +258,12 @@ Page({
   },
   onToggleEmotePanel() {
     playCue('tap', {volume: 0.72});
+    playVibrate('light');
     this.setData({emotePanelVisible: !this.data.emotePanelVisible});
   },
   onToggleMessageCard() {
     playCue('tap', {volume: 0.72});
+    playVibrate('light');
     this.setData({
       messageCardCollapsed: !this.data.messageCardCollapsed,
     });
@@ -276,6 +279,7 @@ Page({
       return;
     }
     playCue('tap', {volume: 0.72});
+    playVibrate('light');
     this.setPlayerEmote(selfPlayer.id, option.text);
     this.setData({
       emotePanelVisible: false,
@@ -362,6 +366,7 @@ Page({
   },
   onPlayerTap(e) {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     const targetId = e.currentTarget.dataset.playerId;
     const players = this.data.players || [];
     if (!players.length || !targetId) {
@@ -491,6 +496,7 @@ Page({
   },
   onTapFortuneBag() {
     playCue('tap', {volume: 0.76});
+    playVibrate('medium');
     const bag = this.data.fortuneBag;
     const players = this.data.players || [];
     if (!bag || !players.length) {
@@ -774,6 +780,7 @@ Page({
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     const page = e.currentTarget.dataset.page;
     if (!page || page === '/pages/arena/index') {
       return;

@@ -1,16 +1,16 @@
 const SOURCES = {
-  tap: '/assets/audio/battle/button-tap.wav',
-  invite: '/assets/audio/battle/remote-invite.wav',
-  remoteDissolve: '/assets/audio/battle/remote-dissolve.wav',
-  inviteSuccess: '/assets/audio/battle/self-invite-success.wav',
-  pairSelf: '/assets/audio/battle/pair-success-self.wav',
-  pairOther: '/assets/audio/battle/pair-success-other.wav',
-  actionFail: '/assets/audio/battle/self-action-fail.wav',
-  countdown3: '/assets/audio/battle/countdown-3.wav',
-  countdown2: '/assets/audio/battle/countdown-2.wav',
-  countdown1: '/assets/audio/battle/countdown-1.wav',
-  gameStart: '/assets/audio/battle/countdown-go.wav',
-  resultWin: '/assets/audio/result/yanhua.wav',
+  tap: 'https://xcx.ukb88.com/assets/audio/battle/button-tap.wav',
+  invite: 'https://xcx.ukb88.com/assets/audio/battle/remote-invite.wav',
+  remoteDissolve: 'https://xcx.ukb88.com/assets/audio/battle/remote-dissolve.wav',
+  inviteSuccess: 'https://xcx.ukb88.com/assets/audio/battle/self-invite-success.wav',
+  pairSelf: 'https://xcx.ukb88.com/assets/audio/battle/pair-success-self.wav',
+  pairOther: 'https://xcx.ukb88.com/assets/audio/battle/pair-success-other.wav',
+  actionFail: 'https://xcx.ukb88.com/assets/audio/battle/self-action-fail.wav',
+  countdown3: 'https://xcx.ukb88.com/assets/audio/battle/countdown-3.wav',
+  countdown2: 'https://xcx.ukb88.com/assets/audio/battle/countdown-2.wav',
+  countdown1: 'https://xcx.ukb88.com/assets/audio/battle/countdown-1.wav',
+  gameStart: 'https://xcx.ukb88.com/assets/audio/battle/countdown-go.wav',
+  resultWin: 'https://xcx.ukb88.com/assets/audio/result/yanhua.wav',
 };
 
 let initialized = false;
@@ -81,6 +81,13 @@ function playCue(name, options = {}) {
   }
 }
 
+function playVibrate(type = 'light') {
+  try {
+    wx.vibrateShort({type});
+  } catch (error) {}
+}
+
 module.exports = {
   playCue,
+  playVibrate,
 };

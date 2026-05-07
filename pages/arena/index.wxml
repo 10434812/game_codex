@@ -1,7 +1,7 @@
 <view class="paper-bg arena-page">
-  <image class="global-bg-image" src="/assets/bg/gamebg.png" mode="scaleToFill"></image>
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/gamebg.png" mode="scaleToFill"></image>
   <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
-    <view class="app-user" bindtap="onTapProfile">
+    <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
       <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
       <view wx:else class="app-user-avatar"></view>
       <text class="app-user-name">{{userProfile.nickName}}</text>
@@ -11,7 +11,7 @@
         <text class="app-status-dot">●</text>
         <text class="app-status-text">{{modeText}}</text>
       </view>
-      <view class="app-gear">⚙</view>
+      <view class="app-gear" hover-class="clickable-hover">⚙</view>
     </view>
   </view>
 
@@ -31,7 +31,7 @@
       <view class="fortune-bag-wrap" wx:if="{{ fortuneBag }}" style="left: {{ fortuneBag.x }}rpx; top: {{ fortuneBag.y }}rpx;" bindtap="onTapFortuneBag">
         <view class="fortune-bag-label">{{ activePosition ? '卖出' : '买入' }}</view>
         <view class="fortune-bag-countdown">{{ fortuneBagCountdownText }}</view>
-        <view class="fortune-bag-shell">
+        <view class="fortune-bag-shell" hover-class="clickable-hover">
           <image class="fortune-bag-image" src="{{ fortuneBag.asset }}" mode="aspectFit"></image>
         </view>
       </view>
@@ -41,8 +41,8 @@
       </view>
 
       <view class="player-node {{ item.isSelf ? 'self-node' : '' }}" wx:for="{{ players }}" wx:key="id" style="left: {{ item.x }}rpx; top: {{ item.y }}rpx;" data-player-id="{{ item.id }}" bindtap="onPlayerTap">
-        <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }}">
-          <image class="avatar" src="{{ item.avatar || '/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill"></image>
+        <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }}" hover-class="clickable-hover">
+          <image class="avatar" src="{{ item.avatar || 'https://xcx.ukb88.com/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill"></image>
         </view>
         <view
           class="pet-follower"
@@ -86,9 +86,9 @@
         <view class="invest-line invest-summary">{{ activeOpportunity.summary }}</view>
       </view>
       <view class="invest-actions">
-        <button class="invest-btn ghost" bindtap="onCloseOpportunity">先放弃</button>
-        <button wx:if="{{ !activePosition }}" class="invest-btn primary-btn" bindtap="onConfirmOpportunity">立即买入</button>
-        <button wx:else class="invest-btn primary-btn" bindtap="onSellPosition">确认卖出</button>
+        <button class="invest-btn ghost" bindtap="onCloseOpportunity" hover-class="btn-hover">先放弃</button>
+        <button wx:if="{{ !activePosition }}" class="invest-btn primary-btn" bindtap="onConfirmOpportunity" hover-class="btn-hover">立即买入</button>
+        <button wx:else class="invest-btn primary-btn" bindtap="onSellPosition" hover-class="btn-hover">确认卖出</button>
       </view>
     </view>
 
@@ -99,6 +99,7 @@
         wx:key="key"
         data-key="{{ item.key }}"
         bindtap="onSendQuickEmote"
+        hover-class="clickable-hover"
       >
         {{ item.label }}
       </view>
@@ -123,22 +124,23 @@
           wx:key="key"
           data-key="{{ item.key }}"
           bindtap="onSendQuickEmote"
+          hover-class="clickable-hover"
         >
           {{item.label}}
         </view>
       </view>
     </view>
 
-    <view class="shop-entry" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onTapShop">
+    <view class="shop-entry" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onTapShop" hover-class="clickable-hover">
       <text class="shop-entry-icon">✦</text>
       <text>商城</text>
     </view>
 
-    <view class="quick-emote" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onToggleEmotePanel">☺</view>
+    <view class="quick-emote" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onToggleEmotePanel" hover-class="clickable-hover">☺</view>
   </view>
 
   <view class="bottom-nav">
-    <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab">
+    <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
       <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
       <text>{{ item.label }}</text>
     </view>

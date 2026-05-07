@@ -29,7 +29,7 @@ const DEFAULT_STAGE = {
   hot: true,
   income: '+150%',
   online: '4.2k',
-  image: '/assets/stages/great-wall-bg.jpg',
+  image: 'https://xcx.ukb88.com/assets/stages/great-wall-bg.jpg',
 };
 
 const STAGES = [
@@ -41,7 +41,7 @@ const STAGES = [
     hot: false,
     income: '+120%',
     online: '3.1k',
-    image: '/assets/stages/mount-fuji-bg.jpg',
+    image: 'https://xcx.ukb88.com/assets/stages/mount-fuji-bg.jpg',
   },
   {
     id: 3,
@@ -50,7 +50,7 @@ const STAGES = [
     hot: true,
     income: '+135%',
     online: '3.8k',
-    image: '/assets/stages/eiffel-bg.jpg',
+    image: 'https://xcx.ukb88.com/assets/stages/eiffel-bg.jpg',
   },
   {
     id: 4,
@@ -59,7 +59,7 @@ const STAGES = [
     hot: false,
     income: '+112%',
     online: '2.7k',
-    image: '/assets/stages/grand-canyon-bg.jpg',
+    image: 'https://xcx.ukb88.com/assets/stages/grand-canyon-bg.jpg',
   },
   {
     id: 5,
@@ -68,7 +68,7 @@ const STAGES = [
     hot: false,
     income: '+126%',
     online: '2.9k',
-    image: '/assets/stages/taj-mahal-bg.jpg',
+    image: 'https://xcx.ukb88.com/assets/stages/taj-mahal-bg.jpg',
   },
   {
     id: 6,
@@ -77,7 +77,7 @@ const STAGES = [
     hot: true,
     income: '+142%',
     online: '4.6k',
-    image: '/assets/stages/xihhu.png',
+    image: 'https://xcx.ukb88.com/assets/stages/xihhu.png',
   },
   {
     id: 7,
@@ -86,13 +86,13 @@ const STAGES = [
     hot: false,
     income: '+118%',
     online: '2.4k',
-    image: '/assets/stages/gulangyu.png',
+    image: 'https://xcx.ukb88.com/assets/stages/gulangyu.png',
   },
 ];
 
 const AVATAR_POOL = Array.from({length: 12}, (_, index) => {
   const n = String(index + 1).padStart(2, '0');
-  return `/assets/bg/avatars/avatar_${n}.png`;
+  return `https://xcx.ukb88.com/assets/bg/avatars/avatar_${n}.png`;
 });
 
 const ROBOT_NAMES = [
@@ -129,29 +129,29 @@ const NAV_TABS = [
   {
     key: 'explore',
     label: '探索',
-    icon: '/assets/nav/explore.svg',
-    iconActive: '/assets/nav/explore_active.svg',
+    icon: 'https://xcx.ukb88.com/assets/nav/explore.svg',
+    iconActive: 'https://xcx.ukb88.com/assets/nav/explore_active.svg',
     page: '/pages/home/index',
   },
   {
     key: 'social',
     label: '社交',
-    icon: '/assets/nav/social.svg',
-    iconActive: '/assets/nav/social_active.svg',
+    icon: 'https://xcx.ukb88.com/assets/nav/social.svg',
+    iconActive: 'https://xcx.ukb88.com/assets/nav/social_active.svg',
     page: '/pages/room/index',
   },
   {
     key: 'play',
     label: '游玩',
-    icon: '/assets/nav/play.svg',
-    iconActive: '/assets/nav/play_active.svg',
+    icon: 'https://xcx.ukb88.com/assets/nav/play.svg',
+    iconActive: 'https://xcx.ukb88.com/assets/nav/play_active.svg',
     page: '/pages/arena/index',
   },
   {
     key: 'history',
     label: '历史',
-    icon: '/assets/nav/history.svg',
-    iconActive: '/assets/nav/history_active.svg',
+    icon: 'https://xcx.ukb88.com/assets/nav/history.svg',
+    iconActive: 'https://xcx.ukb88.com/assets/nav/history_active.svg',
     page: '/pages/result/index',
   },
 ];

@@ -1,5 +1,5 @@
 <view class="paper-bg shop-page">
-  <image class="global-bg-image" src="/assets/bg/bg.png" mode="scaleToFill"></image>
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
 
   <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
     <view class="app-user">
@@ -11,7 +11,7 @@
       <view class="app-status-pill">
         <text class="app-status-text">装备中心</text>
       </view>
-      <view class="app-gear" bindtap="onBack">✦</view>
+      <view class="app-gear" bindtap="onBack" hover-class="clickable-hover">✦</view>
     </view>
   </view>
 
@@ -33,6 +33,7 @@
         class="tab-item {{ activeCategory == item.key ? 'active' : '' }}"
         data-category="{{ item.key }}"
         bindtap="onSwitchCategory"
+        hover-class="clickable-hover"
       >
         {{ item.label }}
         <view class="tab-line" wx:if="{{ activeCategory == item.key }}"></view>
@@ -40,7 +41,7 @@
     </view>
 
     <view class="goods-grid">
-      <view wx:for="{{ goods }}" wx:key="id" class="goods-card cursor-hover">
+      <view wx:for="{{ goods }}" wx:key="id" class="goods-card" hover-class="clickable-hover">
         <view class="goods-head">
           <view class="goods-badge">{{ item.category == 'skin' ? item.rarityLabel : '灵宠' }}</view>
           <view class="goods-price">
@@ -77,6 +78,7 @@
           data-item-id="{{ item.id }}"
           data-action="{{ item.status.disabled ? '' : item.status.action }}"
           bindtap="onTapAction"
+          hover-class="btn-hover"
         >
           {{ item.status.text }}
         </view>

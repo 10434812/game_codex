@@ -1,7 +1,7 @@
 <view class="paper-bg room-page">
-  <image class="global-bg-image" src="/assets/bg/roombg.png" mode="scaleToFill"></image>
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/roombg.png" mode="scaleToFill"></image>
   <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
-    <view class="app-user" bindtap="onTapProfile">
+    <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
       <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
       <view wx:else class="app-user-avatar"></view>
       <text class="app-user-name">{{userProfile.nickName}}</text>
@@ -11,7 +11,7 @@
         <text class="app-status-dot">●</text>
         <text class="app-status-text">{{modeText}}</text>
       </view>
-      <view class="app-gear">⚙</view>
+      <view class="app-gear" hover-class="clickable-hover">⚙</view>
     </view>
   </view>
 
@@ -42,22 +42,22 @@
     </view>
 
     <view class="bottom-actions">
-      <button class="start-btn" bindtap="start" disabled="{{starting}}">
+      <button class="start-btn" bindtap="start" disabled="{{starting}}" hover-class="btn-hover">
         <text class="btn-icon">▶</text>
         <text>{{startButtonText}}</text>
       </button>
-      <button class="primary-btn invite-btn" bindtap="inviteFriend" disabled="{{starting}}">
+      <button class="primary-btn invite-btn" bindtap="inviteFriend" disabled="{{starting}}" hover-class="btn-hover">
         <text class="btn-icon">👤+</text>
         <text>邀请好友</text>
       </button>
-      <button class="ready-btn" bindtap="toggleReady" disabled="{{starting}}">
+      <button class="ready-btn" bindtap="toggleReady" disabled="{{starting}}" hover-class="btn-hover">
         <text class="btn-icon">{{selfReady ? '✓' : '○'}}</text>
         <text>{{selfReady ? '取消准备' : '准备'}}</text>
       </button>
     </view>
 
     <view class="bottom-nav">
-      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab">
+      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
         <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
         <text>{{ item.label }}</text>
       </view>

@@ -3,7 +3,7 @@ const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, STAGES} = require('../../utils/
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
 const playerStats = require('../../utils/player-stats');
-const {playCue} = require('../../utils/audio');
+const {playCue, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency} = require('../../utils/format');
@@ -48,6 +48,7 @@ Page({
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     const page = e.currentTarget.dataset.page;
     if (!page || page === '/pages/home/index') {
       return;
@@ -78,11 +79,13 @@ Page({
   },
   startGame() {
     playCue('tap', {volume: 0.75});
+    playVibrate('medium');
     const stage = this.data.stages[this.data.activeStage] || DEFAULT_STAGE;
     gameStore.createRoomFromStage(stage);
     wx.navigateTo({url: '/pages/room/index'});
   },
   onStageChange(e) {
+    playVibrate('light');
     this.setData({
       activeStage: e.detail.current,
     });
@@ -106,10 +109,12 @@ Page({
     });
   },
   onTapProfile() {
+    playVibrate('light');
     wx.navigateTo({url: '/pages/profile/index'});
   },
   onTapIncome() {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     wx.navigateTo({url: '/pages/income/index'});
   },
 });

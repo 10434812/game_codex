@@ -9,6 +9,38 @@
       {
         "type": "folder",
         "value": "assets/avatars"
+      },
+      {
+        "type": "folder",
+        "value": "assets/111"
+      },
+      {
+        "type": "folder",
+        "value": "assets/skins"
+      },
+      {
+        "type": "folder",
+        "value": "assets/stages"
+      },
+      {
+        "type": "folder",
+        "value": "assets/bg"
+      },
+      {
+        "type": "folder",
+        "value": "assets/stitch_wechat_mini_program_clone 2"
+      },
+      {
+        "type": "folder",
+        "value": "docs"
+      },
+      {
+        "type": "folder",
+        "value": "tests"
+      },
+      {
+        "type": "file",
+        "value": "game_logic_analysis.md"
       }
     ],
     "include": [
@@ -19,10 +51,6 @@
       {
         "type": "file",
         "value": "assets/iocns/2657.png_30012.png"
-      },
-      {
-        "type": "file",
-        "value": "assets/iocns/fudai.png"
       }
     ]
   },

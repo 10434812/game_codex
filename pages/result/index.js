@@ -2,7 +2,7 @@ const {getNavLayout} = require('../../utils/nav');
 const {MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const playerStats = require('../../utils/player-stats');
-const {playCue} = require('../../utils/audio');
+const {playCue, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency, formatNumber} = require('../../utils/format');
@@ -60,17 +60,17 @@ function createEmptyTop3() {
     first: {
       name: '--',
       score: '0',
-      avatar: '/assets/bg/avatars/avatar_01.png',
+      avatar: 'https://xcx.ukb88.com/assets/bg/avatars/avatar_01.png',
     },
     second: {
       name: '--',
       score: '0',
-      avatar: '/assets/bg/avatars/avatar_02.png',
+      avatar: 'https://xcx.ukb88.com/assets/bg/avatars/avatar_02.png',
     },
     third: {
       name: '--',
       score: '0',
-      avatar: '/assets/bg/avatars/avatar_03.png',
+      avatar: 'https://xcx.ukb88.com/assets/bg/avatars/avatar_03.png',
     },
   };
 }
@@ -142,6 +142,39 @@ Page({
   },
   onUnload() {
     this.stopResultFirework();
+    this.stopNumberAnimations();
+  },
+  stopNumberAnimations() {
+    if (this.gainAnimTimer) clearInterval(this.gainAnimTimer);
+    if (this.incomeAnimTimer) clearInterval(this.incomeAnimTimer);
+  },
+  animateNumber(targetValue, formatFn, stateKey, duration = 1200) {
+    const steps = 30;
+    const stepTime = duration / steps;
+    let currentStep = 0;
+    const startValue = 0;
+    const diff = targetValue - startValue;
+
+    const timer = setInterval(() => {
+      currentStep++;
+      const progress = currentStep / steps;
+      // easeOutExpo
+      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      const currentValue = Math.floor(startValue + diff * easeProgress);
+
+      this.setData({
+        [stateKey]: formatFn(currentValue)
+      });
+
+      if (currentStep >= steps) {
+        clearInterval(timer);
+        this.setData({
+          [stateKey]: formatFn(targetValue)
+        });
+      }
+    }, stepTime);
+    
+    return timer;
   },
   playResultFirework() {
     this.stopResultFirework();
@@ -151,8 +184,10 @@ Page({
       fireworkParticles: generateFireworks(6),
     });
     playCue('resultWin', {volume: 0.8});
+    playVibrate('heavy');
     this.resultWinInterval = setInterval(() => {
       playCue('resultWin', {volume: 0.8});
+      playVibrate('medium');
       // 持续生成新烟花
       this.setData({
         fireworkParticles: generateFireworks(4),
@@ -184,25 +219,33 @@ Page({
       return;
     }
 
+    this.stopNumberAnimations();
+
     this.setData({
       top3: state.result.top3,
       rankList: state.result.rest,
-      gainText: formatNumber(state.result.gain),
-      incomeText: formatCurrency(state.result.coins),
+      gainText: '0',
+      incomeText: '¥0',
       achievementText: state.result.achievement,
       modeText: state.modeText || MATCH_MODE_TEXT,
       resultId: state.result.resultId || '',
       totalText: `总计 ${state.result.ranking.length} 玩家`,
       expProgress: buildExpProgress(playerStats.getSummary().totalExp),
     });
+
+    // 播放数字滚动动画
+    this.gainAnimTimer = this.animateNumber(state.result.gain, formatNumber, 'gainText', 1200);
+    this.incomeAnimTimer = this.animateNumber(state.result.coins, formatCurrency, 'incomeText', 1500);
   },
   replay() {
     playCue('tap', {volume: 0.75});
+    playVibrate('medium');
     gameStore.restartGame();
     wx.redirectTo({url: '/pages/arena/index'});
   },
   goHome() {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     gameStore.resetToHome();
     wx.reLaunch({url: '/pages/home/index'});
   },
@@ -214,6 +257,7 @@ Page({
     });
   },
   onTapProfile() {
+    playVibrate('light');
     wx.navigateTo({url: '/pages/profile/index'});
   },
   onTapPlayer(e) {
@@ -221,6 +265,7 @@ Page({
     if (!player || player.name === '--') return;
 
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     const state = gameStore.getState();
     const breakdownMap = (state.result && state.result.scoreBreakdownMap) || {};
     const breakdown = breakdownMap[player.id] || {
@@ -243,12 +288,14 @@ Page({
   },
   closeScorePopup() {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     this.setData({
       showScorePopup: false,
     });
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     const page = e.currentTarget.dataset.page;
     if (!page || page === '/pages/result/index') {
       return;

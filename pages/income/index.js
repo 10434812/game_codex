@@ -1,7 +1,7 @@
 const {getNavLayout} = require('../../utils/nav');
 const shopStore = require('../../utils/shop-store');
 const {formatCurrency, formatDateTime} = require('../../utils/format');
-const {playCue} = require('../../utils/audio');
+const {playCue, playVibrate} = require('../../utils/audio');
 
 function buildTypeLabel(type) {
   const map = {
@@ -52,6 +52,7 @@ Page({
   },
   onBack() {
     playCue('tap', {volume: 0.75});
+    playVibrate('light');
     wx.navigateBack({delta: 1});
   },
 });

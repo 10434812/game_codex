@@ -244,6 +244,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: btn-breathe 2s infinite ease-in-out;
+  box-shadow: 0 8rpx 20rpx rgba(229, 124, 31, 0.4);
+}
+
+@keyframes btn-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 8rpx 20rpx rgba(229, 124, 31, 0.4);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 12rpx 28rpx rgba(229, 124, 31, 0.6);
+  }
 }
 
 .start-btn::after {

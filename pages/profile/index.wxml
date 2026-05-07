@@ -1,5 +1,5 @@
 <view class="paper-bg profile-page">
-  <image class="global-bg-image" src="/assets/bg/bg.png" mode="scaleToFill"></image>
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
 
   <view class="app-header profile-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
     <view class="app-user">

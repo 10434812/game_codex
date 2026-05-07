@@ -1,7 +1,7 @@
 const {getNavLayout} = require('../../utils/nav')
 const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, ROOM_UI_LIMIT, WAITING_SLOT_NAME} = require('../../utils/constants')
 const gameStore = require('../../utils/game-store')
-const {playCue} = require('../../utils/audio')
+const {playCue, playVibrate} = require('../../utils/audio')
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile')
 
 function buildEmptySlot() {
@@ -110,6 +110,7 @@ Page({
       return
     }
     playCue('tap', {volume: 0.75})
+    playVibrate('light')
     playCue('invite', {volume: 0.7})
     const before = gameStore.getState()
     const state = gameStore.inviteHumanPlayer()
@@ -127,6 +128,7 @@ Page({
       return
     }
     playCue('tap', {volume: 0.75})
+    playVibrate('medium')
     const state = gameStore.setSelfReady(!this.data.selfReady)
     this.observeState(state)
   },
@@ -140,6 +142,7 @@ Page({
       return
     }
     playCue('tap', {volume: 0.75})
+    playVibrate('medium')
     this.clearStartCountdown()
     let left = 3
     this.setData({
@@ -193,6 +196,7 @@ Page({
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75})
+    playVibrate('light')
     const page = e.currentTarget.dataset.page
     if (!page || page === '/pages/room/index') {
       return
@@ -214,6 +218,7 @@ Page({
     wx.redirectTo({url: page})
   },
   onTapProfile() {
+    playVibrate('light')
     wx.navigateTo({url: '/pages/profile/index'})
   },
 })

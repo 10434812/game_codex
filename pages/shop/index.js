@@ -2,6 +2,7 @@ const {getNavLayout} = require('../../utils/nav');
 const shopStore = require('../../utils/shop-store');
 const userProfile = require('../../utils/user-profile');
 const {formatCurrency} = require('../../utils/format');
+const {playCue, playVibrate} = require('../../utils/audio');
 
 const CATEGORY_OPTIONS = [
   {key: 'skin', label: '皮肤'},
@@ -84,6 +85,8 @@ Page({
     if (!category || category === this.data.activeCategory) {
       return;
     }
+    playCue('tap', {volume: 0.6});
+    playVibrate('light');
     this.setData({
       activeCategory: category,
       goods: buildGoods(category),
@@ -101,14 +104,25 @@ Page({
       action === 'buy' ? shopStore.purchaseItem(category, itemId) : shopStore.equipItem(category, itemId);
 
     if (!result.ok) {
+      playCue('actionFail', {volume: 0.7});
       wx.showToast({title: result.message || '操作未完成', icon: 'none'});
       return;
+    }
+
+    if (action === 'buy') {
+      playCue('pairSelf', {volume: 0.8});
+      playVibrate('medium');
+    } else {
+      playCue('tap', {volume: 0.7});
+      playVibrate('light');
     }
 
     wx.showToast({title: result.message || '操作已完成', icon: 'none'});
     this.syncPage();
   },
   onBack() {
+    playCue('tap', {volume: 0.6});
+    playVibrate('light');
     wx.navigateBack({delta: 1});
   },
 });

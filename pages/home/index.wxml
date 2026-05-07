@@ -1,7 +1,7 @@
 <view class="paper-bg home-page">
-  <image class="global-bg-image" src="/assets/bg/bg.png" mode="scaleToFill"></image>
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
   <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
-    <view class="app-user" bindtap="onTapProfile">
+    <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
       <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
       <view wx:else class="app-user-avatar"></view>
       <text class="app-user-name">{{userProfile.nickName}}</text>
@@ -11,7 +11,7 @@
         <text class="app-status-dot">●</text>
         <text class="app-status-text">{{modeText}}</text>
       </view>
-      <view class="app-gear">⚙</view>
+      <view class="app-gear" hover-class="clickable-hover">⚙</view>
     </view>
   </view>
 
@@ -36,7 +36,7 @@
         </view>
       </view>
       <view class="profile-divider"></view>
-      <view class="account-row clickable" bindtap="onTapIncome">
+      <view class="account-row clickable" bindtap="onTapIncome" hover-class="clickable-hover">
         <view class="account-copy">
           <text class="label">统一资金账户</text>
           <text class="value gold">{{balanceText}}</text>
@@ -66,10 +66,10 @@
       </swiper>
     </view>
 
-    <button class="primary-btn start-btn" bindtap="startGame">快速开始 ⚡</button>
+    <button class="primary-btn start-btn" bindtap="startGame" hover-class="btn-hover">快速开始 ⚡</button>
 
     <view class="bottom-nav">
-      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab">
+      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
         <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
         <text>{{ item.label }}</text>
       </view>

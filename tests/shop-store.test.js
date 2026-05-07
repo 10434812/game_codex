@@ -101,7 +101,7 @@ test('equipItem 会更新当前装备状态', () => {
   assert.equal(display.equippedPetId, 'pet-fox');
   assert.equal(display.skinClass, 'skin-storm');
   assert.equal(display.petIcon, '🦊');
-  assert.equal(display.petImage, '/assets/111/pets/linghu.png');
+  assert.equal(display.petImage, 'https://xcx.ukb88.com/assets/111/pets/linghu.png');
   assert.equal(display.petAccent, '#de6a45');
 });
 
