@@ -76,14 +76,14 @@
       </view>
       <view class="invest-title">{{ activePosition ? activePosition.name : activeOpportunity.name }}</view>
       <view wx:if="{{ activePosition }}">
-        <view class="invest-line">持仓成本：{{ activePosition.cost }}</view>
-        <view class="invest-line">持有时间：{{ activePositionHoldText }}</view>
+        <view class="invest-line invest-highlight">持仓成本：{{ activePosition.cost }}</view>
+        <view class="invest-line invest-highlight">持有时间：{{ activePositionHoldText }}</view>
         <view class="invest-line">再次弹出会提示卖出当前持仓</view>
       </view>
       <view wx:else>
-        <view class="invest-line">投入成本：{{ activeOpportunity.cost }}</view>
-        <view class="invest-line">预计波动：{{ activeOpportunity.floatRangeText }}</view>
-        <view class="invest-line">{{ activeOpportunity.summary }}</view>
+        <view class="invest-line invest-highlight">投入成本：{{ activeOpportunity.cost }}</view>
+        <view class="invest-line invest-highlight">预计波动：{{ activeOpportunity.floatRangeText }}</view>
+        <view class="invest-line invest-summary">{{ activeOpportunity.summary }}</view>
       </view>
       <view class="invest-actions">
         <button class="invest-btn ghost" bindtap="onCloseOpportunity">先放弃</button>

@@ -491,3 +491,74 @@
   color: #a88b69;
   letter-spacing: 2rpx;
 }
+
+/* 烟花特效样式 */
+.fireworks-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.firework {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.firework-particle {
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  background: var(--color);
+  border-radius: 50%;
+  box-shadow: 0 0 10rpx var(--color), 0 0 20rpx var(--color);
+  animation: firework-burst 1.2s ease-out forwards;
+  transform: rotate(var(--angle)) translateX(0);
+  opacity: 1;
+}
+
+@keyframes firework-burst {
+  0% {
+    transform: rotate(var(--angle)) translateX(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: rotate(var(--angle)) translateX(200rpx) scale(0);
+    opacity: 0;
+  }
+}
+
+/* 额外的闪光效果 */
+.firework::before {
+  content: '';
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 20rpx white, 0 0 40rpx white;
+  animation: firework-flash 0.3s ease-out forwards;
+}
+
+@keyframes firework-flash {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(3);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}

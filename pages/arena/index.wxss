@@ -461,8 +461,8 @@
 .invest-title {
   margin-top: 6rpx;
   color: #4f2f1f;
-  font-size: 30rpx;
-  font-weight: 700;
+  font-size: 24rpx;
+  font-weight: 600;
 }
 
 .fortune-panel .invest-line {
@@ -481,6 +481,17 @@
 
 .invest-line.neg {
   color: #7a5c34;
+}
+
+.invest-highlight {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #e53935;
+}
+
+.invest-summary {
+  font-size: 20rpx;
+  color: #8b7355;
 }
 
 .invest-actions {

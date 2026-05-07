@@ -42,6 +42,10 @@
     </view>
 
     <view class="bottom-actions">
+      <button class="start-btn" bindtap="start" disabled="{{starting}}">
+        <text class="btn-icon">▶</text>
+        <text>{{startButtonText}}</text>
+      </button>
       <button class="primary-btn invite-btn" bindtap="inviteFriend" disabled="{{starting}}">
         <text class="btn-icon">👤+</text>
         <text>邀请好友</text>
@@ -49,10 +53,6 @@
       <button class="ready-btn" bindtap="toggleReady" disabled="{{starting}}">
         <text class="btn-icon">{{selfReady ? '✓' : '○'}}</text>
         <text>{{selfReady ? '取消准备' : '准备'}}</text>
-      </button>
-      <button class="start-btn" bindtap="start" disabled="{{starting}}">
-        <text class="btn-icon">▶</text>
-        <text>{{startButtonText}}</text>
       </button>
     </view>
 

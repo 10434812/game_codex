@@ -10,6 +10,51 @@ const {formatCurrency, formatNumber} = require('../../utils/format');
 const RESULT_FIREWORK_MS = 5000;
 const RESULT_FIREWORK_STEP_MS = 1800;
 
+// 烟花颜色配置
+const FIREWORK_COLORS = [
+  '#FFD700', // 金色
+  '#FF6B6B', // 红色
+  '#4ECDC4', // 青色
+  '#45B7D1', // 蓝色
+  '#96CEB4', // 绿色
+  '#FFEAA7', // 黄色
+  '#DDA0DD', // 粉紫
+  '#FF8C00', // 橙色
+];
+
+// 生成单个烟花
+function createFirework(index) {
+  const particleCount = 12 + Math.floor(Math.random() * 8);
+  const particles = [];
+  const baseAngle = (360 / particleCount);
+
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      angle: baseAngle * i + Math.random() * 20 - 10,
+      color: FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)],
+      size: 8 + Math.random() * 8,
+      pDelay: Math.random() * 100,
+    });
+  }
+
+  return {
+    id: `fw_${Date.now()}_${index}`,
+    left: 100 + Math.random() * 550,
+    top: 100 + Math.random() * 300,
+    delay: index * 300 + Math.random() * 200,
+    particles,
+  };
+}
+
+// 生成一批烟花
+function generateFireworks(count) {
+  const fireworks = [];
+  for (let i = 0; i < count; i++) {
+    fireworks.push(createFirework(i));
+  }
+  return fireworks;
+}
+
 function createEmptyTop3() {
   return {
     first: {
@@ -75,6 +120,8 @@ Page({
       investment: '0',
       fortuneBag: '0',
     },
+    showFireworks: false,
+    fireworkParticles: [],
   },
   onLoad() {
     try {
@@ -98,9 +145,18 @@ Page({
   },
   playResultFirework() {
     this.stopResultFirework();
+    // 显示烟花特效
+    this.setData({
+      showFireworks: true,
+      fireworkParticles: generateFireworks(6),
+    });
     playCue('resultWin', {volume: 0.8});
     this.resultWinInterval = setInterval(() => {
       playCue('resultWin', {volume: 0.8});
+      // 持续生成新烟花
+      this.setData({
+        fireworkParticles: generateFireworks(4),
+      });
     }, RESULT_FIREWORK_STEP_MS);
     this.resultWinTimer = setTimeout(() => {
       this.stopResultFirework();
@@ -115,6 +171,11 @@ Page({
       clearInterval(this.resultWinInterval);
       this.resultWinInterval = null;
     }
+    // 隐藏烟花
+    this.setData({
+      showFireworks: false,
+      fireworkParticles: [],
+    });
   },
   refreshResult() {
     const state = gameStore.getState();
