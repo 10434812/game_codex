@@ -3,7 +3,7 @@ const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constant
 const {buildVisibleScoreState} = require('../../utils/game-engine');
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
-const {playCue, playVibrate} = require('../../utils/audio');
+const {playCue, playStageBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {
   BOARD_LAYOUT,
@@ -98,6 +98,7 @@ Page({
   onShow() {
     this.syncUserProfile();
     this.syncShopDisplay();
+    this.syncStageMusic();
     const state = this.ensureArenaState();
     if (!state) {
       return;
@@ -151,6 +152,10 @@ Page({
     this.setData({
       shopDisplay: shopStore.getEquippedDisplay(),
     });
+  },
+  syncStageMusic() {
+    const snapshot = gameStore.getState();
+    playStageBgm(snapshot.stage || DEFAULT_STAGE, {volume: 0.38});
   },
   onTapProfile() {
     wx.navigateTo({url: '/pages/profile/index'});

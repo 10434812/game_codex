@@ -11,10 +11,17 @@ const SOURCES = {
   countdown1: 'https://xcx.ukb88.com/assets/audio/battle/countdown-1.wav',
   gameStart: 'https://xcx.ukb88.com/assets/audio/battle/countdown-go.wav',
   resultWin: 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3',
+  bgm: '/assets/audio/result/bgm.mp3',
+  bg3: '/assets/audio/result/bg3.mp3',
+};
+
+const STAGE_BGM_SOURCES = {
+  '万里长城': SOURCES.bg3,
 };
 
 let initialized = false;
 let sharedAudio = null;
+let bgmAudio = null;
 const loopPool = {};
 
 function initAudioOption() {
@@ -55,6 +62,20 @@ function getAudioByMode(name, useLoop) {
   return sharedAudio;
 }
 
+function getBgmAudio() {
+  if (!bgmAudio) {
+    bgmAudio = createAudio();
+  }
+  return bgmAudio;
+}
+
+function getStageBgmSrc(stage) {
+  if (!stage) {
+    return SOURCES.bgm;
+  }
+  return STAGE_BGM_SOURCES[stage.name] || SOURCES.bgm;
+}
+
 function playCue(name, options = {}) {
   initAudioOption();
   const src = SOURCES[name];
@@ -81,6 +102,68 @@ function playCue(name, options = {}) {
   }
 }
 
+function playBgm(options = {}) {
+  initAudioOption();
+  const src = SOURCES.bgm;
+  if (!src) {
+    return null;
+  }
+
+  try {
+    const audio = getBgmAudio();
+    try {
+      audio.stop();
+      if (typeof audio.seek === 'function') {
+        audio.seek(0);
+      }
+    } catch (error) {}
+    audio.src = src;
+    audio.loop = true;
+    audio.volume = typeof options.volume === 'number' ? options.volume : 0.38;
+    audio.play();
+    return audio;
+  } catch (error) {
+    return null;
+  }
+}
+
+function playStageBgm(stage, options = {}) {
+  initAudioOption();
+  const src = getStageBgmSrc(stage);
+  if (!src) {
+    return null;
+  }
+
+  try {
+    const audio = getBgmAudio();
+    try {
+      audio.stop();
+      if (typeof audio.seek === 'function') {
+        audio.seek(0);
+      }
+    } catch (error) {}
+    audio.src = src;
+    audio.loop = true;
+    audio.volume = typeof options.volume === 'number' ? options.volume : 0.38;
+    audio.play();
+    return audio;
+  } catch (error) {
+    return null;
+  }
+}
+
+function stopBgm() {
+  if (!bgmAudio) {
+    return;
+  }
+  try {
+    bgmAudio.stop();
+    if (typeof bgmAudio.seek === 'function') {
+      bgmAudio.seek(0);
+    }
+  } catch (error) {}
+}
+
 function playVibrate(type = 'light') {
   try {
     wx.vibrateShort({ type });
@@ -89,5 +172,8 @@ function playVibrate(type = 'light') {
 
 module.exports = {
   playCue,
+  playBgm,
+  playStageBgm,
+  stopBgm,
   playVibrate,
 };

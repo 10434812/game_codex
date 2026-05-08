@@ -25,6 +25,14 @@ page {
   --border-warm: rgba(205, 171, 114, 0.6);
   --border-gold: rgba(221, 198, 154, 0.75);
 
+  /* 头像外框，可统一调整边框、留白和颜色 */
+  --avatar-ring-padding: 5rpx;
+  --avatar-ring-border: 4rpx;
+  --avatar-ring-border-color: #9a6e3a;
+  --avatar-ring-bg-start: #ffd45f;
+  --avatar-ring-bg-end: #f1a91f;
+  --avatar-ring-shadow: 0 8rpx 18rpx rgba(145, 98, 27, 0.22);
+
   background: #f6ebd1;
   color: #51331c;
   font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -226,4 +234,3 @@ page {
   transform: scale(0.97);
   transition: all 0.1s ease;
 }
-

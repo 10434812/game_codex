@@ -2,13 +2,10 @@ const {getNavLayout} = require('../../utils/nav');
 const {MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const playerStats = require('../../utils/player-stats');
-const {playCue, playVibrate} = require('../../utils/audio');
+const {playCue, stopBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency, formatNumber} = require('../../utils/format');
-
-const RESULT_FIREWORK_MS = 5000;
-const RESULT_FIREWORK_STEP_MS = 1800;
 
 // 烟花颜色配置
 const FIREWORK_COLORS = [
@@ -131,6 +128,7 @@ Page({
   },
   onShow() {
     this.syncUserProfile();
+    stopBgm();
     this.refreshResult();
     if (this.data.resultId && this.data.resultId !== this.lastPlayedResultId) {
       this.playResultFirework();
@@ -147,6 +145,45 @@ Page({
   stopNumberAnimations() {
     if (this.gainAnimTimer) clearInterval(this.gainAnimTimer);
     if (this.incomeAnimTimer) clearInterval(this.incomeAnimTimer);
+  },
+  playResultWinAudio() {
+    if (!this.resultFireworkActive) {
+      return;
+    }
+
+    if (this.resultWinAudio) {
+      try {
+        this.resultWinAudio.stop();
+        this.resultWinAudio.destroy();
+      } catch (error) {}
+      this.resultWinAudio = null;
+    }
+
+    const audio = wx.createInnerAudioContext();
+    audio.autoplay = false;
+    audio.loop = false;
+    audio.volume = 0.8;
+    audio.src = 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3';
+    audio.onEnded(() => {
+      if (!this.resultFireworkActive) {
+        return;
+      }
+      this.setData({
+        fireworkParticles: generateFireworks(4),
+      });
+      playVibrate('medium');
+      this.playResultWinAudio();
+    });
+    audio.onError(() => {
+      if (this.resultWinAudio === audio) {
+        this.resultWinAudio = null;
+      }
+    });
+    this.resultWinAudio = audio;
+
+    try {
+      audio.play();
+    } catch (error) {}
   },
   animateNumber(targetValue, formatFn, stateKey, duration = 1200) {
     const steps = 30;
@@ -178,33 +215,23 @@ Page({
   },
   playResultFirework() {
     this.stopResultFirework();
+    this.resultFireworkActive = true;
     // 显示烟花特效
     this.setData({
       showFireworks: true,
       fireworkParticles: generateFireworks(6),
     });
-    playCue('resultWin', {volume: 0.8});
     playVibrate('heavy');
-    this.resultWinInterval = setInterval(() => {
-      playCue('resultWin', {volume: 0.8});
-      playVibrate('medium');
-      // 持续生成新烟花
-      this.setData({
-        fireworkParticles: generateFireworks(4),
-      });
-    }, RESULT_FIREWORK_STEP_MS);
-    this.resultWinTimer = setTimeout(() => {
-      this.stopResultFirework();
-    }, RESULT_FIREWORK_MS);
+    this.playResultWinAudio();
   },
   stopResultFirework() {
-    if (this.resultWinTimer) {
-      clearTimeout(this.resultWinTimer);
-      this.resultWinTimer = null;
-    }
-    if (this.resultWinInterval) {
-      clearInterval(this.resultWinInterval);
-      this.resultWinInterval = null;
+    this.resultFireworkActive = false;
+    if (this.resultWinAudio) {
+      try {
+        this.resultWinAudio.stop();
+        this.resultWinAudio.destroy();
+      } catch (error) {}
+      this.resultWinAudio = null;
     }
     // 隐藏烟花
     this.setData({

@@ -3,7 +3,7 @@ const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, STAGES} = require('../../utils/
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
 const playerStats = require('../../utils/player-stats');
-const {playCue, playVibrate} = require('../../utils/audio');
+const {playCue, playStageBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency} = require('../../utils/format');
@@ -45,6 +45,7 @@ Page({
   onShow() {
     this.syncUserProfile();
     this.syncOverview();
+    this.syncStageMusic();
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
@@ -89,6 +90,11 @@ Page({
     this.setData({
       activeStage: e.detail.current,
     });
+    this.syncStageMusic();
+  },
+  syncStageMusic() {
+    const stage = this.data.stages[this.data.activeStage] || DEFAULT_STAGE;
+    playStageBgm(stage, {volume: 0.38});
   },
   syncUserProfile() {
     const cached = getCachedProfile();

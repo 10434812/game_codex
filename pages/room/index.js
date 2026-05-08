@@ -1,7 +1,7 @@
 const {getNavLayout} = require('../../utils/nav')
 const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, ROOM_UI_LIMIT, WAITING_SLOT_NAME} = require('../../utils/constants')
 const gameStore = require('../../utils/game-store')
-const {playCue, playVibrate} = require('../../utils/audio')
+const {playCue, playStageBgm, playVibrate} = require('../../utils/audio')
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile')
 
 function buildEmptySlot() {
@@ -58,6 +58,7 @@ Page({
   },
   onShow() {
     this.syncUserProfile()
+    this.syncStageMusic()
     const snapshot = gameStore.getState()
     this.observeState(gameStore.ensureRoom(snapshot.stage || DEFAULT_STAGE))
     this.unsubscribeStore()
@@ -175,6 +176,10 @@ Page({
       userProfile: cached,
       userAuthorized: hasValidProfile(cached),
     })
+  },
+  syncStageMusic() {
+    const snapshot = gameStore.getState()
+    playStageBgm(snapshot.stage || DEFAULT_STAGE, {volume: 0.38})
   },
   clearStartCountdown() {
     if (this.startCountdownTimer) {

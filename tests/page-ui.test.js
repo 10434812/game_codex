@@ -77,6 +77,86 @@ function loadPage(relativePath) {
   return captured;
 }
 
+function loadAppWithStubbedAudio(audioStub) {
+  let captured = null;
+  global.App = (config) => {
+    captured = config;
+    if (typeof config.onLaunch === 'function') {
+      config.onLaunch();
+    }
+    if (typeof config.onShow === 'function') {
+      config.onShow();
+    }
+    return config;
+  };
+
+  const audioPath = require.resolve('../utils/audio.js');
+  const appPath = require.resolve('../app.js');
+  const originalAudioModule = require.cache[audioPath];
+  require.cache[audioPath] = {
+    id: audioPath,
+    filename: audioPath,
+    loaded: true,
+    exports: audioStub,
+  };
+
+  delete require.cache[appPath];
+  try {
+    require('../app.js');
+  } finally {
+    if (originalAudioModule) {
+      require.cache[audioPath] = originalAudioModule;
+    } else {
+      delete require.cache[audioPath];
+    }
+  }
+
+  return captured;
+}
+
+function loadPageWithStubbedAudio(relativePath, audioStub) {
+  let captured = null;
+  global.Page = (config) => {
+    captured = createPageInstance(config);
+    if (typeof captured.onLoad === 'function') {
+      captured.onLoad();
+    }
+    if (typeof captured.onShow === 'function') {
+      captured.onShow();
+    }
+    return config;
+  };
+
+  const audioPath = require.resolve('../utils/audio.js');
+  const pagePath = require.resolve(relativePath);
+  const originalAudioModule = require.cache[audioPath];
+  require.cache[audioPath] = {
+    id: audioPath,
+    filename: audioPath,
+    loaded: true,
+    exports: audioStub,
+  };
+
+  delete require.cache[pagePath];
+  try {
+    require(relativePath);
+  } finally {
+    if (originalAudioModule) {
+      require.cache[audioPath] = originalAudioModule;
+    } else {
+      delete require.cache[audioPath];
+    }
+  }
+
+  return captured;
+}
+
+function loadAudioModule() {
+  const audioPath = require.resolve('../utils/audio.js');
+  delete require.cache[audioPath];
+  return require('../utils/audio.js');
+}
+
 function createPageInstance(config) {
   return {
     ...config,
@@ -284,8 +364,125 @@ test('红包和结算音效会切到新的资源文件', () => {
   const resultJs = fs.readFileSync(path.join(__dirname, '../pages/result/index.js'), 'utf8');
   const projectConfig = fs.readFileSync(path.join(__dirname, '../project.config.json'), 'utf8');
 
-  assert.match(audioJs, /resultWin:\s*'\/assets\/audio\/result\/yanhua\.mp3'/);
+  assert.match(audioJs, /resultWin:\s*'https:\/\/xcx\.ukb88\.com\/assets\/audio\/result\/yanhua\.mp3'/);
+  assert.match(audioJs, /bgm:\s*'\/assets\/audio\/result\/bgm\.mp3'/);
+  assert.match(audioJs, /bg3:\s*'\/assets\/audio\/result\/bg3\.mp3'/);
+  assert.match(audioJs, /'万里长城':\s*SOURCES\.bg3/);
   assert.match(investmentJs, /FORTUNE_BAG_ASSETS[\s\S]*fudai\.png/);
-  assert.match(resultJs, /const RESULT_FIREWORK_MS = 5000;/);
-  assert.match(projectConfig, /assets\/iocns\/fudai\.png/);
+  assert.match(resultJs, /playResultWinAudio\(\)/);
+  assert.match(projectConfig, /assets\/iocns\/2657\.png_300\.png/);
+});
+
+test('app 启动时会自动播放全局背景音乐并在返回前台时重新触发', () => {
+  createWxStub();
+  const playStageBgmCalls = [];
+  const app = loadAppWithStubbedAudio({
+    playStageBgm(stage, options) {
+      playStageBgmCalls.push({stage, options});
+      return null;
+    },
+  });
+
+  assert.ok(app);
+  assert.equal(playStageBgmCalls.length, 2);
+  assert.equal(playStageBgmCalls[0].stage.name, '万里长城');
+  assert.deepEqual(playStageBgmCalls[0].options, { volume: 0.38 });
+  assert.equal(playStageBgmCalls[1].stage.name, '万里长城');
+  assert.deepEqual(playStageBgmCalls[1].options, { volume: 0.38 });
+});
+
+test('长城主题会切换到 bg3.mp3', () => {
+  createWxStub();
+  const audioEvents = [];
+  global.wx.createInnerAudioContext = () => ({
+    stop() {
+      audioEvents.push('stop');
+    },
+    destroy() {},
+    seek() {
+      audioEvents.push('seek');
+    },
+    play() {
+      audioEvents.push('play');
+    },
+    onError() {},
+    set src(value) {
+      audioEvents.push(`src:${value}`);
+    },
+    get src() {
+      return '';
+    },
+    set loop(value) {
+      audioEvents.push(`loop:${value}`);
+    },
+    set volume(value) {
+      audioEvents.push(`volume:${value}`);
+    },
+  });
+
+  const audio = loadAudioModule();
+  audio.playStageBgm({name: '万里长城'}, {volume: 0.44});
+
+  assert.ok(audioEvents.includes('src:/assets/audio/result/bg3.mp3'));
+  assert.ok(audioEvents.includes('loop:true'));
+  assert.ok(audioEvents.includes('volume:0.44'));
+});
+
+test('结算页炮声会等当前音频播完再接下一次', () => {
+  createWxStub();
+  const audioContexts = [];
+  global.wx.createInnerAudioContext = () => {
+    const context = {
+      stop() {},
+      destroy() {},
+      play() {
+        this.playCount = (this.playCount || 0) + 1;
+      },
+      onEnded(handler) {
+        this.endedHandler = handler;
+      },
+      onError() {},
+      set src(value) {
+        this._src = value;
+      },
+      set volume(value) {
+        this._volume = value;
+      },
+      set loop(value) {
+        this._loop = value;
+      },
+    };
+    audioContexts.push(context);
+    return context;
+  };
+
+  const resultPage = createPageInstance(loadPage('../pages/result/index.js'));
+  resultPage.setData({
+    resultId: 'result-001',
+  });
+
+  resultPage.playResultFirework();
+
+  assert.equal(audioContexts.length, 1);
+  assert.equal(audioContexts[0]._src, 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3');
+  assert.equal(audioContexts[0]._loop, false);
+
+  audioContexts[0].endedHandler();
+
+  assert.equal(audioContexts.length, 2);
+  assert.equal(audioContexts[1]._src, 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3');
+});
+
+test('结算页进入时会先停掉背景音乐', () => {
+  createWxStub();
+  const calls = [];
+  loadPageWithStubbedAudio('../pages/result/index.js', {
+    stopBgm() {
+      calls.push('stopBgm');
+    },
+    playCue() {},
+    playVibrate() {},
+  });
+
+  assert.deepEqual(calls, ['stopBgm']);
 });
