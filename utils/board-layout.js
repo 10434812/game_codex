@@ -154,18 +154,10 @@ function isBagOverlappingPlayers(x, y, players = []) {
 function buildFortuneBagByPlayers(idSeed, players = [], assets = [], random = Math.random) {
   const id = `bag-${idSeed}-${Date.now()}`;
   const pickAsset = Array.isArray(assets) && assets.length ? assets[randomInt(0, assets.length - 1, random)] : '';
-  const maxTry = 24;
-  for (let i = 0; i < maxTry; i += 1) {
-    const x = randomInt(BAG_SPAWN_BOUNDS.minX, BAG_SPAWN_BOUNDS.maxX, random);
-    const y = randomInt(BAG_SPAWN_BOUNDS.minY, BAG_SPAWN_BOUNDS.maxY, random);
-    if (!isBagOverlappingPlayers(x, y, players)) {
-      return {id, x, y, asset: pickAsset};
-    }
-  }
   return {
     id,
     x: BOARD_LAYOUT.centerX,
-    y: BOARD_LAYOUT.centerY + 38,
+    y: BOARD_LAYOUT.centerY,
     asset: pickAsset,
   };
 }

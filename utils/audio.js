@@ -10,7 +10,7 @@ const SOURCES = {
   countdown2: 'https://xcx.ukb88.com/assets/audio/battle/countdown-2.wav',
   countdown1: 'https://xcx.ukb88.com/assets/audio/battle/countdown-1.wav',
   gameStart: 'https://xcx.ukb88.com/assets/audio/battle/countdown-go.wav',
-  resultWin: 'https://xcx.ukb88.com/assets/audio/result/yanhua.wav',
+  resultWin: 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3',
 };
 
 let initialized = false;
@@ -27,7 +27,7 @@ function initAudioOption() {
       obeyMuteSwitch: false,
       mixWithOther: true,
     });
-  } catch (error) {}
+  } catch (error) { }
 }
 
 function createAudio() {
@@ -37,7 +37,7 @@ function createAudio() {
     try {
       audio.stop();
       audio.destroy();
-    } catch (error) {}
+    } catch (error) { }
   });
   return audio;
 }
@@ -70,7 +70,7 @@ function playCue(name, options = {}) {
       if (typeof audio.seek === 'function') {
         audio.seek(0);
       }
-    } catch (error) {}
+    } catch (error) { }
     audio.src = src;
     audio.loop = useLoop;
     audio.volume = typeof options.volume === 'number' ? options.volume : 1;
@@ -83,8 +83,8 @@ function playCue(name, options = {}) {
 
 function playVibrate(type = 'light') {
   try {
-    wx.vibrateShort({type});
-  } catch (error) {}
+    wx.vibrateShort({ type });
+  } catch (error) { }
 }
 
 module.exports = {
