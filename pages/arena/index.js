@@ -19,7 +19,7 @@ const {
   getMateIdFromPairKey,
   mergeTeamLinks,
 } = require('../../utils/team-link');
-const {FORTUNE_BAG_ASSETS, buildOpportunity, settlePosition} = require('../../utils/investment');
+const {buildOpportunity, getFortuneBagAsset, settlePosition} = require('../../utils/investment');
 const {QUICK_EMOTES, chooseRemoteEmote, randomInt} = require('../../utils/emote');
 
 function formatTimeLeft(timeLeft) {
@@ -66,6 +66,7 @@ Page({
     actionHintText: '',
     fortunePanelVisible: false,
     fortuneBagCountdownText: '10s',
+    fortunePanelAsset: '',
     tabs: NAV_TABS,
     activeTab: 'play',
     userProfile: getCachedProfile(),
@@ -130,6 +131,7 @@ Page({
       fortuneBag: null,
       activeOpportunity: null,
       fortunePanelVisible: false,
+      fortunePanelAsset: '',
       emotePanelVisible: false,
       fortuneBagCountdownText: '10s',
     });
@@ -509,10 +511,16 @@ Page({
     }
     const selfPlayer = players.find((player) => player.isSelf) || players[0];
     const selfScore = parseScoreText(selfPlayer ? selfPlayer.score : 0);
-    const opportunity = this.data.activePosition ? null : (this.data.activeOpportunity || buildOpportunity(selfScore));
+    const opportunity = this.data.activePosition
+      ? null
+      : (bag.opportunity || this.data.activeOpportunity || buildOpportunity(selfScore));
+    const panelAsset = this.data.activePosition
+      ? (this.data.activePosition.asset || getFortuneBagAsset(this.data.activePosition.category))
+      : (opportunity && opportunity.asset) || bag.asset || getFortuneBagAsset(opportunity && opportunity.category);
     this.setData({
       activeOpportunity: opportunity,
       fortunePanelVisible: true,
+      fortunePanelAsset: panelAsset,
       activePositionHoldText: formatHoldTime(this.data.activePosition),
       emotePanelVisible: false,
       actionHintText: this.data.activePosition
@@ -523,6 +531,7 @@ Page({
   onCloseOpportunity() {
     this.setData({
       fortunePanelVisible: false,
+      fortunePanelAsset: '',
       actionHintText: '',
     });
   },
@@ -566,11 +575,13 @@ Page({
       riskText: opportunity.riskText,
       cost,
       buyAt: Date.now(),
+      asset: opportunity.asset,
     };
     this.setData({
       activeOpportunity: null,
       activePosition: position,
       fortunePanelVisible: true,
+      fortunePanelAsset: position.asset,
       activePositionHoldText: formatHoldTime(position),
       actionHintText: `已买入${opportunity.name}，当前可直接卖出`,
       successToast: {
@@ -607,6 +618,7 @@ Page({
       activePosition: null,
       activeOpportunity: null,
       fortunePanelVisible: false,
+      fortunePanelAsset: '',
       actionHintText: `卖出完成，净收益 ${result.pnlText}`,
       successToast: {
         text: `卖出${result.pnlText}`,
@@ -634,7 +646,10 @@ Page({
       if (!nextState || nextState.status !== 'playing') {
         return;
       }
-      const bag = buildFortuneBagByPlayers(this.data.timeText || 't', this.data.players || [], FORTUNE_BAG_ASSETS);
+      const selfPlayer = (this.data.players || []).find((player) => player.isSelf) || (this.data.players || [])[0];
+      const selfScore = parseScoreText(selfPlayer ? selfPlayer.score : 0);
+      const opportunity = buildOpportunity(selfScore);
+      const bag = buildFortuneBagByPlayers(this.data.timeText || 't', this.data.players || [], opportunity);
       this.fortuneBagExpiresAt = Date.now() + 10000;
       this.setData({
         fortuneBag: bag,
@@ -649,6 +664,7 @@ Page({
           fortuneBag: null,
           activeOpportunity: null,
           fortunePanelVisible: false,
+          fortunePanelAsset: '',
           fortuneBagCountdownText: '10s',
           actionHintText: hasActivePosition ? '当前持仓已保留，等待下一次红包' : '本次红包已结束',
         });

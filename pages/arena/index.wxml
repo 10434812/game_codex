@@ -71,8 +71,13 @@
 
     <view class="invest-panel fortune-panel" wx:if="{{ fortunePanelVisible }}">
       <view class="invest-head">
-        <text class="invest-type">{{ activePosition ? '卖出窗口' : activeOpportunity.category }}</text>
-        <text class="invest-risk">{{ activePosition ? activePosition.riskText : activeOpportunity.riskText }}</text>
+        <view class="invest-head-left">
+          <image wx:if="{{ fortunePanelAsset }}" class="invest-head-icon" src="{{ fortunePanelAsset }}" mode="aspectFit"></image>
+          <view class="invest-head-copy">
+            <text class="invest-type">{{ activePosition ? '卖出窗口' : activeOpportunity.category }}</text>
+            <text class="invest-risk">{{ activePosition ? activePosition.riskText : activeOpportunity.riskText }}</text>
+          </view>
+        </view>
       </view>
       <view class="invest-title">{{ activePosition ? activePosition.name : activeOpportunity.name }}</view>
       <view wx:if="{{ activePosition }}">

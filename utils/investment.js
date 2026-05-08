@@ -7,9 +7,11 @@ const INVESTMENT_POOL = [
   {category: '比特币', name: '矿企联动仓位'},
 ];
 
-const FORTUNE_BAG_ASSETS = [
-  'https://xcx.ukb88.com/assets/iocns/fudai.png',
-];
+const FORTUNE_BAG_ASSETS = {
+  房产: '/assets/battle/fortune-fangchan.png',
+  股票: '/assets/battle/fortune-gupiao.png',
+  比特币: '/assets/battle/fortune-bitebi.png',
+};
 
 function randomInt(min, max, random = Math.random) {
   return min + Math.floor(random() * (max - min + 1));
@@ -20,6 +22,10 @@ function randomPick(list, random = Math.random) {
     return null;
   }
   return list[randomInt(0, list.length - 1, random)];
+}
+
+function getFortuneBagAsset(category) {
+  return FORTUNE_BAG_ASSETS[category] || FORTUNE_BAG_ASSETS.房产;
 }
 
 function clamp(value, min, max) {
@@ -49,6 +55,7 @@ function buildOpportunity(selfScore, random = Math.random) {
     riskText: range.label,
     floatRangeText: `${Math.round((range.min - 1) * 100)}% ~ +${Math.round((range.max - 1) * 100)}%`,
     summary: '买入后需等待时机卖出，持有时间越长波动越大。',
+    asset: getFortuneBagAsset(item.category),
   };
 }
 
@@ -82,5 +89,6 @@ module.exports = {
   FORTUNE_BAG_ASSETS,
   INVESTMENT_POOL,
   buildOpportunity,
+  getFortuneBagAsset,
   settlePosition,
 };

@@ -447,6 +447,25 @@
   align-items: center;
 }
 
+.invest-head-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.invest-head-icon {
+  width: 54rpx;
+  height: 54rpx;
+  flex-shrink: 0;
+}
+
+.invest-head-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .invest-type {
   color: #a3672f;
   font-size: 24rpx;

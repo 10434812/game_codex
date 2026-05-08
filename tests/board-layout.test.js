@@ -1,7 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const {applySelfDecorations, buildBoardPlayers} = require('../utils/board-layout');
+const {applySelfDecorations, buildBoardPlayers, buildFortuneBagByPlayers} = require('../utils/board-layout');
+const {buildOpportunity, getFortuneBagAsset} = require('../utils/investment');
 
 function makePlayers(count) {
   return Array.from({length: count}, (_, index) => ({
@@ -70,4 +71,13 @@ test('聊天气泡会按左右侧锚定到头像上方的外侧', () => {
   assert.ok(rightPlayer);
   assert.equal(leftPlayer.chatPos, 'upper-left');
   assert.equal(rightPlayer.chatPos, 'upper-right');
+});
+
+test('福袋会按机会类别携带对应图标', () => {
+  const opportunity = buildOpportunity(300, () => 0);
+  const bag = buildFortuneBagByPlayers('case', makePlayers(2), opportunity);
+
+  assert.equal(bag.category, opportunity.category);
+  assert.equal(bag.asset, getFortuneBagAsset(opportunity.category));
+  assert.equal(bag.opportunity.name, opportunity.name);
 });

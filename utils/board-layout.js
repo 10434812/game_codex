@@ -1,4 +1,5 @@
 const {formatScore} = require('./game-engine');
+const {getFortuneBagAsset} = require('./investment');
 
 const BOARD_LAYOUT = {
   centerX: 360,
@@ -25,10 +26,6 @@ const BAG_SPAWN_BOUNDS = {
 };
 
 const BAG_SAFE_RADIUS = 152;
-
-function randomInt(min, max, random = Math.random) {
-  return min + Math.floor(random() * (max - min + 1));
-}
 
 function getLayoutForPlayerCount(count) {
   if (count >= 8) {
@@ -151,14 +148,18 @@ function isBagOverlappingPlayers(x, y, players = []) {
   });
 }
 
-function buildFortuneBagByPlayers(idSeed, players = [], assets = [], random = Math.random) {
+function buildFortuneBagByPlayers(idSeed, players = [], opportunity = null) {
   const id = `bag-${idSeed}-${Date.now()}`;
-  const pickAsset = Array.isArray(assets) && assets.length ? assets[randomInt(0, assets.length - 1, random)] : '';
+  const asset = opportunity && opportunity.asset
+    ? opportunity.asset
+    : getFortuneBagAsset(opportunity && opportunity.category);
   return {
     id,
     x: BOARD_LAYOUT.centerX,
     y: BOARD_LAYOUT.centerY,
-    asset: pickAsset,
+    asset,
+    category: opportunity && opportunity.category ? opportunity.category : '',
+    opportunity: opportunity || null,
   };
 }
 

@@ -12,16 +12,27 @@ const SOURCES = {
   gameStart: 'https://xcx.ukb88.com/assets/audio/battle/countdown-go.wav',
   resultWin: 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3',
   bgm: '/assets/audio/result/bgm.mp3',
-  bg3: '/assets/audio/result/bg3.mp3',
+  changcheng: '/assets/audio/result/changcheng.mp3',
+  fujisan: '/assets/audio/result/富士山下音频.mp3',
+  eiffel: '/assets/audio/result/埃菲尔音频.mp3',
+  grandCanyon: '/assets/audio/result/美洲大峡谷音频.mp3',
+  tajMahal: '/assets/audio/result/泰姬陵音频.mp3',
+  westLake: '/assets/audio/result/西湖夜景音频.mp3',
 };
 
 const STAGE_BGM_SOURCES = {
-  '万里长城': SOURCES.bg3,
+  '万里长城': SOURCES.changcheng,
+  '富士山': SOURCES.fujisan,
+  '巴黎铁塔': SOURCES.eiffel,
+  '大峡谷': SOURCES.grandCanyon,
+  '泰姬陵': SOURCES.tajMahal,
+  '西湖夜游': SOURCES.westLake,
 };
 
 let initialized = false;
 let sharedAudio = null;
 let bgmAudio = null;
+let currentBgmSrc = '';
 const loopPool = {};
 
 function initAudioOption() {
@@ -76,6 +87,28 @@ function getStageBgmSrc(stage) {
   return STAGE_BGM_SOURCES[stage.name] || SOURCES.bgm;
 }
 
+function playBgmSource(src, options = {}) {
+  if (!src) {
+    return null;
+  }
+
+  const audio = getBgmAudio();
+  const volume = typeof options.volume === 'number' ? options.volume : 0.38;
+  try {
+    audio.loop = true;
+    audio.volume = volume;
+    if (currentBgmSrc === src) {
+      return audio;
+    }
+    audio.src = src;
+    currentBgmSrc = src;
+    audio.play();
+    return audio;
+  } catch (error) {
+    return null;
+  }
+}
+
 function playCue(name, options = {}) {
   initAudioOption();
   const src = SOURCES[name];
@@ -104,52 +137,12 @@ function playCue(name, options = {}) {
 
 function playBgm(options = {}) {
   initAudioOption();
-  const src = SOURCES.bgm;
-  if (!src) {
-    return null;
-  }
-
-  try {
-    const audio = getBgmAudio();
-    try {
-      audio.stop();
-      if (typeof audio.seek === 'function') {
-        audio.seek(0);
-      }
-    } catch (error) {}
-    audio.src = src;
-    audio.loop = true;
-    audio.volume = typeof options.volume === 'number' ? options.volume : 0.38;
-    audio.play();
-    return audio;
-  } catch (error) {
-    return null;
-  }
+  return playBgmSource(SOURCES.bgm, options);
 }
 
 function playStageBgm(stage, options = {}) {
   initAudioOption();
-  const src = getStageBgmSrc(stage);
-  if (!src) {
-    return null;
-  }
-
-  try {
-    const audio = getBgmAudio();
-    try {
-      audio.stop();
-      if (typeof audio.seek === 'function') {
-        audio.seek(0);
-      }
-    } catch (error) {}
-    audio.src = src;
-    audio.loop = true;
-    audio.volume = typeof options.volume === 'number' ? options.volume : 0.38;
-    audio.play();
-    return audio;
-  } catch (error) {
-    return null;
-  }
+  return playBgmSource(getStageBgmSrc(stage), options);
 }
 
 function stopBgm() {
@@ -161,6 +154,7 @@ function stopBgm() {
     if (typeof bgmAudio.seek === 'function') {
       bgmAudio.seek(0);
     }
+    currentBgmSrc = '';
   } catch (error) {}
 }
 
