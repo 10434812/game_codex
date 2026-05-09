@@ -168,18 +168,26 @@
   width: 100%;
 }
 
+.secondary-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  width: 100%;
+}
+
 .invite-btn {
-  width: 100% !important;
+  flex: 1 1 0;
+  width: auto !important;
   max-width: none !important;
   min-width: 0;
-  margin: 0 auto;
-  height: 96rpx;
+  margin: 0;
+  height: 92rpx;
   border-radius: 999rpx;
   border: 3rpx solid #cc8a45;
   box-shadow: inset 0 0 0 2rpx rgba(239, 178, 99, 0.35);
   background: linear-gradient(180deg, #f4b24a, #e57c1f);
   color: #fff6dd;
-  font-size: 46rpx;
+  font-size: 34rpx;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -205,15 +213,16 @@
 }
 
 .ready-btn {
-  width: 100% !important;
+  flex: 1 1 0;
+  width: auto !important;
   max-width: none !important;
   min-width: 0;
-  margin: 16rpx auto 0;
+  margin: 0;
   border-radius: 999rpx;
-  height: 88rpx;
+  height: 92rpx;
   border: 3rpx solid rgba(194, 156, 104, 0.62);
   box-shadow: 0 6rpx 14rpx rgba(122, 90, 48, 0.2);
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #fff7e5;
   background: linear-gradient(135deg, #f5bc60, #e57c1f);
@@ -229,7 +238,7 @@
 }
 
 .btn-icon {
-  margin-right: 14rpx;
-  font-size: 40rpx;
+  margin-right: 10rpx;
+  font-size: 34rpx;
   line-height: 1;
 }

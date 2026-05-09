@@ -27,6 +27,14 @@
         "value": "assets/bg"
       },
       {
+        "type": "file",
+        "value": "assets/bg/bg.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/bg/开机动画.png"
+      },
+      {
         "type": "folder",
         "value": "assets/stitch_wechat_mini_program_clone 2"
       },
@@ -83,7 +91,7 @@
   "compileType": "miniprogram",
   "libVersion": "3.4.0",
   "appid": "wx72a4b552a87b44cf",
-  "projectname": "game_codex",
+  "projectname": "锦鲤前程",
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},
   "editorSetting": {}

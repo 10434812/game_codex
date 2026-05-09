@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/boot/index",
     "pages/home/index",
     "pages/arena/index",
     "pages/room/index",

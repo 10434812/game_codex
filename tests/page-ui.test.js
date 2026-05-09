@@ -37,6 +37,11 @@ function createWxStub() {
         width: 87,
       };
     },
+    getImageInfo(payload) {
+      if (typeof payload.success === 'function') {
+        payload.success({width: 1, height: 1, path: payload.src});
+      }
+    },
     setInnerAudioOption() { },
     createInnerAudioContext() {
       return {
@@ -199,9 +204,12 @@ test('room 页面会完整展示 10 个房间槽位并把活跃度限制在 100%
 test('room 页面会提示准备后两分钟内开始游戏', () => {
   const roomJs = fs.readFileSync(path.join(__dirname, '../pages/room/index.js'), 'utf8');
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxml'), 'utf8');
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxss'), 'utf8');
 
   assert.match(roomJs, /roomHintText:\s*'准备好后，游戏将在两分钟内开始'/);
   assert.match(wxml, /room-hint/);
+  assert.match(wxml, /class="secondary-actions"/);
+  assert.match(wxss, /\.secondary-actions\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*16rpx;/);
 });
 
 test('home 页面在没有结算结果时点击历史 Tab 不会误跳转', () => {
@@ -237,6 +245,44 @@ test('home 页面在零经验时也会显示轻微进度填充', () => {
 
   assert.equal(homePage.data.progressPercent, 0);
   assert.equal(homePage.data.progressVisualPercent, 10);
+});
+
+test('boot 页面会引用开机动画并把进度条放进启动页', () => {
+  const appJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../app.json'), 'utf8'));
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/boot/index.wxml'), 'utf8');
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/boot/index.wxss'), 'utf8');
+
+  assert.equal(appJson.pages[0], 'pages/boot/index');
+  assert.match(wxml, /assets\/bg\/开机动画\.png/);
+  assert.match(wxml, /class="boot-stage"/);
+  assert.match(wxml, /class="boot-progress-shell"/);
+  assert.match(wxss, /\.boot-progress-fill\s*\{/);
+  assert.doesNotMatch(wxml, /boot-brand|boot-pill|boot-header/);
+});
+
+test('boot loader 会按完成数量推进进度并在结束时完成', async () => {
+  const {createBootLoader} = require('../utils/boot-loader');
+  const calls = [];
+  const loader = createBootLoader([
+    () => Promise.resolve('a'),
+    () => Promise.resolve('b'),
+  ], (percent) => calls.push(percent));
+
+  await loader.start();
+
+  assert.deepEqual(calls, [50, 100]);
+});
+
+test('boot 页面会在预加载结束后跳回首页', async () => {
+  const calls = createWxStub();
+  const bootPage = createPageInstance(loadPage('../pages/boot/index.js'));
+
+  bootPage.onLoad();
+  await new Promise((resolve) => setTimeout(resolve, 260));
+
+  assert.equal(calls.reLaunch.length, 1);
+  assert.equal(calls.reLaunch[0].url, '/pages/home/index');
+  assert.equal(bootPage.data.progress, 100);
 });
 
 test('room 页面在没有结算结果时点击历史 Tab 不会误跳转', () => {
@@ -306,18 +352,24 @@ test('arena 页的聊天气泡会保持单行横排，不会把中间玩家的�
   assert.match(wxss, /\.emote-bubble\s*\{[\s\S]*white-space:\s*nowrap;[\s\S]*word-break:\s*keep-all;/);
 });
 
-test('arena 页的买入卖出图标会保留较大的视觉权重', () => {
+test('arena 页的福袋会保持居中并保留足够的视觉权重', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
 
-  assert.match(wxss, /\.fortune-bag-wrap\s*\{[\s\S]*width:\s*148rpx;[\s\S]*min-height:\s*214rpx;/);
-  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*width:\s*118rpx;[\s\S]*height:\s*118rpx;/);
-  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*flex-shrink:\s*0;/);
-  assert.match(wxss, /\.fortune-bag-shell\s*\{[\s\S]*width:\s*130rpx;[\s\S]*height:\s*130rpx;/);
+  assert.match(wxss, /\.fortune-bag-wrap\s*\{[\s\S]*width:\s*146rpx;[\s\S]*height:\s*146rpx;/);
+  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*position:\s*absolute;[\s\S]*inset:\s*0;/);
+  assert.doesNotMatch(wxss, /\.fortune-bag-shell\s*\{/);
+  assert.doesNotMatch(wxss, /\.fortune-bag-label\s*\{/);
   assert.match(wxml, /fortune-bag-countdown/);
   assert.match(wxml, /fortune-panel/);
   assert.match(wxml, /invest-head-icon/);
   assert.match(wxml, /确认卖出/);
+});
+
+test('arena 页面在血条模式下不会继续渲染玩家名字文字', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
+
+  assert.match(wxml, /wx:if="\{\{ !item\.showScore \|\| item\.isSelf \}\}"/);
 });
 
 test('arena 页面在持仓存在时再次点红包会直接切到卖出面板', () => {
@@ -369,6 +421,24 @@ test('arena 页面在持仓存在时再次点红包会直接切到卖出面板',
   assert.match(arenaPage.data.actionHintText, /卖出/);
   assert.equal(arenaPage.data.activePosition.name, '测试持仓');
   assert.equal(arenaPage.data.fortunePanelAsset, '/assets/battle/fortune-gupiao.png');
+});
+
+test('arena 页面福袋不会再套一层 shell', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
+
+  assert.match(wxml, /<image class="fortune-bag-image" src="\{\{ fortuneBag\.asset \}\}" mode="aspectFit"><\/image>/);
+  assert.doesNotMatch(wxml, /fortune-bag-shell/);
+  assert.doesNotMatch(wxss, /\.fortune-bag-shell/);
+  assert.doesNotMatch(wxml, /fortune-bag-label/);
+});
+
+test('arena 页面头像最外层黑框会去掉且橘色外框更窄', () => {
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
+
+  assert.match(wxss, /\.avatar-shell\s*\{[\s\S]*padding:\s*var\(--avatar-ring-padding,\s*3rpx\);/);
+  assert.match(wxss, /\.avatar \{[\s\S]*border:\s*0;/);
+  assert.match(wxss, /\.self-avatar-shell\s*\{[\s\S]*box-shadow:[\s\S]*3rpx/);
 });
 
 test('红包和结算音效会切到新的资源文件', () => {

@@ -153,10 +153,11 @@ function buildFortuneBagByPlayers(idSeed, players = [], opportunity = null) {
   const asset = opportunity && opportunity.asset
     ? opportunity.asset
     : getFortuneBagAsset(opportunity && opportunity.category);
+  const layout = getLayoutForPlayerCount(players.length);
   return {
     id,
-    x: BOARD_LAYOUT.centerX,
-    y: BOARD_LAYOUT.centerY,
+    x: layout.centerX,
+    y: layout.centerY,
     asset,
     category: opportunity && opportunity.category ? opportunity.category : '',
     opportunity: opportunity || null,

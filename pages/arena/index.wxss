@@ -80,60 +80,35 @@
 
 .fortune-bag-wrap {
   position: absolute;
-  width: 148rpx;
-  min-height: 214rpx;
+  width: 146rpx;
+  height: 146rpx;
   transform: translate(-50%, -50%);
   z-index: 12;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   animation: bagDropIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, bagDropPulse 0.88s ease-in-out 0.6s infinite alternate;
 }
 
 .fortune-bag-image {
-  width: 118rpx;
-  height: 118rpx;
-  flex-shrink: 0;
+  position: absolute;
+  inset: 0;
+  width: 146rpx;
+  height: 146rpx;
   filter: drop-shadow(0 8rpx 16rpx rgba(185, 108, 42, 0.34));
 }
 
-.fortune-bag-shell {
-  margin-top: 8rpx;
-  width: 130rpx;
-  height: 130rpx;
-  padding: 4rpx;
-  box-sizing: border-box;
-  border-radius: 34rpx;
-  background: linear-gradient(145deg, rgba(255, 251, 238, 0.98), rgba(245, 199, 98, 0.92));
-  border: 3rpx solid rgba(193, 139, 56, 0.78);
-  box-shadow: 0 12rpx 24rpx rgba(157, 101, 28, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.72);
-}
-
-.fortune-bag-label {
-  margin-top: 2rpx;
-  min-width: 84rpx;
-  height: 30rpx;
-  border-radius: 999rpx;
-  padding: 0 10rpx;
-  text-align: center;
-  line-height: 30rpx;
-  color: #fff4dc;
-  font-size: 20rpx;
-  font-weight: 700;
-  background: #be8c45;
-}
-
 .fortune-bag-countdown {
-  margin-top: 4rpx;
-  min-width: 70rpx;
-  height: 28rpx;
+  position: absolute;
+  bottom: -20rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 66rpx;
+  height: 26rpx;
   padding: 0 10rpx;
   border-radius: 999rpx;
   background: rgba(255, 250, 241, 0.94);
   border: 2rpx solid rgba(182, 137, 71, 0.72);
   color: #8a5f2b;
   font-size: 18rpx;
-  line-height: 24rpx;
+  line-height: 22rpx;
   text-align: center;
   box-sizing: border-box;
 }
@@ -168,16 +143,16 @@
 .avatar-shell {
   width: 120rpx;
   height: 120rpx;
-  padding: var(--avatar-ring-padding, 5rpx);
+  padding: var(--avatar-ring-padding, 3rpx);
   border-radius: 50%;
   overflow: hidden;
   background: linear-gradient(145deg, var(--avatar-ring-bg-start, #ffd45f) 0%, var(--avatar-ring-bg-end, #f1a91f) 100%);
-  box-shadow: var(--avatar-ring-shadow, 0 8rpx 18rpx rgba(145, 98, 27, 0.22));
+  box-shadow: var(--avatar-ring-shadow, 0 6rpx 14rpx rgba(145, 98, 27, 0.18));
 }
 
 .self-avatar-shell {
   background: linear-gradient(145deg, #ffdd78 0%, #f09529 100%);
-  box-shadow: 0 0 0 4rpx rgba(255, 223, 136, 0.42), 0 10rpx 24rpx rgba(188, 101, 33, 0.34);
+  box-shadow: 0 0 0 3rpx rgba(255, 223, 136, 0.36), 0 8rpx 18rpx rgba(188, 101, 33, 0.28);
 }
 
 .avatar-shell.skin-default.self-avatar-shell {
@@ -186,17 +161,17 @@
 
 .avatar-shell.skin-sakura.self-avatar-shell {
   background: linear-gradient(145deg, #ffd1de 0%, #db6b91 100%);
-  box-shadow: 0 0 0 4rpx rgba(255, 214, 227, 0.42), 0 10rpx 24rpx rgba(200, 92, 126, 0.32);
+  box-shadow: 0 0 0 3rpx rgba(255, 214, 227, 0.36), 0 8rpx 18rpx rgba(200, 92, 126, 0.26);
 }
 
 .avatar-shell.skin-storm.self-avatar-shell {
   background: linear-gradient(145deg, #adc3ff 0%, #4968d1 100%);
-  box-shadow: 0 0 0 4rpx rgba(182, 202, 255, 0.4), 0 10rpx 24rpx rgba(66, 96, 189, 0.34);
+  box-shadow: 0 0 0 3rpx rgba(182, 202, 255, 0.34), 0 8rpx 18rpx rgba(66, 96, 189, 0.28);
 }
 
 .avatar-shell.skin-sunrise.self-avatar-shell {
   background: linear-gradient(145deg, #ffd47d 0%, #ea7b2c 100%);
-  box-shadow: 0 0 0 4rpx rgba(255, 219, 154, 0.42), 0 10rpx 24rpx rgba(210, 112, 35, 0.32);
+  box-shadow: 0 0 0 3rpx rgba(255, 219, 154, 0.36), 0 8rpx 18rpx rgba(210, 112, 35, 0.26);
 }
 
 .avatar {
@@ -204,7 +179,7 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: var(--avatar-ring-border, 4rpx) solid var(--avatar-ring-border-color, #9a6e3a);
+  border: 0;
   box-sizing: border-box;
 }
 
