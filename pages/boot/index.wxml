@@ -1,10 +1,11 @@
 <view class="paper-bg boot-page">
   <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
   <view class="page-content boot-content">
-    <view class="boot-stage" style="{{stageStyle}}">
-      <image class="boot-art" src="https://xcx.ukb88.com/assets/bg/开机动画.png" mode="aspectFill" style="{{artStyle}}"></image>
-      <view class="boot-art-glow"></view>
-      <view class="boot-progress-shell" style="{{progressStyle}}">
+    <image class="boot-art" src="{{bootArtSrc}}" mode="aspectFill"></image>
+    <view class="boot-art-glow"></view>
+    <view class="boot-progress-section">
+      <text class="boot-progress-label">{{loadingText}}</text>
+      <view class="boot-progress-shell">
         <view class="boot-progress-fill" style="width: {{progress}}%;"></view>
       </view>
     </view>

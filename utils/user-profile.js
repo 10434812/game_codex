@@ -34,7 +34,7 @@ function saveProfile(profile) {
   const normalized = normalizeProfile(profile);
   try {
     wx.setStorageSync(USER_PROFILE_KEY, normalized);
-  } catch (error) {}
+  } catch (error) { console.warn('[user-profile] saveProfile error:', error); }
   return normalized;
 }
 
@@ -66,34 +66,26 @@ function requestProfile(options = {}) {
   if (now - lastRequestTime < PROFILE_REQUEST_COOLDOWN_MS) {
     return Promise.reject(new Error('PROFILE_REQUEST_TOO_FREQUENT'));
   }
+  if (typeof wx.getUserProfile !== 'function') {
+    return Promise.reject(new Error('getUserProfile unavailable'));
+  }
+
   lastRequestTime = now;
 
-  return new Promise((resolve, reject) => {
-    if (typeof wx.getUserProfile !== 'function') {
-      reject(new Error('getUserProfile unavailable'));
-      return;
-    }
-
-    requestInFlight = Promise.resolve().then(() =>
-      new Promise((innerResolve, innerReject) => {
-        wx.getUserProfile({
+  requestInFlight = new Promise((resolve, reject) => {
+    wx.getUserProfile({
       desc: '用于展示头像和昵称',
-          success: (res) => {
-            const profile = saveProfile(res && res.userInfo);
-            innerResolve(profile);
-          },
-          fail: innerReject,
-        });
-      })
-    );
-
-    requestInFlight
-      .then(resolve)
-      .catch(reject)
-      .finally(() => {
-        requestInFlight = null;
-      });
+      success: (res) => {
+        const profile = saveProfile(res && res.userInfo);
+        resolve(profile);
+      },
+      fail: reject,
+    });
+  }).finally(() => {
+    requestInFlight = null;
   });
+
+  return requestInFlight;
 }
 
 module.exports = {

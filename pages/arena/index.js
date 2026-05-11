@@ -141,6 +141,7 @@ Page({
     this.clearInviteTimers();
     this.clearBagTimers();
     this.clearEmoteTimers();
+    this.clearRemoteEmoteTimer();
     this.unsubscribeStore();
   },
   syncUserProfile() {

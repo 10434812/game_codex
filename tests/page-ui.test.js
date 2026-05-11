@@ -64,6 +64,27 @@ function createWxStub() {
     showToast(payload) {
       calls.showToast.push(payload);
     },
+    createAnimation() {
+      return {
+        opacity: () => this,
+        step: () => this,
+        export: () => ({}),
+        matrix: () => this,
+        rotate: () => this,
+        scale: () => this,
+        translate: () => this,
+      };
+    },
+    nextTick(cb) {
+      if (typeof cb === 'function') cb();
+    },
+    vibrateShort() {},
+    getUserProfile() {
+      return Promise.reject(new Error('not implemented'));
+    },
+    hideLoading() {},
+    showLoading() {},
+    request() {},
   };
 
   return calls;
@@ -253,8 +274,7 @@ test('boot 页面会引用开机动画并把进度条放进启动页', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/boot/index.wxss'), 'utf8');
 
   assert.equal(appJson.pages[0], 'pages/boot/index');
-  assert.match(wxml, /assets\/bg\/开机动画\.png/);
-  assert.match(wxml, /class="boot-stage"/);
+  assert.match(wxml, /bootArtSrc|开机动画/);
   assert.match(wxml, /class="boot-progress-shell"/);
   assert.match(wxss, /\.boot-progress-fill\s*\{/);
   assert.doesNotMatch(wxml, /boot-brand|boot-pill|boot-header/);
@@ -277,8 +297,13 @@ test('boot 页面会在预加载结束后跳回首页', async () => {
   const calls = createWxStub();
   const bootPage = createPageInstance(loadPage('../pages/boot/index.js'));
 
+  // Inject short timers for testing (production uses 2000/2700/300ms)
+  bootPage._bootMinMs = 50;
+  bootPage._bootMaxMs = 150;
+  bootPage._bootHoldMs = 30;
+
   bootPage.onLoad();
-  await new Promise((resolve) => setTimeout(resolve, 260));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   assert.equal(calls.reLaunch.length, 1);
   assert.equal(calls.reLaunch[0].url, '/pages/home/index');
@@ -448,14 +473,14 @@ test('红包和结算音效会切到新的资源文件', () => {
   const projectConfig = fs.readFileSync(path.join(__dirname, '../project.config.json'), 'utf8');
 
   assert.match(audioJs, /resultWin:\s*'https:\/\/xcx\.ukb88\.com\/assets\/audio\/result\/yanhua\.mp3'/);
-  assert.match(audioJs, /bgm:\s*'\/assets\/audio\/result\/bgm\.mp3'/);
-  assert.match(audioJs, /changcheng:\s*'\/assets\/audio\/result\/changcheng\.mp3'/);
+  assert.match(audioJs, /bgm:\s*'https:\/\/xcx\.ukb88\.com\/assets\/audio\/result\/bgm\.mp3'/);
+  assert.match(audioJs, /changcheng:\s*'https:\/\/xcx\.ukb88\.com\/assets\/audio\/result\/changcheng\.mp3'/);
   assert.match(audioJs, /'万里长城':\s*SOURCES\.changcheng/);
   assert.match(investmentJs, /FORTUNE_BAG_ASSETS[\s\S]*fortune-fangchan\.png/);
   assert.match(investmentJs, /FORTUNE_BAG_ASSETS[\s\S]*fortune-gupiao\.png/);
   assert.match(investmentJs, /FORTUNE_BAG_ASSETS[\s\S]*fortune-bitebi\.png/);
   assert.match(resultJs, /playResultWinAudio\(\)/);
-  assert.match(projectConfig, /assets\/iocns\/2657\.png_300\.png/);
+  assert.match(projectConfig, /assets\/icons\/2657\.png_300\.png/);
 });
 
 test('app 启动时会自动播放全局背景音乐并在返回前台时重新触发', () => {
@@ -479,12 +504,12 @@ test('app 启动时会自动播放全局背景音乐并在返回前台时重新�
 test('各场景主题会切换到对应的本地背景音乐', () => {
   createWxStub();
   const cases = [
-    ['万里长城', '/assets/audio/result/changcheng.mp3'],
-    ['富士山', '/assets/audio/result/富士山下音频.mp3'],
-    ['巴黎铁塔', '/assets/audio/result/埃菲尔音频.mp3'],
-    ['大峡谷', '/assets/audio/result/美洲大峡谷音频.mp3'],
-    ['泰姬陵', '/assets/audio/result/泰姬陵音频.mp3'],
-    ['西湖夜游', '/assets/audio/result/西湖夜景音频.mp3'],
+    ['万里长城', 'https://xcx.ukb88.com/assets/audio/result/changcheng.mp3'],
+    ['富士山', 'https://xcx.ukb88.com/assets/audio/result/富士山下音频.mp3'],
+    ['巴黎铁塔', 'https://xcx.ukb88.com/assets/audio/result/埃菲尔音频.mp3'],
+    ['大峡谷', 'https://xcx.ukb88.com/assets/audio/result/美洲大峡谷音频.mp3'],
+    ['泰姬陵', 'https://xcx.ukb88.com/assets/audio/result/泰姬陵音频.mp3'],
+    ['西湖夜游', 'https://xcx.ukb88.com/assets/audio/result/西湖夜景音频.mp3'],
   ];
 
   cases.forEach(([stageName, expectedSrc]) => {

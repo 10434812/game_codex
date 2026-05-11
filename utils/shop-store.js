@@ -1,7 +1,8 @@
 const SHOP_STORAGE_KEY = 'game_codex_shop_store_v1';
+const INITIAL_COINS = 8820; // 新用户初始金币
 
 const DEFAULT_STATE = {
-  coins: 8820,
+  coins: INITIAL_COINS,
   ownedSkins: ['skin-default'],
   ownedPets: [],
   equippedSkinId: 'skin-default',
@@ -432,7 +433,7 @@ function saveState(state) {
   const normalized = normalizeState(state);
   try {
     wx.setStorageSync(SHOP_STORAGE_KEY, normalized);
-  } catch (error) {}
+  } catch (error) { console.warn('[shop-store] saveState error:', error); }
   return normalized;
 }
 
@@ -648,7 +649,7 @@ function getCoinRecords() {
 function __resetForTests() {
   try {
     wx.removeStorageSync(SHOP_STORAGE_KEY);
-  } catch (error) {}
+  } catch (error) { console.warn('[shop-store] clearRecords error:', error); }
   return getStoreState();
 }
 

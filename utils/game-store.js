@@ -3,6 +3,8 @@ const {
   GAME_DURATION_SECONDS,
   MATCH_MODE_TEXT,
   MAX_PLAYERS,
+  PLAYER_STATUS_SELF_READY,
+  PLAYER_STATUS_SELF_WAITING,
   ROOM_UI_LIMIT,
   ROUND_INTERVAL_SECONDS,
 } = require('./constants');
@@ -10,9 +12,65 @@ const engine = require('./game-engine');
 const shopStore = require('./shop-store');
 const playerStats = require('./player-stats');
 
+const GAME_STATE_KEY = 'game_codex_game_state_v1';
+
 let state = createEmptyState();
 const listeners = new Set();
 let timer = null;
+
+function loadPersistedState() {
+  try {
+    if (typeof wx !== 'undefined' && wx.getStorageSync) {
+      const stored = wx.getStorageSync(GAME_STATE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    }
+  } catch (error) {
+    console.warn('[game-store] loadPersistedState error:', error);
+  }
+  return null;
+}
+
+function savePersistedState() {
+  try {
+    if (typeof wx !== 'undefined' && wx.setStorageSync) {
+      const payload = {
+        roomId: state.roomId,
+        stage: state.stage,
+        status: state.status,
+        timeLeft: state.timeLeft,
+        round: state.round,
+      };
+      wx.setStorageSync(GAME_STATE_KEY, JSON.stringify(payload));
+    }
+  } catch (error) {
+    console.warn('[game-store] savePersistedState error:', error);
+  }
+}
+
+function clearPersistedState() {
+  try {
+    if (typeof wx !== 'undefined' && wx.removeStorageSync) {
+      wx.removeStorageSync(GAME_STATE_KEY);
+    }
+  } catch (error) {
+    console.warn('[game-store] clearPersistedState error:', error);
+  }
+}
+
+// Try to restore persisted state on module load
+const persisted = loadPersistedState();
+if (persisted && persisted.status === 'playing') {
+  state = {
+    ...state,
+    roomId: persisted.roomId || state.roomId,
+    stage: persisted.stage || state.stage,
+    status: persisted.status || state.status,
+    timeLeft: typeof persisted.timeLeft === 'number' ? persisted.timeLeft : state.timeLeft,
+    round: typeof persisted.round === 'number' ? persisted.round : state.round,
+  };
+}
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -42,7 +100,7 @@ function emit() {
   listeners.forEach((listener) => {
     try {
       listener(snapshot);
-    } catch (error) {}
+    } catch (error) { console.warn('[game-store] emit listener error:', error); }
   });
 }
 
@@ -191,6 +249,7 @@ function buildFinishedResult(currentState) {
 
 function createRoomFromStage(stage = DEFAULT_STAGE, options = {}) {
   stopTimer();
+  clearPersistedState();
   const roomState = engine.createRoomState(stage, options);
   state = {
     ...createEmptyState(),
@@ -266,6 +325,7 @@ function startGame(options = {}) {
     startTimer();
   }
 
+  savePersistedState();
   emit();
   return getState();
 }
@@ -295,6 +355,7 @@ function finishGame() {
     lastEvents: [],
     feedText: '对局结束，正在结算',
   };
+  clearPersistedState();
   emit();
   return getState();
 }
@@ -404,6 +465,7 @@ function tick(options = {}) {
     return finishGame();
   }
 
+  savePersistedState();
   emit();
   return getState();
 }
@@ -475,7 +537,7 @@ function setSelfReady(ready) {
     return {
       ...player,
       ready: nextReady,
-      state: nextReady ? '房主·已准备' : '房主·未准备',
+      state: nextReady ? PLAYER_STATUS_SELF_READY : PLAYER_STATUS_SELF_WAITING,
     };
   });
   state = {
@@ -498,11 +560,13 @@ function restartGame(options = {}) {
 
 function resetToHome() {
   stopTimer();
+  clearPersistedState();
   state = createEmptyState();
   emit();
   return getState();
 }
 
+/** @private Testing only - do not use in production */
 function __resetForTests() {
   stopTimer();
   listeners.clear();

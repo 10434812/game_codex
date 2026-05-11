@@ -14,16 +14,12 @@
   padding: 0;
 }
 
-.boot-stage {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 0;
-}
-
 .boot-art {
   position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   display: block;
 }
 
@@ -38,18 +34,37 @@
   pointer-events: none;
 }
 
+.boot-progress-section {
+  position: fixed;
+  left: 64rpx;
+  right: 64rpx;
+  bottom: 100rpx;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.boot-progress-label {
+  font-size: 24rpx;
+  color: #fff;
+  letter-spacing: 4rpx;
+  text-shadow: 0 0 8rpx rgba(0, 0, 0, 0.9), 0 1rpx 2rpx rgba(0, 0, 0, 0.8), 0 0 24rpx rgba(0, 0, 0, 0.5);
+}
+
 .boot-progress-shell {
-  position: absolute;
-  overflow: hidden;
+  width: 100%;
+  height: 12rpx;
   border-radius: 999rpx;
-  pointer-events: none;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
 }
 
 .boot-progress-fill {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #e85c21 0%, #f29f39 44%, #ffd867 100%);
-  box-shadow: 0 0 18rpx rgba(255, 195, 70, 0.72);
+  box-shadow: 0 0 12rpx rgba(255, 195, 70, 0.8), 0 0 32rpx rgba(255, 165, 50, 0.4);
   transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }

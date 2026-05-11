@@ -222,10 +222,15 @@ function pairPlayers(players, options = {}) {
 
   for (let index = 0; index < withTeams.length; index += TEAM_SIZE) {
     const teamId = `team-${teams.length + 1}`;
-    const memberIds = [withTeams[index].id, withTeams[index + 1].id];
-    withTeams[index].teamId = teamId;
-    withTeams[index + 1].teamId = teamId;
-    teams.push({id: teamId, memberIds});
+    if (index + 1 < withTeams.length) {
+      const memberIds = [withTeams[index].id, withTeams[index + 1].id];
+      withTeams[index].teamId = teamId;
+      withTeams[index + 1].teamId = teamId;
+      teams.push({id: teamId, memberIds});
+    } else {
+      withTeams[index].teamId = teamId;
+      teams.push({id: teamId, memberIds: [withTeams[index].id]});
+    }
   }
 
   return {
@@ -240,10 +245,15 @@ function assignTeamsByOrder(playersInOrder) {
 
   for (let index = 0; index < withTeams.length; index += TEAM_SIZE) {
     const teamId = `team-${teams.length + 1}`;
-    const memberIds = [withTeams[index].id, withTeams[index + 1].id];
-    withTeams[index].teamId = teamId;
-    withTeams[index + 1].teamId = teamId;
-    teams.push({id: teamId, memberIds});
+    if (index + 1 < withTeams.length) {
+      const memberIds = [withTeams[index].id, withTeams[index + 1].id];
+      withTeams[index].teamId = teamId;
+      withTeams[index + 1].teamId = teamId;
+      teams.push({id: teamId, memberIds});
+    } else {
+      withTeams[index].teamId = teamId;
+      teams.push({id: teamId, memberIds: [withTeams[index].id]});
+    }
   }
 
   return {

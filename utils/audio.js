@@ -11,13 +11,13 @@ const SOURCES = {
   countdown1: 'https://xcx.ukb88.com/assets/audio/battle/countdown-1.wav',
   gameStart: 'https://xcx.ukb88.com/assets/audio/battle/countdown-go.wav',
   resultWin: 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3',
-  bgm: '/assets/audio/result/bgm.mp3',
-  changcheng: '/assets/audio/result/changcheng.mp3',
-  fujisan: '/assets/audio/result/富士山下音频.mp3',
-  eiffel: '/assets/audio/result/埃菲尔音频.mp3',
-  grandCanyon: '/assets/audio/result/美洲大峡谷音频.mp3',
-  tajMahal: '/assets/audio/result/泰姬陵音频.mp3',
-  westLake: '/assets/audio/result/西湖夜景音频.mp3',
+  bgm: 'https://xcx.ukb88.com/assets/audio/result/bgm.mp3',
+  changcheng: 'https://xcx.ukb88.com/assets/audio/result/changcheng.mp3',
+  fujisan: 'https://xcx.ukb88.com/assets/audio/result/富士山下音频.mp3',
+  eiffel: 'https://xcx.ukb88.com/assets/audio/result/埃菲尔音频.mp3',
+  grandCanyon: 'https://xcx.ukb88.com/assets/audio/result/美洲大峡谷音频.mp3',
+  tajMahal: 'https://xcx.ukb88.com/assets/audio/result/泰姬陵音频.mp3',
+  westLake: 'https://xcx.ukb88.com/assets/audio/result/西湖夜景音频.mp3',
 };
 
 const STAGE_BGM_SOURCES = {
@@ -45,7 +45,7 @@ function initAudioOption() {
       obeyMuteSwitch: false,
       mixWithOther: true,
     });
-  } catch (error) { }
+  } catch (error) { console.warn('[audio] setInnerAudioOption error:', error); }
 }
 
 function createAudio() {
@@ -55,7 +55,7 @@ function createAudio() {
     try {
       audio.stop();
       audio.destroy();
-    } catch (error) { }
+    } catch (error) { console.warn('[audio] destroy audio error:', error); }
   });
   return audio;
 }
@@ -124,7 +124,7 @@ function playCue(name, options = {}) {
       if (typeof audio.seek === 'function') {
         audio.seek(0);
       }
-    } catch (error) { }
+    } catch (error) { console.warn('[audio] stop bgm error:', error); }
     audio.src = src;
     audio.loop = useLoop;
     audio.volume = typeof options.volume === 'number' ? options.volume : 1;
@@ -155,13 +155,42 @@ function stopBgm() {
       bgmAudio.seek(0);
     }
     currentBgmSrc = '';
-  } catch (error) {}
+  } catch (error) { console.warn('[audio] playEffect error:', error); }
 }
 
 function playVibrate(type = 'light') {
   try {
     wx.vibrateShort({ type });
-  } catch (error) { }
+  } catch (error) { console.warn('[audio] playVibrate error:', error); }
+}
+
+function destroy() {
+  try {
+    if (sharedAudio) {
+      sharedAudio.stop();
+      sharedAudio.destroy();
+      sharedAudio = null;
+    }
+  } catch (error) { console.warn('[audio] destroy sharedAudio error:', error); }
+  try {
+    if (bgmAudio) {
+      bgmAudio.stop();
+      bgmAudio.destroy();
+      bgmAudio = null;
+    }
+  } catch (error) { console.warn('[audio] destroy bgmAudio error:', error); }
+  try {
+    const names = Object.keys(loopPool);
+    for (const name of names) {
+      try {
+        loopPool[name].stop();
+        loopPool[name].destroy();
+      } catch (error) { console.warn('[audio] destroy loopPool item error:', error); }
+    }
+  } catch (error) { console.warn('[audio] destroy loopPool error:', error); }
+  Object.keys(loopPool).forEach(key => delete loopPool[key]);
+  currentBgmSrc = '';
+  initialized = false;
 }
 
 module.exports = {
@@ -170,4 +199,5 @@ module.exports = {
   playStageBgm,
   stopBgm,
   playVibrate,
+  destroy,
 };

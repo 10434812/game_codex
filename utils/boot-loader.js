@@ -5,7 +5,10 @@ const LOCAL_BOOT_ASSETS = [
   'https://xcx.ukb88.com/assets/bg/bg2.png',
   'https://xcx.ukb88.com/assets/bg/bg6.png',
   'https://xcx.ukb88.com/assets/bg/gamebg.png',
-  'https://xcx.ukb88.com/assets/bg/开机动画.png',
+  'https://xcx.ukb88.com/assets/bg/开机动画1.jpg',
+  'https://xcx.ukb88.com/assets/bg/开机动画2.jpg',
+  'https://xcx.ukb88.com/assets/bg/开机动画3.jpg',
+  'https://xcx.ukb88.com/assets/bg/开机动画4.jpg',
 ];
 
 function getRemoteBootAssets() {
@@ -39,6 +42,7 @@ function createImagePreloadTask(src) {
         resolve({src, ok: true});
       },
       fail() {
+        console.warn('[boot-loader] Image preload failed:', src);
         resolve({src, ok: false});
       },
     });
@@ -50,23 +54,22 @@ function createBootLoader(tasks = [], onProgress = () => {}) {
   const total = safeTasks.length;
 
   return {
-    async start() {
+    start() {
       if (total === 0) {
         onProgress(100, {completed: 0, total: 0});
-        return;
+        return Promise.resolve();
       }
 
       let completed = 0;
-      for (const task of safeTasks) {
-        try {
-          await Promise.resolve(task()).catch(() => null);
-        } catch (error) {
-          // 单个资源失败不阻塞启动。
-        }
-        completed += 1;
-        const percent = Math.round((completed / total) * 100);
-        onProgress(percent, {completed, total});
-      }
+      const promises = safeTasks.map((task) => {
+        return Promise.resolve(task()).catch(() => null).then(() => {
+          completed += 1;
+          const percent = Math.round((completed / total) * 100);
+          onProgress(percent, {completed, total});
+        });
+      });
+
+      return Promise.all(promises);
     },
   };
 }

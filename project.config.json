@@ -4,15 +4,11 @@
     "ignore": [
       {
         "type": "folder",
-        "value": "assets/iocns"
+        "value": "assets/icons"
       },
       {
         "type": "folder",
         "value": "assets/avatars"
-      },
-      {
-        "type": "folder",
-        "value": "assets/111"
       },
       {
         "type": "folder",
@@ -25,14 +21,6 @@
       {
         "type": "folder",
         "value": "assets/bg"
-      },
-      {
-        "type": "file",
-        "value": "assets/bg/bg.png"
-      },
-      {
-        "type": "file",
-        "value": "assets/bg/开机动画.png"
       },
       {
         "type": "folder",
@@ -54,11 +42,11 @@
     "include": [
       {
         "type": "file",
-        "value": "assets/iocns/2657.png_300.png"
+        "value": "assets/icons/2657.png_300.png"
       },
       {
         "type": "file",
-        "value": "assets/iocns/2657.png_30012.png"
+        "value": "assets/icons/2657.png_30012.png"
       }
     ]
   },

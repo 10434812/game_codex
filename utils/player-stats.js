@@ -59,7 +59,7 @@ function saveState(state) {
   const normalized = normalizeState(state);
   try {
     wx.setStorageSync(STATS_STORAGE_KEY, normalized);
-  } catch (error) {}
+  } catch (error) { console.warn('[player-stats] saveStats error:', error); }
   return normalized;
 }
 
@@ -118,7 +118,7 @@ function recordSettlement(payload = {}) {
 function __resetForTests() {
   try {
     wx.removeStorageSync(STATS_STORAGE_KEY);
-  } catch (error) {}
+  } catch (error) { console.warn('[player-stats] clearStats error:', error); }
   return getState();
 }
 

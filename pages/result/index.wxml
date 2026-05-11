@@ -1,12 +1,6 @@
 <view class="paper-bg result-page">
   <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
 
-  <!-- 烟花特效容器 -->
-  <view class="fireworks-container" wx:if="{{showFireworks}}">
-    <view class="firework" wx:for="{{fireworkParticles}}" wx:key="id" style="left: {{item.left}}rpx; top: {{item.top}}rpx; animation-delay: {{item.delay}}ms;">
-      <view class="firework-particle" wx:for="{{item.particles}}" wx:key="index" style="--angle: {{item.angle}}deg; --color: {{item.color}}; --size: {{item.size}}rpx; animation-delay: {{item.pDelay}}ms;"></view>
-    </view>
-  </view>
   <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
     <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
       <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
@@ -19,6 +13,13 @@
         <text class="app-status-text">{{modeText}}</text>
       </view>
       <view class="app-gear" hover-class="clickable-hover">⚙</view>
+    </view>
+  </view>
+
+  <!-- 烟花特效容器 -->
+  <view class="fireworks-container" wx:if="{{showFireworks}}">
+    <view class="firework" wx:for="{{fireworkParticles}}" wx:key="id" style="left: {{item.left}}rpx; top: {{item.top}}rpx; animation-delay: {{item.delay}}ms;">
+      <view class="firework-particle" wx:for="{{item.particles}}" wx:key="index" style="--angle: {{item.angle}}deg; --color: {{item.color}}; --size: {{item.size}}rpx; animation-delay: {{item.pDelay}}ms;"></view>
     </view>
   </view>
 

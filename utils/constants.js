@@ -21,6 +21,8 @@ const SELF_PLAYER_STATE = '房主';
 const ROBOT_PLAYER_STATE = '已就绪';
 const HUMAN_PLAYER_STATE = '已就绪';
 const WAITING_SLOT_NAME = '等待加入';
+const PLAYER_STATUS_SELF_READY = '房主·已准备';
+const PLAYER_STATUS_SELF_WAITING = '房主·未准备';
 
 const DEFAULT_STAGE = {
   id: 1,
@@ -77,7 +79,7 @@ const STAGES = [
     hot: true,
     income: '+142%',
     online: '4.6k',
-    image: 'https://xcx.ukb88.com/assets/stages/xihhu.png',
+    image: 'https://xcx.ukb88.com/assets/stages/xihu.png',
   },
   {
     id: 7,
@@ -172,6 +174,8 @@ module.exports = {
   ROBOT_NAMES,
   ROBOT_PLAYER_STATE,
   NAV_TABS,
+  PLAYER_STATUS_SELF_READY,
+  PLAYER_STATUS_SELF_WAITING,
   ROOM_PLAYER_COUNT_OPTIONS,
   ROOM_UI_LIMIT,
   ROUND_INTERVAL_SECONDS,
