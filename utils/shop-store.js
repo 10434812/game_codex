@@ -1,3 +1,4 @@
+const api = require('./api-client');
 const SHOP_STORAGE_KEY = 'game_codex_shop_store_v1';
 const INITIAL_COINS = 8820; // 新用户初始金币
 
@@ -653,6 +654,58 @@ function __resetForTests() {
   return getStoreState();
 }
 
+async function buyViaApi(itemId) {
+  try {
+    const result = await api.post('/shop/buy', { itemId });
+    if (result) {
+      await refreshInventory();
+      const state = loadState();
+      state.coins = result.coins || state.coins;
+      saveState(state);
+    }
+    return true;
+  } catch (err) {
+    console.warn('[shop-store] buyViaApi error:', err);
+    return false;
+  }
+}
+
+async function equipViaApi(itemId, category) {
+  try {
+    await api.post('/shop/equip', { itemId, category });
+    const state = loadState();
+    if (category === 'skin') {
+      state.equippedSkinId = itemId;
+    } else {
+      state.equippedPetId = itemId;
+    }
+    saveState(state);
+    return true;
+  } catch (err) {
+    console.warn('[shop-store] equipViaApi error:', err);
+    return false;
+  }
+}
+
+async function refreshInventory() {
+  try {
+    const items = await api.get('/shop/inventory');
+    const skins = items.filter(i => i.category === 'skin').map(i => i.item_id);
+    const pets = items.filter(i => i.category === 'pet').map(i => i.item_id);
+    const equippedSkin = items.find(i => i.category === 'skin' && i.is_equipped);
+    const equippedPet = items.find(i => i.category === 'pet' && i.is_equipped);
+
+    const state = loadState();
+    state.ownedSkins = [...new Set([...state.ownedSkins, ...skins])];
+    state.ownedPets = [...new Set([...state.ownedPets, ...pets])];
+    if (equippedSkin) state.equippedSkinId = equippedSkin.item_id;
+    if (equippedPet) state.equippedPetId = equippedPet.item_id;
+    saveState(state);
+  } catch (err) {
+    console.warn('[shop-store] refreshInventory error:', err);
+  }
+}
+
 module.exports = {
   getCatalog,
   getGoodsByCategory,
@@ -665,4 +718,7 @@ module.exports = {
   equipItem,
   getEquippedDisplay,
   __resetForTests,
+  buyViaApi,
+  equipViaApi,
+  refreshInventory,
 };

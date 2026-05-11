@@ -97,6 +97,8 @@ const AVATAR_POOL = Array.from({length: 12}, (_, index) => {
   return `https://xcx.ukb88.com/assets/bg/avatars/avatar_${n}.png`;
 });
 
+const DEFAULT_AVATAR = AVATAR_POOL[0];
+
 const ROBOT_NAMES = [
   '龙之传人',
   '锦鲤本鲤',
@@ -160,6 +162,7 @@ const NAV_TABS = [
 
 module.exports = {
   AVATAR_POOL,
+  DEFAULT_AVATAR,
   DEFAULT_STAGE,
   GAME_DURATION_SECONDS,
   MATCH_MODE_TEXT,

@@ -1,0 +1,51 @@
+$brand-primary: #e57c1f;
+$brand-bg: #f6ebd1;
+$brand-gold: #d2a45a;
+$brand-gold-mid: #9e743e;
+$brand-brown: #4a2d1a;
+$brand-brown-sub: #8a7051;
+$brand-border: rgba(205, 171, 114, 0.4);
+$brand-success: #2bbf9f;
+$brand-danger: #d9534f;
+$brand-warning: #f0ad4e;
+
+$primary-light-3: #f5a623;
+$primary-light-5: #f8c060;
+$primary-light-7: #fbd99a;
+$primary-light-8: #fce7bb;
+$primary-light-9: #fdf2db;
+
+:root {
+  --el-color-primary: #{$brand-primary};
+  --el-color-primary-light-3: #{$primary-light-3};
+  --el-color-primary-light-5: #{$primary-light-5};
+  --el-color-primary-light-7: #{$primary-light-7};
+  --el-color-primary-light-8: #{$primary-light-8};
+  --el-color-primary-light-9: #{$primary-light-9};
+  --el-color-primary-dark-2: #c96a10;
+  --el-color-success: #{$brand-success};
+  --el-color-warning: #{$brand-warning};
+  --el-color-danger: #{$brand-danger};
+  --el-color-info: #{$brand-gold-mid};
+
+  --el-bg-color: #{$brand-bg};
+  --el-bg-color-page: #{darken($brand-bg, 3%)};
+  --el-bg-color-overlay: #fffaf0;
+  --el-text-color-primary: #{$brand-brown};
+  --el-text-color-regular: #{$brand-brown-sub};
+  --el-text-color-placeholder: #{lighten($brand-brown-sub, 20%)};
+  --el-border-color: #{$brand-border};
+  --el-border-color-light: #{rgba(205, 171, 114, 0.2)};
+  --el-border-color-lighter: #{rgba(205, 171, 114, 0.12)};
+  --el-border-color-extra-light: #{rgba(205, 171, 114, 0.06)};
+  --el-fill-color: #{rgba(229, 124, 31, 0.06)};
+  --el-fill-color-light: #{rgba(229, 124, 31, 0.04)};
+  --el-fill-color-lighter: #{rgba(229, 124, 31, 0.02)};
+
+  --admin-sidebar-bg: #2b1e10;
+  --admin-sidebar-text: #cdb38c;
+  --admin-sidebar-active: #e57c1f;
+  --admin-header-bg: #fffaf0;
+  --admin-main-bg: #f3ead6;
+  --admin-card-bg: #fffdf5;
+}

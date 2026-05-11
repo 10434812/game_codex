@@ -3,6 +3,7 @@ const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, ROOM_UI_LIMIT, WAITING_SLOT_NAM
 const gameStore = require('../../utils/game-store')
 const {playCue, playStageBgm, playVibrate} = require('../../utils/audio')
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile')
+const api = require('../../utils/api-client')
 
 function buildEmptySlot() {
   return {
@@ -59,12 +60,10 @@ Page({
   onShow() {
     this.syncUserProfile()
     this.syncStageMusic()
-    const snapshot = gameStore.getState()
-    this.observeState(gameStore.ensureRoom(snapshot.stage || DEFAULT_STAGE))
     this.unsubscribeStore()
-    this.unsubscribe = gameStore.subscribe((state) => {
-      this.observeState(state)
-    })
+    this.unsubscribe = gameStore.subscribe((state) => this.observeState(state))
+    this.observeState(gameStore.getState())
+    this.initRoom()
   },
   onHide() {
     this.clearStartCountdown()
@@ -72,6 +71,7 @@ Page({
   },
   onUnload() {
     this.clearStartCountdown()
+    this.clearPollTimer()
     this.unsubscribeStore()
   },
   observeState(state) {
@@ -161,8 +161,7 @@ Page({
       if (left <= 0) {
         this.clearStartCountdown()
         playCue('gameStart', {volume: 0.85})
-        const state = gameStore.startGame()
-        this.observeState(state)
+        this.onStartGame()
         return
       }
       this.setData({
@@ -180,6 +179,49 @@ Page({
   syncStageMusic() {
     const snapshot = gameStore.getState()
     playStageBgm(snapshot.stage || DEFAULT_STAGE, {volume: 0.38})
+  },
+  async initRoom() {
+    try {
+      const room = await api.post('/rooms', { stageId: 1 })
+      const roomId = room.id
+      this.setData({ roomId: room.roomCode || roomId })
+      this.pollRoom(roomId)
+    } catch (err) {
+      console.warn('[room] initRoom error:', err)
+    }
+  },
+  pollRoom(roomId) {
+    this.pollTimer = setInterval(async () => {
+      try {
+        const room = await api.get(`/rooms/${roomId}`)
+        const players = (room.players || []).map(p => ({
+          name: p.nick_name || p.name,
+          state: p.is_ready ? '已就绪' : '未准备',
+          filled: true,
+          star: p.is_host,
+          avatar: p.avatar_url || '',
+        }))
+        while (players.length < ROOM_UI_LIMIT) {
+          players.push(buildEmptySlot())
+        }
+        this.setData({ slots: players })
+      } catch (err) { /* ignore polling errors */ }
+    }, 2000)
+  },
+  async onStartGame() {
+    try {
+      const result = await api.post(`/rooms/${this.data.roomId}/start`)
+      wx.redirectTo({ url: `/pages/arena/index?sessionId=${result.sessionId}` })
+    } catch (err) {
+      gameStore.startGame()
+      wx.redirectTo({ url: '/pages/arena/index' })
+    }
+  },
+  clearPollTimer() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer)
+      this.pollTimer = null
+    }
   },
   clearStartCountdown() {
     if (this.startCountdownTimer) {

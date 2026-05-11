@@ -1,23 +1,19 @@
+const api = require('./api-client');
+
 const USER_PROFILE_KEY = 'wx_user_profile_v1';
-const PROFILE_REQUEST_COOLDOWN_MS = 1500;
 
 const DEFAULT_PROFILE = {
   nickName: '微信用户',
   avatarUrl: '',
 };
 
-let lastRequestTime = 0;
-let requestInFlight = null;
-
 function normalizeProfile(raw) {
   if (!raw || typeof raw !== 'object') {
-    return {...DEFAULT_PROFILE};
+    return { ...DEFAULT_PROFILE };
   }
-  const nickName = String(raw.nickName || raw.nickname || '').trim() || DEFAULT_PROFILE.nickName;
-  const avatarUrl = String(raw.avatarUrl || '').trim();
   return {
-    nickName,
-    avatarUrl,
+    nickName: String(raw.nickName || raw.nick_name || '').trim() || DEFAULT_PROFILE.nickName,
+    avatarUrl: String(raw.avatarUrl || raw.avatar_url || '').trim(),
   };
 }
 
@@ -25,8 +21,8 @@ function getCachedProfile() {
   try {
     const cached = wx.getStorageSync(USER_PROFILE_KEY);
     return normalizeProfile(cached);
-  } catch (error) {
-    return {...DEFAULT_PROFILE};
+  } catch (e) {
+    return { ...DEFAULT_PROFILE };
   }
 }
 
@@ -34,7 +30,9 @@ function saveProfile(profile) {
   const normalized = normalizeProfile(profile);
   try {
     wx.setStorageSync(USER_PROFILE_KEY, normalized);
-  } catch (error) { console.warn('[user-profile] saveProfile error:', error); }
+  } catch (e) {
+    console.warn('[user-profile] saveProfile error:', e);
+  }
   return normalized;
 }
 
@@ -48,51 +46,77 @@ function updateProfile(partial = {}) {
 
 function hasValidProfile(profile) {
   const normalized = normalizeProfile(profile);
-  return Boolean(normalized.avatarUrl && normalized.nickName);
+  return Boolean(normalized.nickName && normalized.nickName !== '微信用户');
 }
 
-function requestProfile(options = {}) {
-  const {force = false} = options;
-  const cached = getCachedProfile();
-  if (!force && hasValidProfile(cached)) {
-    return Promise.resolve(cached);
-  }
-
-  if (requestInFlight) {
-    return requestInFlight;
-  }
-
-  const now = Date.now();
-  if (now - lastRequestTime < PROFILE_REQUEST_COOLDOWN_MS) {
-    return Promise.reject(new Error('PROFILE_REQUEST_TOO_FREQUENT'));
-  }
-  if (typeof wx.getUserProfile !== 'function') {
-    return Promise.reject(new Error('getUserProfile unavailable'));
-  }
-
-  lastRequestTime = now;
-
-  requestInFlight = new Promise((resolve, reject) => {
-    wx.getUserProfile({
-      desc: '用于展示头像和昵称',
-      success: (res) => {
-        const profile = saveProfile(res && res.userInfo);
-        resolve(profile);
-      },
-      fail: reject,
+async function login() {
+  try {
+    const { code } = await new Promise((resolve, reject) => {
+      wx.login({
+        success: (res) => {
+          if (res.code) resolve(res);
+          else reject(new Error('wx.login failed: ' + (res.errMsg || '')));
+        },
+        fail: reject,
+      });
     });
-  }).finally(() => {
-    requestInFlight = null;
-  });
+    
+    const result = await api.post('/auth/login', { code });
+    if (result.token) {
+      api.setToken(result.token);
+    }
+    if (result.user) {
+      const profile = saveProfile({
+        nickName: result.user.nickName || result.user.nick_name,
+        avatarUrl: result.user.avatarUrl || result.user.avatar_url,
+      });
+      return profile;
+    }
+    return getCachedProfile();
+  } catch (err) {
+    console.warn('[user-profile] login error:', err);
+    return getCachedProfile();
+  }
+}
 
-  return requestInFlight;
+async function requestUpdate(partial = {}) {
+  try {
+    const result = await api.put('/user/profile', {
+      nickName: partial.nickName,
+      avatarUrl: partial.avatarUrl,
+    });
+    if (result) {
+      saveProfile(result);
+    }
+    return getCachedProfile();
+  } catch (err) {
+    console.warn('[user-profile] requestUpdate error:', err);
+    return updateProfile(partial);
+  }
+}
+
+async function fetchProfile() {
+  try {
+    if (api.isLoggedIn()) {
+      const result = await api.get('/user/profile');
+      if (result) {
+        saveProfile(result);
+        return normalizeProfile(result);
+      }
+    }
+  } catch (err) {
+    console.warn('[user-profile] fetchProfile error:', err);
+  }
+  return getCachedProfile();
 }
 
 module.exports = {
   DEFAULT_PROFILE,
   getCachedProfile,
   hasValidProfile,
-  requestProfile,
   saveProfile,
   updateProfile,
+  login,
+  requestUpdate,
+  fetchProfile,
 };

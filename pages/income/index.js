@@ -1,4 +1,5 @@
 const {getNavLayout} = require('../../utils/nav');
+const api = require('../../utils/api-client');
 const shopStore = require('../../utils/shop-store');
 const {formatCurrency, formatDateTime} = require('../../utils/format');
 const {playCue, playVibrate} = require('../../utils/audio');
@@ -42,7 +43,23 @@ Page({
   onShow() {
     this.syncRecords();
   },
-  syncRecords() {
+  async syncRecords() {
+    try {
+      if (api.isLoggedIn()) {
+        const data = await api.get('/stats/history', { page: 1, limit: 50 });
+        if (data && data.records) {
+          const userData = await api.get('/user/profile');
+          this.setData({
+            balanceText: formatCurrency(userData.coins || 0),
+            records: buildListView(data.records, userData.coins),
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('[income] API error:', err);
+    }
+    // Fallback to local
     const state = shopStore.getStoreState();
     const records = shopStore.getCoinRecords();
     this.setData({

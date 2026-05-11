@@ -11,6 +11,7 @@ const {
 const engine = require('./game-engine');
 const shopStore = require('./shop-store');
 const playerStats = require('./player-stats');
+const {getCachedProfile} = require('./user-profile');
 
 const GAME_STATE_KEY = 'game_codex_game_state_v1';
 
@@ -250,7 +251,13 @@ function buildFinishedResult(currentState) {
 function createRoomFromStage(stage = DEFAULT_STAGE, options = {}) {
   stopTimer();
   clearPersistedState();
-  const roomState = engine.createRoomState(stage, options);
+  const cachedProfile = getCachedProfile();
+  const mergedOptions = {
+    ...options,
+    selfAvatar: options.selfAvatar || cachedProfile.avatarUrl || '',
+    selfName: options.selfName || (cachedProfile.nickName && cachedProfile.nickName !== '微信用户' ? cachedProfile.nickName : ''),
+  };
+  const roomState = engine.createRoomState(stage, mergedOptions);
   state = {
     ...createEmptyState(),
     roomId: roomState.roomId,

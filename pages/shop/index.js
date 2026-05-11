@@ -1,4 +1,5 @@
 const {getNavLayout} = require('../../utils/nav');
+const api = require('../../utils/api-client');
 const shopStore = require('../../utils/shop-store');
 const userProfile = require('../../utils/user-profile');
 const {formatCurrency} = require('../../utils/format');
@@ -92,7 +93,7 @@ Page({
       goods: buildGoods(category),
     });
   },
-  onTapAction(e) {
+  async onTapAction(e) {
     const category = e.currentTarget.dataset.category;
     const itemId = e.currentTarget.dataset.itemId;
     const action = e.currentTarget.dataset.action;
@@ -100,6 +101,29 @@ Page({
       return;
     }
 
+    // Try API first
+    if (api.isLoggedIn()) {
+      if (action === 'buy') {
+        const apiSuccess = await shopStore.buyViaApi(itemId);
+        if (apiSuccess) {
+          playCue('pairSelf', {volume: 0.8});
+          playVibrate('medium');
+          wx.showToast({title: '购买成功', icon: 'success'});
+          this.syncPage();
+          return;
+        }
+      } else if (action === 'equip') {
+        const apiSuccess = await shopStore.equipViaApi(itemId, category);
+        if (apiSuccess) {
+          playCue('tap', {volume: 0.7});
+          playVibrate('light');
+          this.syncPage();
+          return;
+        }
+      }
+    }
+
+    // Fall back to local
     const result =
       action === 'buy' ? shopStore.purchaseItem(category, itemId) : shopStore.equipItem(category, itemId);
 

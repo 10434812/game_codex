@@ -1,3 +1,4 @@
+const api = require('./api-client');
 const STATS_STORAGE_KEY = 'game_codex_player_stats_v1';
 const MAX_RECORDS = 200;
 
@@ -115,6 +116,34 @@ function recordSettlement(payload = {}) {
   return clone(next);
 }
 
+async function fetchSummary() {
+  try {
+    if (!api.isLoggedIn()) return getSummary();
+    const data = await api.get('/stats/summary');
+    if (data) {
+      return {
+        totalIncome: data.totalIncome || 0,
+        totalExp: data.totalExp || 0,
+        recordsCount: data.recordCount || 0,
+      };
+    }
+  } catch (err) {
+    console.warn('[player-stats] fetchSummary error:', err);
+  }
+  return getSummary();
+}
+
+async function fetchHistory(page = 1, limit = 20) {
+  try {
+    if (api.isLoggedIn()) {
+      return await api.get('/stats/history', { page, limit });
+    }
+  } catch (err) {
+    console.warn('[player-stats] fetchHistory error:', err);
+  }
+  return { records: [], total: 0, page, limit };
+}
+
 function __resetForTests() {
   try {
     wx.removeStorageSync(STATS_STORAGE_KEY);
@@ -126,6 +155,8 @@ module.exports = {
   getIncomeRecords,
   getState,
   getSummary,
+  fetchSummary,
+  fetchHistory,
   recordSettlement,
   __resetForTests,
 };

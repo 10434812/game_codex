@@ -1,4 +1,5 @@
 const {getNavLayout} = require('../../utils/nav');
+const api = require('../../utils/api-client');
 const {MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const playerStats = require('../../utils/player-stats');
@@ -239,7 +240,37 @@ Page({
       fireworkParticles: [],
     });
   },
-  refreshResult() {
+  async refreshResult() {
+    // Try API first
+    try {
+      const pages = getCurrentPages();
+      const currentPage = pages[pages.length - 1];
+      const sessionId = currentPage.options.sessionId;
+      if (sessionId && api.isLoggedIn()) {
+        const result = await api.get(`/games/${sessionId}/result`);
+        if (result) {
+          this.stopNumberAnimations();
+          this.setData({
+            top3: result.top3 || this.data.top3,
+            rankList: result.ranking || [],
+            gainText: '0',
+            incomeText: '¥0',
+            achievementText: result.achievement || '',
+            modeText: result.modeText || this.data.modeText,
+            resultId: result.resultId || '',
+            totalText: `总计 ${(result.ranking || []).length} 玩家`,
+            expProgress: buildExpProgress(playerStats.getSummary().totalExp),
+          });
+          this.gainAnimTimer = this.animateNumber(result.gain || 0, formatNumber, 'gainText', 1200);
+          this.incomeAnimTimer = this.animateNumber(result.coins || 0, formatCurrency, 'incomeText', 1500);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('[result] API error:', err);
+    }
+
+    // Fall back to local gameStore
     const state = gameStore.getState();
     if (state.status !== 'finished' || !state.result) {
       wx.reLaunch({url: '/pages/home/index'});

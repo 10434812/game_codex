@@ -1,6 +1,7 @@
 {
   "libVersion": "3.15.2",
   "projectname": "锦鲤前程",
+  "miniprogramRoot": "",
   "setting": {
     "urlCheck": false,
     "coverView": false,
@@ -15,7 +16,7 @@
     "showES6CompileOption": false,
     "compileHotReLoad": true,
     "checkInvalidKey": true,
-    "ignoreDevUnusedFiles": true,
+    "ignoreDevUnusedFiles": false,
     "bigPackageSizeSupport": false
   }
 }

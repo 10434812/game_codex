@@ -158,7 +158,14 @@ function normalizePlayers(players) {
 function createInitialPlayers(options = {}) {
   const random = getRandom(options);
   const desiredCount = clamp(options.count || MIN_PLAYERS, 1, MAX_PLAYERS);
-  const players = [createSelfPlayer({score: options.selfScore}, options)];
+  const selfOverrides = {score: options.selfScore};
+  if (options.selfAvatar) {
+    selfOverrides.avatar = options.selfAvatar;
+  }
+  if (options.selfName) {
+    selfOverrides.name = options.selfName;
+  }
+  const players = [createSelfPlayer(selfOverrides, options)];
   const usedNames = getUsedRobotNames(players);
 
   while (players.length < desiredCount) {

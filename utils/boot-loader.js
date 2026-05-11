@@ -5,10 +5,6 @@ const LOCAL_BOOT_ASSETS = [
   'https://xcx.ukb88.com/assets/bg/bg2.png',
   'https://xcx.ukb88.com/assets/bg/bg6.png',
   'https://xcx.ukb88.com/assets/bg/gamebg.png',
-  'https://xcx.ukb88.com/assets/bg/开机动画1.jpg',
-  'https://xcx.ukb88.com/assets/bg/开机动画2.jpg',
-  'https://xcx.ukb88.com/assets/bg/开机动画3.jpg',
-  'https://xcx.ukb88.com/assets/bg/开机动画4.jpg',
 ];
 
 function getRemoteBootAssets() {

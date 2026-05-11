@@ -274,7 +274,7 @@ test('boot 页面会引用开机动画并把进度条放进启动页', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/boot/index.wxss'), 'utf8');
 
   assert.equal(appJson.pages[0], 'pages/boot/index');
-  assert.match(wxml, /bootArtSrc|开机动画/);
+  assert.match(wxml, /bootVideoSrc|开机动画/);
   assert.match(wxml, /class="boot-progress-shell"/);
   assert.match(wxss, /\.boot-progress-fill\s*\{/);
   assert.doesNotMatch(wxml, /boot-brand|boot-pill|boot-header/);

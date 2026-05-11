@@ -4,27 +4,11 @@
     "ignore": [
       {
         "type": "folder",
-        "value": "assets/icons"
+        "value": "assets"
       },
       {
         "type": "folder",
-        "value": "assets/avatars"
-      },
-      {
-        "type": "folder",
-        "value": "assets/skins"
-      },
-      {
-        "type": "folder",
-        "value": "assets/stages"
-      },
-      {
-        "type": "folder",
-        "value": "assets/bg"
-      },
-      {
-        "type": "folder",
-        "value": "assets/stitch_wechat_mini_program_clone 2"
+        "value": "back"
       },
       {
         "type": "folder",
@@ -33,6 +17,14 @@
       {
         "type": "folder",
         "value": "tests"
+      },
+      {
+        "type": "folder",
+        "value": ".i18n_work"
+      },
+      {
+        "type": "folder",
+        "value": ".sisyphus"
       },
       {
         "type": "file",

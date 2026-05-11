@@ -5,6 +5,7 @@ const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
 const {playCue, playStageBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
+const api = require('../../utils/api-client');
 const {
   BOARD_LAYOUT,
   applySelfDecorations,
@@ -38,6 +39,10 @@ function parseScoreText(scoreText) {
   const value = Number(String(scoreText || '').replace(/,/g, ''));
   return Number.isFinite(value) ? value : 0;
 }
+
+// Socket connection state
+let socketTask = null;
+let arenaSessionId = '';
 
 Page({
   data: {
@@ -100,30 +105,21 @@ Page({
     this.syncUserProfile();
     this.syncShopDisplay();
     this.syncStageMusic();
-    const state = this.ensureArenaState();
-    if (!state) {
-      return;
+
+    // Get sessionId from URL params and connect via WebSocket
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    arenaSessionId = currentPage.options.sessionId;
+
+    if (arenaSessionId) {
+      this.connectArena(arenaSessionId);
     }
 
-    this.syncArena(state);
-    this.unsubscribeStore();
-    this.unsubscribe = gameStore.subscribe((nextState) => {
-      if (nextState.status === 'finished') {
-        this.clearBagTimers();
-        this.clearEmoteTimers();
-        this.unsubscribeStore();
-        wx.redirectTo({url: '/pages/result/index'});
-        return;
-      }
-      if (nextState.status !== 'playing') {
-        return;
-      }
-      this.syncArena(nextState);
-    });
     this.scheduleNextBagDrop();
     this.scheduleRemoteEmote();
   },
   onHide() {
+    this.disconnectArena();
     this.clearInviteTimers();
     this.clearBagTimers();
     this.clearEmoteTimers();
@@ -138,6 +134,7 @@ Page({
     this.unsubscribeStore();
   },
   onUnload() {
+    this.disconnectArena();
     this.clearInviteTimers();
     this.clearBagTimers();
     this.clearEmoteTimers();
@@ -159,6 +156,78 @@ Page({
   syncStageMusic() {
     const snapshot = gameStore.getState();
     playStageBgm(snapshot.stage || DEFAULT_STAGE, {volume: 0.38});
+  },
+  connectArena(sessionId) {
+    const token = api.getToken();
+    socketTask = wx.connectSocket({
+      url: `ws://localhost:3000?token=${token}`,
+      success: () => {},
+      fail: (err) => {
+        console.warn('[arena] connectSocket failed:', err);
+      },
+    });
+
+    socketTask.onOpen(() => {
+      socketTask.send({
+        data: JSON.stringify({ event: 'join_arena', data: { sessionId } }),
+      });
+    });
+
+    socketTask.onMessage((res) => {
+      try {
+        const msg = JSON.parse(res.data);
+        this.handleSocketMessage(msg);
+      } catch (e) {
+        console.warn('[arena] parse socket message error:', e);
+      }
+    });
+
+    socketTask.onError((err) => {
+      console.warn('[arena] socket error:', err);
+    });
+  },
+  handleSocketMessage(msg) {
+    const { event, data } = msg;
+    switch (event) {
+      case 'game_tick':
+        this.handleGameTick(data);
+        break;
+      case 'time_update':
+        this.setData({ timeText: (data.timeLeft || 180) + 's' });
+        break;
+      case 'game_finished':
+        this.clearBagTimers();
+        this.clearEmoteTimers();
+        this.disconnectArena();
+        wx.redirectTo({ url: `/pages/result/index?sessionId=${arenaSessionId}` });
+        break;
+      case 'emote_broadcast':
+        if (data && data.playerId && data.emoteText) {
+          this.setPlayerEmote(data.playerId, data.emoteText);
+        }
+        break;
+    }
+  },
+  handleGameTick(data) {
+    if (!data) return;
+    // Reuse syncArena with socket data in gameStore-compatible format
+    this.syncArena(data);
+  },
+  disconnectArena() {
+    if (socketTask) {
+      socketTask.close({});
+      socketTask = null;
+    }
+  },
+  sendEmoteViaSocket(emoteId) {
+    if (socketTask) {
+      socketTask.send({
+        data: JSON.stringify({
+          event: 'emote',
+          data: { sessionId: arenaSessionId, emoteId },
+        }),
+      });
+    }
   },
   onTapProfile() {
     wx.navigateTo({url: '/pages/profile/index'});
@@ -289,6 +358,7 @@ Page({
     playCue('tap', {volume: 0.72});
     playVibrate('light');
     this.setPlayerEmote(selfPlayer.id, option.text);
+    this.sendEmoteViaSocket(option.key);
     this.setData({
       emotePanelVisible: false,
       actionHintText: `你发送了消息：${option.label}`,

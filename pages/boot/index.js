@@ -1,19 +1,27 @@
 const {createBootLoader, createImagePreloadTask, getBootAssetQueue} = require('../../utils/boot-loader');
+const api = require('../../utils/api-client');
+const userProfile = require('../../utils/user-profile');
 
 const DEFAULT_MIN_MS = 2000;
 const DEFAULT_MAX_MS = 2700;
 const DEFAULT_HOLD_MS = 300;
 
-const BOOT_ARTS = [
-  'https://xcx.ukb88.com/assets/bg/开机动画1.jpg',
-  'https://xcx.ukb88.com/assets/bg/开机动画2.jpg',
-  'https://xcx.ukb88.com/assets/bg/开机动画3.jpg',
-  'https://xcx.ukb88.com/assets/bg/开机动画4.jpg',
+const BOOT_VIDEOS = [
+  'https://xcx.ukb88.com/assets/bg/开机动画1.mp4',
+  'https://xcx.ukb88.com/assets/bg/开机动画2.mp4',
+  'https://xcx.ukb88.com/assets/bg/开机动画3.mp4',
+  'https://xcx.ukb88.com/assets/bg/开机动画4.mp4',
 ];
+
+async function tryAutoLogin() {
+  if (!api.isLoggedIn()) {
+    await userProfile.login();
+  }
+}
 
 Page({
   data: {
-    bootArtSrc: BOOT_ARTS[Math.floor(Math.random() * BOOT_ARTS.length)],
+    bootVideoSrc: BOOT_VIDEOS[Math.floor(Math.random() * BOOT_VIDEOS.length)],
     progress: 0,
     loadingText: '正在加载资源',
   },
@@ -26,6 +34,14 @@ Page({
       clearTimeout(this.holdTimer);
       this.holdTimer = null;
     }
+    if (this.videoContext) {
+      this.videoContext.stop();
+    }
+  },
+  onReady() {
+    this.videoContext = wx.createVideoContext('bootVideo');
+  },
+  onVideoEnded() {
   },
   updateProgress(progress) {
     if (this.isDestroyed) return;
@@ -62,6 +78,9 @@ Page({
     Promise.race([
       Promise.all([loadingDone, minTimer]),
       maxTimer,
-    ]).then(() => this.finishBoot());
+    ]).then(async () => {
+      await tryAutoLogin();
+      this.finishBoot();
+    });
   },
 });

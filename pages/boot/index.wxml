@@ -1,7 +1,7 @@
 <view class="paper-bg boot-page">
   <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
   <view class="page-content boot-content">
-    <image class="boot-art" src="{{bootArtSrc}}" mode="aspectFill"></image>
+    <video class="boot-video" src="{{bootVideoSrc}}" autoplay muted="{{false}}" loop="{{false}}" controls="{{false}}" show-fullscreen-btn="{{false}}" show-play-btn="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindended="onVideoEnded"></video>
     <view class="boot-art-glow"></view>
     <view class="boot-progress-section">
       <text class="boot-progress-label">{{loadingText}}</text>
