@@ -17,31 +17,38 @@
 
   <view class="page-content">
     <view class="hero-safe">
-      <view class="hero-title">祝你好运</view>
+      <view class="hero-title">锦鲤前程</view>
       <view class="subtitle">两两组队去探索世界，使自己资产增加</view>
     </view>
 
-    <view class="card profile-card">
-      <view class="profile-copy">
-        <view class="minor">当前等级</view>
-        <view class="title-row">
-          <view class="name">登峰造极</view>
-          <view class="badge">高级</view>
+    <view class="expand-toggle" bindtap="toggleProfileCard" hover-class="clickable-hover">
+      <text wx:if="{{!showProfileCard}}">▼ 查看我的资产</text>
+      <text wx:else>▲ 收起资产</text>
+    </view>
+
+    <view class="profile-card-wrap {{showProfileCard ? 'expanded' : ''}}">
+      <view class="card profile-card">
+        <view class="profile-copy">
+          <view class="minor">当前等级</view>
+          <view class="title-row">
+            <view class="name">登峰造极</view>
+            <view class="badge">高级</view>
+          </view>
+          <view class="profile-meta">{{levelText}} 持续旅行者</view>
         </view>
-        <view class="profile-meta">{{levelText}} 持续旅行者</view>
-      </view>
-      <view class="exp-progress">
-        <view class="exp-track">
-          <view class="exp-fill" style="width: {{progressVisualPercent}}%;"></view>
+        <view class="exp-progress">
+          <view class="exp-track">
+            <view class="exp-fill" style="width: {{progressVisualPercent}}%;"></view>
+          </view>
         </view>
-      </view>
-      <view class="profile-divider"></view>
-      <view class="account-row clickable" bindtap="onTapIncome" hover-class="clickable-hover">
-        <view class="account-copy">
-          <text class="label">统一资金账户</text>
-          <text class="value gold">{{balanceText}}</text>
+        <view class="profile-divider"></view>
+        <view class="account-row clickable" bindtap="onTapIncome" hover-class="clickable-hover">
+          <view class="account-copy">
+            <text class="label">统一资金账户</text>
+            <text class="value gold">{{balanceText}}</text>
+          </view>
+          <view class="jump-hint">查看明细 ›</view>
         </view>
-        <text class="jump-hint">查看明细</text>
       </view>
     </view>
 

@@ -34,6 +34,7 @@ Page({
     levelText: 'Lv.1',
     progressPercent: 0,
     progressVisualPercent: MIN_VISIBLE_PROGRESS_PERCENT,
+    showProfileCard: false,
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
   },
@@ -122,5 +123,8 @@ Page({
     playCue('tap', {volume: 0.75});
     playVibrate('light');
     wx.navigateTo({url: '/pages/income/index'});
+  },
+  toggleProfileCard() {
+    this.setData({showProfileCard: !this.data.showProfileCard});
   },
 });
