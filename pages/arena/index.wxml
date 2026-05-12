@@ -137,7 +137,7 @@
 
     <view class="shop-entry" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onTapShop" hover-class="clickable-hover">
       <text class="shop-entry-icon">✦</text>
-      <text>商城</text>
+      <text>装备商城</text>
     </view>
 
     <view class="quick-emote" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onToggleEmotePanel" hover-class="clickable-hover">☺</view>

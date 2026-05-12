@@ -5,11 +5,11 @@
     <view class="app-user">
       <image wx:if="{{avatarUrl}}" class="app-user-avatar shop-avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
       <image wx:else class="app-user-avatar shop-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
-      <text class="app-user-name">旅行商城</text>
+      <text class="app-user-name">装备商城</text>
     </view>
     <view class="app-header-right">
       <view class="app-status-pill">
-        <text class="app-status-text">装备中心</text>
+        <text class="app-status-text">装备商城</text>
       </view>
       <view class="app-gear" bindtap="onBack" hover-class="clickable-hover">✦</view>
     </view>

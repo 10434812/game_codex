@@ -21,7 +21,7 @@
 - `pages/arena/index`：对局主战场
 - `pages/result/index`：结算与排行
 - `pages/profile/index`：头像昵称资料
-- `pages/shop/index`：幸运金币商城
+- `pages/shop/index`：装备商城
 
 ## 本地开发
 
