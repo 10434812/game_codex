@@ -92,6 +92,9 @@ test('finishGame 会把金币收益写入商城余额', () => {
 
   assert.equal(finished.result.gain, 100);
   assert.equal(finished.result.coins, 300);
+  assert.equal(finished.result.achievement, '长城守望者');
+  assert.equal(finished.result.achievementMedal.symbol, '城');
+  assert.ok(finished.result.achievementMedal.tierLabel);
   assert.equal(afterCoins - beforeCoins, 300);
   assert.equal(afterSummary.totalIncome - beforeSummary.totalIncome, 300);
   assert.equal(afterSummary.totalExp - beforeSummary.totalExp, 100);

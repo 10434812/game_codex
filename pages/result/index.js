@@ -7,6 +7,7 @@ const {playCue, stopBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency, formatNumber} = require('../../utils/format');
+const {buildAchievementMedal} = require('../../utils/achievement-medals');
 const runtimeConfig = require('../../utils/runtime-config');
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
 
@@ -86,6 +87,28 @@ function formatSigned(value) {
   return '0';
 }
 
+function createDefaultMedal() {
+  return buildAchievementMedal({
+    stageName: '万里长城',
+    achievement: '长城守望者',
+    gain: 0,
+    rank: 0,
+  });
+}
+
+function createResultMedal(result = {}) {
+  if (result.achievementMedal) {
+    return result.achievementMedal;
+  }
+  return buildAchievementMedal({
+    stage: result.stage,
+    stageName: result.stageName,
+    achievement: result.achievement,
+    gain: result.gain,
+    rank: result.rank,
+  });
+}
+
 Page({
   data: {
     nav: {
@@ -102,6 +125,7 @@ Page({
     gainText: '0',
     incomeText: '¥0',
     achievementText: '--',
+    achievementMedal: createDefaultMedal(),
     totalText: '总计 0 玩家',
     expProgress: {
       level: 1,
@@ -265,13 +289,15 @@ Page({
       if (sessionId && api.isLoggedIn()) {
         const result = await api.get(`/games/${sessionId}/result`);
         if (result) {
+          const achievementMedal = createResultMedal(result);
           this.stopNumberAnimations();
           this.setData({
             top3: result.top3 || this.data.top3,
             rankList: result.ranking || [],
             gainText: '0',
             incomeText: '¥0',
-            achievementText: result.achievement || '',
+            achievementText: result.achievement || achievementMedal.achievement,
+            achievementMedal,
             modeText: result.modeText || this.data.modeText,
             resultId: result.resultId || '',
             totalText: `总计 ${(result.ranking || []).length} 玩家`,
@@ -294,13 +320,15 @@ Page({
     }
 
     this.stopNumberAnimations();
+    const achievementMedal = createResultMedal(state.result);
 
     this.setData({
       top3: state.result.top3,
       rankList: state.result.rest,
       gainText: '0',
       incomeText: '¥0',
-      achievementText: state.result.achievement,
+      achievementText: state.result.achievement || achievementMedal.achievement,
+      achievementMedal,
       modeText: state.modeText || MATCH_MODE_TEXT,
       resultId: state.result.resultId || '',
       totalText: `总计 ${state.result.ranking.length} 玩家`,

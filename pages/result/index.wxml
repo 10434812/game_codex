@@ -52,31 +52,41 @@
       </view>
     </view>
 
-    <view class="meta-row">
-      <view class="card meta-card">
-        <view class="meta-title">本局收益</view>
+    <view class="settlement-panel">
+      <view class="income-block">
+        <view class="meta-title">收益</view>
         <view class="income-main">{{incomeText}}</view>
-        <view class="income-sub">已完成入账</view>
-        <view class="exp-module">
-          <view class="exp-head">
-            <text>经验进度 Lv.{{expProgress.level}}</text>
-            <text>+{{gainText}} EXP</text>
-          </view>
-          <view class="exp-track">
-            <view class="exp-fill" style="width: {{expProgress.percent}}%;"></view>
-          </view>
-          <view class="exp-foot">{{expProgress.current}} / {{expProgress.required}} · 距下一级 {{expProgress.left}}</view>
-        </view>
       </view>
-      <view class="card meta-card">
-        <view class="meta-title tag">新成就</view>
-        <view class="meta-achievement">{{achievementText}}</view>
-        <view class="meta-mountain"></view>
+      <view class="exp-module">
+        <view class="exp-head">
+          <text>Lv.{{expProgress.level}}</text>
+          <text>+{{gainText}} EXP</text>
+        </view>
+        <view class="exp-track">
+          <view class="exp-fill" style="width: {{expProgress.percent}}%;"></view>
+        </view>
+        <view class="exp-foot">{{expProgress.current}}/{{expProgress.required}}</view>
+      </view>
+      <view class="achievement-pill" style="--medal-accent: {{achievementMedal.accent}}; --medal-glow: {{achievementMedal.glow}}; --medal-rim: {{achievementMedal.rim}}; --medal-plate: {{achievementMedal.plate}};">
+        <view class="achievement-medal">
+          <view class="medal-ribbon left"></view>
+          <view class="medal-ribbon right"></view>
+          <view class="medal-core">
+            <view class="medal-symbol">{{achievementMedal.symbol}}</view>
+          </view>
+        </view>
+        <view class="achievement-copy">
+          <view class="achievement-row">
+            <text class="achievement-label">新成就</text>
+            <text class="medal-tier">{{achievementMedal.tierLabel}} · {{achievementMedal.shortName}}</text>
+          </view>
+          <text class="achievement-name">{{achievementText}}</text>
+        </view>
       </view>
     </view>
 
     <view class="rank-head">
-      <view class="rank-title">详细排名 (4-10)</view>
+      <view class="rank-title">排名</view>
       <view class="rank-total">{{totalText}}</view>
     </view>
 
@@ -88,8 +98,6 @@
         <text class="num">{{item.score}}</text>
       </view>
     </view>
-
-    <view class="view-all" hover-class="clickable-hover">查看完整榜单</view>
 
     <view class="action-row">
       <button class="primary-btn action-btn" bindtap="replay" hover-class="btn-hover">↻ 再来一局</button>

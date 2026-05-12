@@ -675,6 +675,17 @@ test('红包和结算音效会切到新的资源文件', () => {
   assert.match(projectConfig, /assets\/icons\/2657\.png_300\.png/);
 });
 
+test('结算页新成就区域会展示勋章', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/result/index.wxml'), 'utf8');
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/result/index.wxss'), 'utf8');
+
+  assert.match(wxml, /class="achievement-medal"/);
+  assert.match(wxml, /achievementMedal\.symbol/);
+  assert.match(wxml, /achievementMedal\.tierLabel/);
+  assert.match(wxss, /\.medal-core\s*\{/);
+  assert.match(wxss, /--medal-accent/);
+});
+
 test('app 启动时不播放背景音乐，仅从后台返回前台时重新触发', () => {
   createWxStub();
   const playStageBgmCalls = [];

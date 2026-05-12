@@ -11,6 +11,7 @@ const {
 const engine = require('./game-engine');
 const shopStore = require('./shop-store');
 const playerStats = require('./player-stats');
+const {buildAchievement, buildAchievementMedal} = require('./achievement-medals');
 const {getCachedProfile} = require('./user-profile');
 
 const GAME_STATE_KEY = 'game_codex_game_state_v1';
@@ -220,30 +221,27 @@ function buildScoreBreakdownMap(scoreLog, players) {
   }, {});
 }
 
-function buildAchievement(stage) {
-  const achievementMap = {
-    '万里长城': '长城守望者',
-    '富士山': '富士远眺者',
-    '巴黎铁塔': '巴黎追光者',
-    '大峡谷': '峡谷远征者',
-    '泰姬陵': '陵光旅人',
-  };
-  return achievementMap[stage.name] || `${stage.name}旅者`;
-}
-
 function buildFinishedResult(currentState) {
   const result = engine.buildResult(currentState.players);
   const scoreBreakdownMap = buildScoreBreakdownMap(currentState.scoreLog, currentState.players);
   const selfPlayer = result.ranking.find((player) => player.isSelf) || result.ranking[0];
   const initialScore = selfPlayer ? currentState.initialScores[selfPlayer.id] || 0 : 0;
   const gain = selfPlayer ? Math.max(0, selfPlayer.score - initialScore) : 0;
+  const achievement = buildAchievement(currentState.stage);
+  const selfRank = selfPlayer ? selfPlayer.rank : 0;
 
   return {
     ...result,
     resultId: `result-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     gain,
     coins: gain * 3,
-    achievement: buildAchievement(currentState.stage),
+    achievement,
+    achievementMedal: buildAchievementMedal({
+      stage: currentState.stage,
+      achievement,
+      gain,
+      rank: selfRank,
+    }),
     scoreBreakdownMap,
   };
 }
