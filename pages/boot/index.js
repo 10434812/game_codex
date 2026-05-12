@@ -15,7 +15,7 @@ const BOOT_VIDEOS = [
 ];
 
 async function tryAutoLogin() {
-  if (!api.isLoggedIn()) {
+  if (!api.isLoggedIn() && runtimeConfig.getBoolean('wechat.login_enabled', true)) {
     await userProfile.login();
   }
 }

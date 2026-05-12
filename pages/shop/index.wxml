@@ -24,6 +24,10 @@
       <view class="asset-body">
         <text class="asset-value">{{ balanceText }}</text>
       </view>
+      <view class="payment-banner {{ payEnabled ? 'enabled' : 'disabled' }}">
+        <view class="payment-banner-title">{{ payStatusText }}</view>
+        <view class="payment-banner-text">{{ payHintText }}</view>
+      </view>
     </view>
 
     <view class="category-tabs">

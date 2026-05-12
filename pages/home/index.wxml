@@ -18,7 +18,9 @@
   <view class="page-content">
     <view class="hero-safe">
       <view class="hero-title">锦鲤前程</view>
-      <view class="subtitle">两两组队去探索世界，使自己资产增加</view>
+      <view class="hero-copy">
+        <view class="subtitle">3分钟好运局，组队抢福袋，赢金币换国风装扮</view>
+      </view>
     </view>
 
     <view class="expand-toggle" bindtap="toggleProfileCard" hover-class="clickable-hover">
@@ -60,7 +62,7 @@
     <view class="card destination-card">
       <swiper class="stage-swiper" indicator-dots="{{ false }}" circular="{{ true }}" current="{{ activeStage }}" previous-margin="0rpx" next-margin="52rpx" bindchange="onStageChange">
         <swiper-item wx:for="{{ stages }}" wx:key="id">
-          <view class="stage-item">
+          <view class="stage-item" style="--stage-title-color: {{ item.titleColor }}; --stage-accent-color: {{ item.accentColor }};">
             <view class="tag" wx:if="{{ item.hot }}">当前热门</view>
             <image class="stage-image" src="{{ item.image }}" mode="aspectFill"></image>
             <view class="stage-info">

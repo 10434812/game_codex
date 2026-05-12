@@ -14,6 +14,16 @@ router.get('/', adminAuth, async (req, res) => {
   }
 });
 
+router.get('/summary', adminAuth, async (_req, res) => {
+  try {
+    const data = await configService.getAdminConfigSummary();
+    res.json(success(data));
+  } catch (err) {
+    console.error('[Admin Config Summary]', err);
+    res.status(500).json(fail('获取配置摘要失败', 500));
+  }
+});
+
 router.put('/', adminAuth, async (req, res) => {
   try {
     const configs = req.body.configs;

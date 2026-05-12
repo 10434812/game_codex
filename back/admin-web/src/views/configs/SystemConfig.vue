@@ -220,7 +220,43 @@ const configs = ref([])
 const loading = ref(false)
 const batchSaving = ref(false)
 const activeGroup = ref('wechat')
+const configLoadState = ref('idle')
+const capabilitySummary = ref(null)
 const originalValuesMap = new Map()
+const fallbackConfigRecords = [
+  { key: 'wechat.login_enabled', value: 'true', defaultValue: 'true', description: '是否开启微信登录', valueType: 'boolean', isPublic: true },
+  { key: 'wechat.login_app_id', value: 'wx72a4b552a87b44cf', defaultValue: 'wx72a4b552a87b44cf', description: '小程序 AppID（服务端登录校验使用）', valueType: 'text', isPublic: false },
+  { key: 'wechat.login_secret', value: '', defaultValue: '', description: '小程序 AppSecret（仅后台保存，不对前端公开）', valueType: 'password', isPublic: false, isSensitive: true },
+  { key: 'wechat.login_token_ttl', value: '604800', defaultValue: '604800', description: '登录态默认有效期（秒）', valueType: 'number', isPublic: false },
+  { key: 'wechat.login_agreement_url', value: 'https://xcx.ukb88.com/legal/user-agreement.html', defaultValue: 'https://xcx.ukb88.com/legal/user-agreement.html', description: '用户协议链接', valueType: 'url', isPublic: true },
+  { key: 'wechat.login_privacy_url', value: 'https://xcx.ukb88.com/legal/privacy-policy.html', defaultValue: 'https://xcx.ukb88.com/legal/privacy-policy.html', description: '隐私政策链接', valueType: 'url', isPublic: true },
+  { key: 'wechat.share_enabled', value: 'true', defaultValue: 'true', description: '是否开启分享给好友 / 朋友圈', valueType: 'boolean', isPublic: true },
+  { key: 'wechat.share_title', value: '锦鲤前程邀你一起组队闯世界', defaultValue: '锦鲤前程邀你一起组队闯世界', description: '发送给好友默认标题', valueType: 'text', isPublic: true },
+  { key: 'wechat.share_desc', value: '选景区、组战队、拼手气，一起冲上好运榜。', defaultValue: '选景区、组战队、拼手气，一起冲上好运榜。', description: '发送给好友默认描述', valueType: 'textarea', isPublic: true },
+  { key: 'wechat.share_path', value: '/pages/home/index', defaultValue: '/pages/home/index', description: '发送给好友默认落地页路径', valueType: 'text', isPublic: true },
+  { key: 'wechat.share_query', value: 'from=admin_share', defaultValue: 'from=admin_share', description: '发送给好友附加参数（不含 ?）', valueType: 'text', isPublic: true },
+  { key: 'wechat.share_image_url', value: 'https://xcx.ukb88.com/assets/bg/screen.png', defaultValue: 'https://xcx.ukb88.com/assets/bg/screen.png', description: '分享卡片图片 URL', valueType: 'url', isPublic: true },
+  { key: 'wechat.share_timeline_title', value: '锦鲤前程开启好运局，来和我一起冲榜', defaultValue: '锦鲤前程开启好运局，来和我一起冲榜', description: '分享到朋友圈标题', valueType: 'text', isPublic: true },
+  { key: 'wechat.share_timeline_image_url', value: 'https://xcx.ukb88.com/assets/bg/screen.png', defaultValue: 'https://xcx.ukb88.com/assets/bg/screen.png', description: '分享到朋友圈图片 URL', valueType: 'url', isPublic: true },
+  { key: 'wechat.pay_enabled', value: 'false', defaultValue: 'false', description: '是否开启微信支付能力', valueType: 'boolean', isPublic: true },
+  { key: 'wechat.pay_mch_id', value: '', defaultValue: '', description: '微信支付商户号 MchId', valueType: 'text', isPublic: false },
+  { key: 'wechat.pay_api_v3_key', value: '', defaultValue: '', description: '微信支付 APIv3 Key', valueType: 'password', isPublic: false, isSensitive: true },
+  { key: 'wechat.pay_cert_serial_no', value: '', defaultValue: '', description: '微信支付商户证书序列号', valueType: 'text', isPublic: false },
+  { key: 'wechat.pay_notify_url', value: '', defaultValue: '', description: '微信支付异步通知地址', valueType: 'url', isPublic: false },
+  { key: 'wechat.pay_success_path', value: '/pages/shop/index', defaultValue: '/pages/shop/index', description: '支付成功后的小程序回跳页面', valueType: 'text', isPublic: true },
+  { key: 'wechat.pay_currency', value: 'CNY', defaultValue: 'CNY', description: '支付默认币种', valueType: 'text', isPublic: true },
+  { key: 'wechat.pay_goods_desc', value: '锦鲤前程幸运金币充值', defaultValue: '锦鲤前程幸运金币充值', description: '微信支付下单默认商品描述', valueType: 'text', isPublic: false },
+  { key: 'wechat.pay_sandbox_mode', value: 'true', defaultValue: 'true', description: '是否启用微信支付沙箱模式', valueType: 'boolean', isPublic: false },
+  { key: 'game.round_duration', value: '180', defaultValue: '180', description: '每局游戏时长(秒)', valueType: 'number', isPublic: true },
+  { key: 'game.min_players', value: '4', defaultValue: '4', description: '最少开局人数', valueType: 'number', isPublic: true },
+  { key: 'game.max_players', value: '10', defaultValue: '10', description: '最多玩家数', valueType: 'number', isPublic: true },
+  { key: 'game.team_size', value: '2', defaultValue: '2', description: '每队人数', valueType: 'number', isPublic: true },
+  { key: 'game.initial_coins', value: '8820', defaultValue: '8820', description: '新用户初始金币', valueType: 'number', isPublic: false },
+  { key: 'game.daily_signin_coins', value: '200', defaultValue: '200', description: '每日签到金币奖励', valueType: 'number', isPublic: false },
+  { key: 'shop.refresh_interval', value: '86400', defaultValue: '86400', description: '商城刷新间隔(秒)', valueType: 'number', isPublic: true },
+  { key: 'system.maintenance_mode', value: '0', defaultValue: '0', description: '维护模式(0=关闭,1=开启)', valueType: 'boolean', isPublic: false },
+  { key: 'system.maintenance_message', value: '', defaultValue: '', description: '维护提示消息', valueType: 'textarea', isPublic: false }
+]
 
 const groupedPrefixes = [
   {
@@ -521,6 +557,39 @@ function hasFilledValue(key) {
 }
 
 const statusCards = computed(() => {
+  if (configLoadState.value === 'failed') {
+    return [
+      {
+        title: '微信登录',
+        value: '待连接',
+        note: '配置接口暂时不可用，当前展示的是本地默认配置草稿。',
+        tag: '异常',
+        type: 'warning'
+      },
+      {
+        title: '微信分享',
+        value: '待连接',
+        note: '分享配置没有拿到服务端实时值，避免继续误显示为已关闭。',
+        tag: '异常',
+        type: 'warning'
+      },
+      {
+        title: '微信支付',
+        value: '待连接',
+        note: '支付参数读取失败，请优先恢复 `/api/admin/configs`。',
+        tag: '异常',
+        type: 'warning'
+      },
+      {
+        title: '待保存修改',
+        value: dirtyCount.value ? `${dirtyCount.value} 项` : '0 项',
+        note: '当前为兜底视图，可继续编辑但建议先恢复后端配置接口。',
+        tag: '兜底',
+        type: dirtyCount.value ? 'danger' : 'info'
+      }
+    ]
+  }
+
   const loginEnabled = hasFilledValue('wechat.login_enabled')
   const shareEnabled = hasFilledValue('wechat.share_enabled')
   const payEnabled = hasFilledValue('wechat.pay_enabled')
@@ -558,6 +627,78 @@ const statusCards = computed(() => {
 })
 
 const capabilityCards = computed(() => {
+  if (configLoadState.value === 'failed') {
+    return [
+      {
+        key: 'login',
+        title: '微信登录能力',
+        description: '账号接入、登录态和协议配置',
+        readyCount: 0,
+        requiredCount: 4,
+        percent: 0,
+        status: '待连接',
+        type: 'warning',
+        tip: '服务端配置接口暂不可用，当前仅展示本地默认模板，不代表线上真实状态。'
+      },
+      {
+        key: 'share',
+        title: '微信分享能力',
+        description: '裂变传播、活动转发和素材管理',
+        readyCount: 0,
+        requiredCount: 4,
+        percent: 0,
+        status: '待连接',
+        type: 'warning',
+        tip: '建议先恢复后台配置接口，再判断是否真的缺少分享参数。'
+      },
+      {
+        key: 'payment',
+        title: '微信支付能力',
+        description: '商户参数、支付回调和联调准备',
+        readyCount: 0,
+        requiredCount: 4,
+        percent: 0,
+        status: '待连接',
+        type: 'warning',
+        tip: '支付参数现在拿不到实时值，页面不会再误导成“已经关闭”。'
+      }
+    ]
+  }
+
+  if (capabilitySummary.value && capabilitySummary.value.capabilities) {
+    const capabilityMetaMap = {
+      login: '账号接入、登录态和协议配置',
+      share: '裂变传播、活动转发和素材管理',
+      payment: '商户参数、支付回调和联调准备'
+    }
+
+    return ['login', 'share', 'payment'].map((key) => {
+      const item = capabilitySummary.value.capabilities[key]
+      const enabled = !!item.enabled
+      const missingKeys = Array.isArray(item.missingKeys) ? item.missingKeys : []
+      const readyCount = Number(item.readyCount || 0)
+      const requiredCount = Number(item.requiredCount || 0)
+      const isReady = !!item.isReady
+
+      return {
+        key,
+        title: key === 'login' ? '微信登录能力' : key === 'share' ? '微信分享能力' : '微信支付能力',
+        description: capabilityMetaMap[key],
+        enabled,
+        readyCount,
+        requiredCount,
+        percent: requiredCount > 0 ? Math.round((readyCount / requiredCount) * 100) : 0,
+        status: !enabled ? '已关闭' : isReady ? '已就绪' : '待补齐',
+        type: !enabled ? 'info' : isReady ? 'success' : 'warning',
+        tip: !enabled
+          ? '当前能力已关闭，不影响其他模块。'
+          : missingKeys.length
+            ? `还缺 ${missingKeys.length} 项关键配置：${missingKeys.join('、')}`
+            : '关键参数完整，可以进入业务联调或投放阶段。'
+      }
+    })
+  }
+
   const capabilityDefs = [
     {
       key: 'login',
@@ -624,14 +765,34 @@ async function fetchConfigs() {
     if (res.data.code === 0) {
       originalValuesMap.clear()
       configs.value = initConfigs(res.data.data || [])
+      configLoadState.value = 'success'
     } else {
+      originalValuesMap.clear()
+      configs.value = initConfigs(fallbackConfigRecords)
+      configLoadState.value = 'failed'
       ElMessage.error(res.data.message || '获取配置失败')
     }
   } catch (_err) {
+    originalValuesMap.clear()
+    configs.value = initConfigs(fallbackConfigRecords)
+    configLoadState.value = 'failed'
     ElMessage.error('获取配置失败')
   } finally {
     loading.value = false
   }
+}
+
+async function fetchConfigSummary() {
+  try {
+    const res = await request.get('/api/admin/configs/summary')
+    if (res.data.code === 0) {
+      capabilitySummary.value = res.data.data || null
+      return
+    }
+  } catch (_err) {
+    // 摘要接口失败时回退到前端本地推断，不阻断配置页使用
+  }
+  capabilitySummary.value = null
 }
 
 async function handleSaveSingle(cfg) {
@@ -642,6 +803,7 @@ async function handleSaveSingle(cfg) {
     })
     originalValuesMap.set(cfg.key, cfg.typedValue)
     cfg.isDirty = false
+    fetchConfigSummary()
     ElMessage.success(`已保存：${cfg.label}`)
   } catch (_err) {
     ElMessage.error(`保存失败：${cfg.label}`)
@@ -668,6 +830,7 @@ async function handleBatchSave() {
       item.isDirty = false
     })
 
+    fetchConfigSummary()
     ElMessage.success(`已批量保存 ${dirtyConfigs.length} 项配置`)
   } catch (_err) {
     ElMessage.error('批量保存失败')
@@ -683,6 +846,7 @@ function handleReset(cfg) {
 
 onMounted(() => {
   fetchConfigs()
+  fetchConfigSummary()
 })
 </script>
 

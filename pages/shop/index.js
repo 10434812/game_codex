@@ -5,6 +5,7 @@ const userProfile = require('../../utils/user-profile');
 const {DEFAULT_AVATAR} = require('../../utils/constants');
 const {formatCurrency} = require('../../utils/format');
 const {playCue, playVibrate} = require('../../utils/audio');
+const runtimeConfig = require('../../utils/runtime-config');
 
 const CATEGORY_OPTIONS = [
   {key: 'skin', label: '皮肤'},
@@ -63,12 +64,17 @@ Page({
     goods: [],
     avatarUrl: '',
     defaultAvatar: DEFAULT_AVATAR,
+    payEnabled: false,
+    payStatusText: '微信支付未开启',
+    payHintText: '当前使用幸运金币完成购买，后续可在后台开启微信支付联调。',
   },
   onLoad() {
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}
-    this.syncPage();
+    runtimeConfig.fetchRemoteConfig().finally(() => {
+      this.syncPage();
+    });
   },
   onShow() {
     this.syncPage();
@@ -77,11 +83,19 @@ Page({
     const state = shopStore.getStoreState();
     const profile = userProfile.getCachedProfile();
     const activeCategory = this.data.activeCategory || 'skin';
+    const payEnabled = runtimeConfig.getBoolean('wechat.pay_enabled', false);
+    const payGoodsDesc = runtimeConfig.getValue('wechat.pay_goods_desc', '锦鲤前程幸运金币充值');
+    const payCurrency = runtimeConfig.getValue('wechat.pay_currency', 'CNY');
     this.setData({
       coins: state.coins,
       balanceText: formatCurrency(state.coins),
       goods: buildGoods(activeCategory),
       avatarUrl: profile.avatarUrl,
+      payEnabled,
+      payStatusText: payEnabled ? '微信支付配置已开启' : '微信支付未开启',
+      payHintText: payEnabled
+        ? `后台已开启支付配置，默认商品为“${payGoodsDesc}”，结算币种 ${payCurrency}。`
+        : '当前使用幸运金币完成购买，后续可在后台开启微信支付联调。',
     });
   },
   onSwitchCategory(e) {

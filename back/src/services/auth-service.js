@@ -49,7 +49,7 @@ function wechatCode2Session(code, wxConfig) {
  * @param {string} openid - WeChat openid
  * @returns {Promise<Object>} user row from database
  */
-async function findOrCreateUser(openid) {
+async function findOrCreateUser(openid, startCoins = 100) {
   // Try to find existing user
   let user = await db.queryOne('SELECT * FROM users WHERE openid = ?', [openid]);
 
@@ -60,8 +60,6 @@ async function findOrCreateUser(openid) {
   // Create new user with defaults
   const defaultNickName = '锦鲤玩家';
   const defaultAvatarUrl = 'https://xcx.ukb88.com/assets/avatar/default.png';
-  const startCoins = 100;
-
   const [result] = await db.execute(
     `INSERT INTO users (openid, nick_name, avatar_url, level, total_exp, total_income, coins, game_count, win_count, is_banned)
      VALUES (?, ?, ?, 1, 0, 0, ?, 0, 0, 0)`,
@@ -79,11 +77,11 @@ async function findOrCreateUser(openid) {
  * @param {Object} user - User row from database
  * @returns {string} signed JWT
  */
-function generateToken(user) {
+function generateToken(user, expiresIn = config.jwt.expiresIn) {
   return jwt.sign(
     { userId: user.id, openid: user.openid },
     config.jwt.secret,
-    { expiresIn: config.jwt.expiresIn }
+    { expiresIn }
   );
 }
 
@@ -107,10 +105,12 @@ async function login(code) {
   const wxSession = await wechatCode2Session(code, wxConfig);
 
   // 2. Find or create user
-  const user = await findOrCreateUser(wxSession.openid);
+  const startCoinsValue = await configService.getConfig('game.initial_coins');
+  const startCoins = Number.isFinite(Number(startCoinsValue)) ? Number(startCoinsValue) : 100;
+  const user = await findOrCreateUser(wxSession.openid, startCoins);
 
   // 3. Generate JWT
-  const token = generateToken(user);
+  const token = generateToken(user, wxConfig.tokenTtl || config.jwt.expiresIn);
 
   // 4. Return token + public user profile
   return {

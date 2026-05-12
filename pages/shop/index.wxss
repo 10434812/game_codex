@@ -58,6 +58,36 @@
   text-shadow: 0 2rpx 0 #eed9bf;
 }
 
+.payment-banner {
+  margin-top: 22rpx;
+  padding: 18rpx 22rpx;
+  border-radius: 20rpx;
+  border: 2rpx solid rgba(194, 139, 74, 0.18);
+  background: rgba(255, 248, 235, 0.88);
+}
+
+.payment-banner.enabled {
+  border-color: rgba(103, 194, 58, 0.28);
+  background: rgba(244, 252, 239, 0.94);
+}
+
+.payment-banner.disabled {
+  border-color: rgba(188, 142, 85, 0.22);
+}
+
+.payment-banner-title {
+  color: #7c5528;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.payment-banner-text {
+  margin-top: 8rpx;
+  color: #9a7c59;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
 .category-tabs {
   margin-top: 32rpx;
   display: flex;

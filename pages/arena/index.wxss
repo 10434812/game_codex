@@ -80,8 +80,8 @@
 
 .fortune-bag-wrap {
   position: absolute;
-  width: 178rpx;
-  height: 202rpx;
+  width: 220rpx;
+  height: 250rpx;
   transform: translate(-50%, -50%);
   z-index: 3;
   animation: bagDropIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, bagDropPulse 0.88s ease-in-out 0.6s infinite alternate;
@@ -91,25 +91,25 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 178rpx;
-  height: 178rpx;
-  filter: drop-shadow(0 12rpx 22rpx rgba(185, 108, 42, 0.32));
+  width: 220rpx;
+  height: 220rpx;
+  filter: drop-shadow(0 14rpx 26rpx rgba(185, 108, 42, 0.34));
 }
 
 .fortune-bag-countdown {
   position: absolute;
-  top: 148rpx;
+  top: 184rpx;
   left: 50%;
   transform: translateX(-50%);
-  min-width: 96rpx;
-  height: 40rpx;
-  padding: 0 18rpx;
+  min-width: 108rpx;
+  height: 44rpx;
+  padding: 0 20rpx;
   border-radius: 999rpx;
   background: rgba(255, 250, 241, 0.94);
   border: 2rpx solid rgba(182, 137, 71, 0.72);
   color: #8a5f2b;
-  font-size: 23rpx;
-  line-height: 36rpx;
+  font-size: 24rpx;
+  line-height: 40rpx;
   text-align: center;
   box-sizing: border-box;
   box-shadow: 0 8rpx 16rpx rgba(153, 112, 58, 0.18);
@@ -405,19 +405,23 @@
 
 .invest-panel {
   position: fixed;
-  left: 22rpx;
-  right: 22rpx;
-  bottom: 188rpx;
-  padding: 18rpx 20rpx;
+  left: 16rpx;
+  right: 16rpx;
+  bottom: 176rpx;
+  min-height: 340rpx;
+  box-sizing: border-box;
+  padding: 28rpx 28rpx 24rpx;
   border-radius: 22rpx;
   background: rgba(255, 248, 234, 0.93);
   border: 2rpx solid rgba(205, 171, 114, 0.56);
   box-shadow: 0 10rpx 20rpx rgba(123, 87, 41, 0.16);
   z-index: 10;
+  display: flex;
+  flex-direction: column;
 }
 
 .fortune-panel {
-  padding-bottom: 16rpx;
+  padding-bottom: 24rpx;
 }
 
 .invest-head {
@@ -457,7 +461,7 @@
 }
 
 .invest-title {
-  margin-top: 6rpx;
+  margin-top: 12rpx;
   color: #4f2f1f;
   font-size: 24rpx;
   font-weight: 600;
@@ -468,7 +472,7 @@
 }
 
 .invest-line {
-  margin-top: 4rpx;
+  margin-top: 8rpx;
   color: #6d4a28;
   font-size: 23rpx;
 }
@@ -493,7 +497,8 @@
 }
 
 .invest-actions {
-  margin-top: 12rpx;
+  margin-top: auto;
+  padding-top: 20rpx;
   display: flex;
   gap: 14rpx;
 }

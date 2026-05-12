@@ -13,20 +13,31 @@
 
 .hero-title {
   margin-top: 4rpx;
-  color: #e57c1f;
-  font-size: 72rpx;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0;
-  text-shadow: 0 2rpx 0 rgba(181, 102, 19, 0.16);
+  color: #dc7419;
+  font-family: "Songti SC", "STSong", "Kaiti SC", "KaiTi", serif;
+  font-size: 76rpx;
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: 3rpx;
+  -webkit-text-stroke: 1rpx rgba(143, 76, 15, 0.12);
+  text-shadow:
+    0 3rpx 0 rgba(255, 239, 199, 0.86),
+    0 10rpx 18rpx rgba(166, 88, 15, 0.16);
+}
+
+.hero-copy {
+  margin-top: 18rpx;
 }
 
 .subtitle {
-  margin-top: 18rpx;
-  font-size: 26rpx;
-  color: #443a33;
-  line-height: 1.45;
-  font-weight: 600;
+  position: relative;
+  max-width: 690rpx;
+  color: #4a3828;
+  font-size: 28rpx;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .profile-card {
@@ -244,16 +255,16 @@
 
 .dest-meta {
   font-size: 20rpx;
-  color: #e08a18;
+  color: var(--stage-accent-color, #e08a18);
   letter-spacing: 4rpx;
 }
 
 .dest-name {
   margin-top: 6rpx;
-  font-size: 78rpx;
-  color: #c76d11;
+  font-size: 48rpx;
+  color: var(--stage-title-color, #c76d11);
   font-weight: 900;
-  line-height: 1.08;
+  line-height: 1.12;
 }
 
 .dest-sub {

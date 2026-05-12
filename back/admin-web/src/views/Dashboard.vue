@@ -171,6 +171,7 @@ use([CanvasRenderer, LineChart, BarChart, GridComponent, TooltipComponent, Legen
 const router = useRouter()
 const loading = ref(false)
 const lastUpdatedAt = ref(null)
+const configLoadState = ref('idle')
 const dashboardData = ref({
   totalUsers: 0,
   todayGames: 0,
@@ -181,6 +182,22 @@ const dashboardData = ref({
   dailyRevenue: []
 })
 const configs = ref([])
+const fallbackConfigs = [
+  { key: 'wechat.login_enabled', value: 'true' },
+  { key: 'wechat.login_app_id', value: 'wx72a4b552a87b44cf' },
+  { key: 'wechat.login_secret', value: '' },
+  { key: 'wechat.login_agreement_url', value: 'https://xcx.ukb88.com/legal/user-agreement.html' },
+  { key: 'wechat.login_privacy_url', value: 'https://xcx.ukb88.com/legal/privacy-policy.html' },
+  { key: 'wechat.share_enabled', value: 'true' },
+  { key: 'wechat.share_title', value: '锦鲤前程邀你一起组队闯世界' },
+  { key: 'wechat.share_path', value: '/pages/home/index' },
+  { key: 'wechat.share_image_url', value: 'https://xcx.ukb88.com/assets/bg/screen.png' },
+  { key: 'wechat.share_timeline_title', value: '锦鲤前程开启好运局，来和我一起冲榜' },
+  { key: 'wechat.pay_enabled', value: 'false' },
+  { key: 'wechat.pay_mch_id', value: '' },
+  { key: 'wechat.pay_api_v3_key', value: '' },
+  { key: 'wechat.pay_notify_url', value: '' }
+]
 
 function formatNumber(value) {
   const number = Number(value || 0)
@@ -217,9 +234,28 @@ function getConfigValue(key, fallback = '') {
   return item.value ?? fallback
 }
 
-const dailyStats = computed(() => dashboardData.value.dailyStats || [])
-const dailyGames = computed(() => dashboardData.value.dailyGames || [])
-const dailyRevenue = computed(() => dashboardData.value.dailyRevenue || [])
+function buildRecentDays(length = 7) {
+  const values = []
+  const base = new Date()
+  for (let index = length - 1; index >= 0; index -= 1) {
+    const current = new Date(base)
+    current.setDate(base.getDate() - index)
+    values.push(new Intl.DateTimeFormat('zh-CN', {
+      month: '2-digit',
+      day: '2-digit'
+    }).format(current))
+  }
+  return values
+}
+
+function normalizeSeries(rawSeries, dataKey) {
+  if (Array.isArray(rawSeries) && rawSeries.length > 0) return rawSeries
+  return buildRecentDays().map((date) => ({ date, [dataKey]: 0 }))
+}
+
+const dailyStats = computed(() => normalizeSeries(dashboardData.value.dailyStats, 'count'))
+const dailyGames = computed(() => normalizeSeries(dashboardData.value.dailyGames, 'count'))
+const dailyRevenue = computed(() => normalizeSeries(dashboardData.value.dailyRevenue, 'amount'))
 
 const userTrend = computed(() => getSeriesTrend(dailyStats.value, 'count'))
 const gameTrend = computed(() => getSeriesTrend(dailyGames.value, 'count'))
@@ -473,6 +509,29 @@ const intensityMetrics = computed(() => {
 })
 
 const capabilityCards = computed(() => {
+  if (configLoadState.value === 'failed') {
+    return [
+      {
+        title: '微信登录',
+        status: '待连接',
+        type: 'warning',
+        note: '配置接口暂时不可用，当前先展示本地默认值，等后端恢复后会自动切回真实配置。'
+      },
+      {
+        title: '微信分享',
+        status: '待连接',
+        type: 'warning',
+        note: '分享能力状态暂未从服务端拉到，建议优先检查 `/api/admin/configs`。'
+      },
+      {
+        title: '微信支付',
+        status: '待连接',
+        type: 'warning',
+        note: '支付配置当前没有真实回传，页面不会再错误显示成已关闭。'
+      }
+    ]
+  }
+
   const loginEnabled = getConfigValue('wechat.login_enabled', 'true') === 'true'
   const shareEnabled = getConfigValue('wechat.share_enabled', 'true') === 'true'
   const payEnabled = getConfigValue('wechat.pay_enabled', 'false') === 'true'
@@ -553,12 +612,19 @@ const lastUpdatedText = computed(() => {
 })
 
 async function fetchConfigs() {
+  configLoadState.value = 'loading'
   try {
     const res = await request.get('/api/admin/configs')
     if (res.data.code === 0) {
       configs.value = res.data.data || []
+      configLoadState.value = 'success'
+      return
     }
+    configs.value = fallbackConfigs
+    configLoadState.value = 'failed'
   } catch (error) {
+    configs.value = fallbackConfigs
+    configLoadState.value = 'failed'
     console.error('Failed to fetch configs:', error)
   }
 }

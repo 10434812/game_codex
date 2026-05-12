@@ -32,6 +32,8 @@ const DEFAULT_STAGE = {
   income: '+150%',
   online: '4.2k',
   image: 'https://xcx.ukb88.com/assets/stages/great-wall-bg.jpg',
+  titleColor: '#b96816',
+  accentColor: '#d9821f',
 };
 
 const STAGES = [
@@ -44,6 +46,8 @@ const STAGES = [
     income: '+120%',
     online: '3.1k',
     image: 'https://xcx.ukb88.com/assets/stages/mount-fuji-bg.jpg',
+    titleColor: '#b65f86',
+    accentColor: '#d7839e',
   },
   {
     id: 3,
@@ -53,6 +57,8 @@ const STAGES = [
     income: '+135%',
     online: '3.8k',
     image: 'https://xcx.ukb88.com/assets/stages/eiffel-bg.jpg',
+    titleColor: '#9b6a24',
+    accentColor: '#c28a32',
   },
   {
     id: 4,
@@ -62,6 +68,8 @@ const STAGES = [
     income: '+112%',
     online: '2.7k',
     image: 'https://xcx.ukb88.com/assets/stages/grand-canyon-bg.jpg',
+    titleColor: '#a9572c',
+    accentColor: '#cb7340',
   },
   {
     id: 5,
@@ -71,6 +79,8 @@ const STAGES = [
     income: '+126%',
     online: '2.9k',
     image: 'https://xcx.ukb88.com/assets/stages/taj-mahal-bg.jpg',
+    titleColor: '#8f657b',
+    accentColor: '#b97d91',
   },
   {
     id: 6,
@@ -80,6 +90,8 @@ const STAGES = [
     income: '+142%',
     online: '4.6k',
     image: 'https://xcx.ukb88.com/assets/stages/xihu.png',
+    titleColor: '#2f7e73',
+    accentColor: '#47a092',
   },
   {
     id: 7,
@@ -89,6 +101,8 @@ const STAGES = [
     income: '+118%',
     online: '2.4k',
     image: 'https://xcx.ukb88.com/assets/stages/gulangyu.png',
+    titleColor: '#2f6f9e',
+    accentColor: '#4b91bc',
   },
 ];
 

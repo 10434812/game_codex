@@ -2,22 +2,35 @@ const api = require('./api-client');
 
 const DEFAULT_CONFIG = {
   'wechat.login_enabled': 'true',
+  'wechat.login_agreement_url': 'https://xcx.ukb88.com/legal/user-agreement.html',
+  'wechat.login_privacy_url': 'https://xcx.ukb88.com/legal/privacy-policy.html',
   'wechat.share_enabled': 'true',
   'wechat.share_title': '锦鲤前程邀你一起组队闯世界',
+  'wechat.share_desc': '选景区、组战队、拼手气，一起冲上好运榜。',
   'wechat.share_path': '/pages/home/index',
   'wechat.share_query': 'from=admin_share',
   'wechat.share_image_url': 'https://xcx.ukb88.com/assets/bg/screen.png',
   'wechat.share_timeline_title': '锦鲤前程开启好运局，来和我一起冲榜',
+  'wechat.share_timeline_image_url': 'https://xcx.ukb88.com/assets/bg/screen.png',
   'wechat.pay_enabled': 'false',
   'wechat.pay_success_path': '/pages/shop/index',
+  'wechat.pay_currency': 'CNY',
+  'wechat.pay_goods_desc': '锦鲤前程幸运金币充值',
+  'system.maintenance_mode': 'false',
+  'system.maintenance_message': '',
 };
 
 let cachedConfig = { ...DEFAULT_CONFIG };
+let cachedFeatures = {};
 let lastFetchTime = 0;
 let pendingPromise = null;
 
 function getConfigMap() {
   return { ...cachedConfig };
+}
+
+function getFeatures() {
+  return JSON.parse(JSON.stringify(cachedFeatures || {}));
 }
 
 function getValue(key, fallback = '') {
@@ -42,10 +55,16 @@ async function fetchRemoteConfig(force = false) {
   }
   pendingPromise = api.get('/configs/public')
     .then((data) => {
+      const remoteConfigs = data && data.configs && typeof data.configs === 'object'
+        ? data.configs
+        : (data || {});
       cachedConfig = {
         ...DEFAULT_CONFIG,
-        ...(data || {}),
+        ...remoteConfigs,
       };
+      cachedFeatures = data && data.features && typeof data.features === 'object'
+        ? data.features
+        : {};
       lastFetchTime = Date.now();
       return getConfigMap();
     })
@@ -62,6 +81,7 @@ async function fetchRemoteConfig(force = false) {
 module.exports = {
   DEFAULT_CONFIG,
   getConfigMap,
+  getFeatures,
   getValue,
   getBoolean,
   fetchRemoteConfig,

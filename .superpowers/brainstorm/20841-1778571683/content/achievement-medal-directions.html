@@ -1,0 +1,439 @@
+<style>
+  .koi-stage {
+    --paper: #fff9ec;
+    --ink: #4d2c1b;
+    --muted: #8f6d45;
+    --gold: #e9a42d;
+    --orange: #e57c1f;
+    --red: #b53a2e;
+    --jade: #3b9f88;
+    --blue: #417aa8;
+    color: var(--ink);
+  }
+
+  .koi-note {
+    margin: 0 0 22px;
+    color: #735235;
+    font-size: 15px;
+  }
+
+  .phone-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .direction-card {
+    min-height: 640px;
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+    padding: 10px;
+    border-radius: 28px;
+    background: #2d2017;
+    box-shadow: 0 18px 40px rgba(80, 50, 25, 0.22);
+  }
+
+  .screen {
+    overflow: hidden;
+    min-height: 500px;
+    border-radius: 22px;
+    padding: 16px 14px;
+    background:
+      linear-gradient(rgba(246, 235, 209, 0.9), rgba(246, 235, 209, 0.9)),
+      radial-gradient(circle at 24% 12%, rgba(229, 124, 31, 0.22), transparent 26%),
+      #f6ebd1;
+  }
+
+  .mini-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 34px;
+    color: #6e4d30;
+    font-size: 11px;
+  }
+
+  .mini-pill {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255, 252, 244, 0.82);
+  }
+
+  .title {
+    margin-top: 8px;
+    text-align: center;
+    color: #7b4314;
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 900;
+    text-shadow: 0 3px 0 #f2debb;
+  }
+
+  .podium-mini {
+    margin: 14px auto 10px;
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    gap: 7px;
+  }
+
+  .podium-block {
+    width: 54px;
+    height: 80px;
+    border-radius: 28px 28px 9px 9px;
+    background: rgba(255, 252, 244, 0.9);
+  }
+
+  .podium-block.main {
+    width: 70px;
+    height: 116px;
+    background: linear-gradient(160deg, #f5bc60, #e57c1f);
+  }
+
+  .settle-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+    margin-top: 10px;
+  }
+
+  .settle-card {
+    min-height: 156px;
+    padding: 12px;
+    border-radius: 18px;
+    background: rgba(255, 250, 240, 0.92);
+    box-shadow: 0 8px 20px rgba(133, 98, 52, 0.12);
+  }
+
+  .settle-label {
+    color: #7d5b3a;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .income {
+    margin-top: 10px;
+    color: var(--orange);
+    font-size: 28px;
+    font-weight: 900;
+  }
+
+  .track {
+    height: 9px;
+    margin-top: 18px;
+    border-radius: 999px;
+    background: rgba(213, 183, 134, 0.36);
+  }
+
+  .fill {
+    width: 68%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f4b24a, #e57c1f);
+  }
+
+  .medal-hero {
+    display: grid;
+    place-items: center;
+    margin-top: 10px;
+  }
+
+  .medal {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 34% 28%, #fff6c9 0 13%, transparent 14%),
+      radial-gradient(circle, #ffd96a 0 42%, #e6a330 43% 64%, #9d5721 65% 100%);
+    border: 4px solid #fff1b9;
+    box-shadow: 0 10px 22px rgba(146, 86, 20, 0.28), inset 0 -8px 0 rgba(108, 55, 22, 0.14);
+    color: #8a4015;
+    font-size: 30px;
+    font-weight: 900;
+  }
+
+  .medal:before,
+  .medal:after {
+    content: "";
+    position: absolute;
+    top: -20px;
+    width: 22px;
+    height: 34px;
+    background: linear-gradient(#c33f32, #8f2b25);
+    z-index: -1;
+  }
+
+  .medal:before {
+    left: 19px;
+    transform: rotate(-16deg);
+  }
+
+  .medal:after {
+    right: 19px;
+    transform: rotate(16deg);
+  }
+
+  .achievement-name {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 20px;
+    line-height: 1.12;
+    font-weight: 900;
+  }
+
+  .achievement-sub {
+    margin-top: 6px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .badge-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 12px;
+  }
+
+  .tiny-medal {
+    display: grid;
+    place-items: center;
+    width: 33px;
+    height: 33px;
+    border-radius: 50%;
+    border: 2px solid #fff0bb;
+    background: #e9a42d;
+    color: #7d3518;
+    font-size: 15px;
+    font-weight: 900;
+  }
+
+  .tiny-medal.locked {
+    opacity: 0.35;
+    filter: grayscale(0.8);
+  }
+
+  .honor-scroll {
+    position: relative;
+    margin-top: 10px;
+    min-height: 120px;
+    padding: 14px 13px 12px;
+    border-radius: 10px;
+    background:
+      linear-gradient(90deg, rgba(159, 92, 38, 0.14), transparent 12%, transparent 88%, rgba(159, 92, 38, 0.14)),
+      #fff4d8;
+    border: 2px solid rgba(198, 137, 63, 0.38);
+  }
+
+  .honor-scroll:before,
+  .honor-scroll:after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    height: 5px;
+    border-radius: 999px;
+    background: #9f5c26;
+  }
+
+  .honor-scroll:before {
+    top: -5px;
+  }
+
+  .honor-scroll:after {
+    bottom: -5px;
+  }
+
+  .scroll-seal {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 8px;
+    border-radius: 50%;
+    background: #b53a2e;
+    color: #ffe6b8;
+    font-size: 23px;
+    box-shadow: inset 0 -4px 0 rgba(87, 24, 27, 0.22);
+  }
+
+  .rank-bars {
+    margin-top: 12px;
+  }
+
+  .rank-line {
+    height: 28px;
+    margin-bottom: 7px;
+    border-radius: 999px;
+    background: rgba(255, 252, 244, 0.9);
+  }
+
+  .card-body h3 {
+    margin-bottom: 4px;
+  }
+
+  .design-note {
+    color: #735235;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 960px) {
+    .phone-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .direction-card {
+      min-height: auto;
+    }
+  }
+</style>
+
+<div class="koi-stage">
+  <h2>结算页「新成就」视觉方向</h2>
+  <p class="subtitle">目标：让它从“文字占位”变成真正的奖励反馈，同时保持东方纸张主题、适配小程序窄屏。</p>
+  <p class="koi-note">点选你最喜欢的方向。我的推荐是 B：一主多副勋章墙，既有本局惊喜，也能自然扩展成长期收集。</p>
+
+  <div class="cards phone-grid">
+    <div class="card direction-card" data-choice="a-single-medal" onclick="toggleSelect(this)">
+      <div class="card-image">
+        <div class="phone">
+          <div class="screen">
+            <div class="mini-header">
+              <span>玩家昵称</span>
+              <span class="mini-pill">本地模拟</span>
+            </div>
+            <div class="title">获得胜利</div>
+            <div class="podium-mini">
+              <div class="podium-block"></div>
+              <div class="podium-block main"></div>
+              <div class="podium-block"></div>
+            </div>
+            <div class="settle-row">
+              <div class="settle-card">
+                <div class="settle-label">本局收益</div>
+                <div class="income">¥300</div>
+                <div class="track"><div class="fill"></div></div>
+              </div>
+              <div class="settle-card">
+                <div class="settle-label">新成就</div>
+                <div class="medal-hero">
+                  <div class="medal">长</div>
+                </div>
+                <div class="achievement-name">长城守望者</div>
+                <div class="achievement-sub">本局首次解锁</div>
+              </div>
+            </div>
+            <div class="rank-bars">
+              <div class="rank-line"></div>
+              <div class="rank-line"></div>
+              <div class="rank-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>A. 单枚主勋章</h3>
+        <p class="design-note">最稳，改动小。把现有成就文字包装成一枚大勋章，适合只展示“本局新获得”。缺点是扩展感弱。</p>
+      </div>
+    </div>
+
+    <div class="card direction-card" data-choice="b-medal-set" onclick="toggleSelect(this)">
+      <div class="card-image">
+        <div class="phone">
+          <div class="screen">
+            <div class="mini-header">
+              <span>玩家昵称</span>
+              <span class="mini-pill">本地模拟</span>
+            </div>
+            <div class="title">获得胜利</div>
+            <div class="podium-mini">
+              <div class="podium-block"></div>
+              <div class="podium-block main"></div>
+              <div class="podium-block"></div>
+            </div>
+            <div class="settle-row">
+              <div class="settle-card">
+                <div class="settle-label">本局收益</div>
+                <div class="income">¥300</div>
+                <div class="track"><div class="fill"></div></div>
+              </div>
+              <div class="settle-card">
+                <div class="settle-label">本局勋章</div>
+                <div class="medal-hero">
+                  <div class="medal">长</div>
+                </div>
+                <div class="achievement-name">长城守望者</div>
+                <div class="badge-row">
+                  <div class="tiny-medal">胜</div>
+                  <div class="tiny-medal" style="background:#72b89e;color:#1f604f;">旅</div>
+                  <div class="tiny-medal" style="background:#8db3d8;color:#244c70;">队</div>
+                  <div class="tiny-medal locked">?</div>
+                </div>
+              </div>
+            </div>
+            <div class="rank-bars">
+              <div class="rank-line"></div>
+              <div class="rank-line"></div>
+              <div class="rank-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>B. 一主多副勋章墙</h3>
+        <p class="design-note">奖励感最强。主勋章展示本局成就，下方显示同批勋章进度，后续可扩展景区、胜场、团队、投资类勋章。</p>
+      </div>
+    </div>
+
+    <div class="card direction-card" data-choice="c-honor-scroll" onclick="toggleSelect(this)">
+      <div class="card-image">
+        <div class="phone">
+          <div class="screen">
+            <div class="mini-header">
+              <span>玩家昵称</span>
+              <span class="mini-pill">本地模拟</span>
+            </div>
+            <div class="title">获得胜利</div>
+            <div class="podium-mini">
+              <div class="podium-block"></div>
+              <div class="podium-block main"></div>
+              <div class="podium-block"></div>
+            </div>
+            <div class="settle-row">
+              <div class="settle-card">
+                <div class="settle-label">本局收益</div>
+                <div class="income">¥300</div>
+                <div class="track"><div class="fill"></div></div>
+              </div>
+              <div class="settle-card">
+                <div class="settle-label">荣誉文书</div>
+                <div class="honor-scroll">
+                  <div class="scroll-seal">锦</div>
+                  <div class="achievement-name">长城守望者</div>
+                  <div class="achievement-sub">景区探索 · 首次登榜</div>
+                </div>
+              </div>
+            </div>
+            <div class="rank-bars">
+              <div class="rank-line"></div>
+              <div class="rank-line"></div>
+              <div class="rank-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>C. 卷轴式荣誉证书</h3>
+        <p class="design-note">东方感更浓，和纸张主题贴。它更像“称号”而不是“收集品”，后续做勋章体系会稍微绕一点。</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,5 @@
 const api = require('./api-client');
+const runtimeConfig = require('./runtime-config');
 
 const USER_PROFILE_KEY = 'wx_user_profile_v1';
 
@@ -50,6 +51,9 @@ function hasValidProfile(profile) {
 }
 
 async function login() {
+  if (!runtimeConfig.getBoolean('wechat.login_enabled', true)) {
+    return getCachedProfile();
+  }
   try {
     const { code } = await new Promise((resolve, reject) => {
       wx.login({

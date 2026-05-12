@@ -254,6 +254,13 @@ test('room 页面会提示准备后两分钟内开始游戏', () => {
   assert.match(wxss, /\.secondary-actions\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*16rpx;/);
 });
 
+test('room 页面下方两个社交操作按钮使用白色背景', () => {
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxss'), 'utf8');
+
+  assert.match(wxss, /\.invite-btn\s*\{[\s\S]*background:\s*rgba\(255,\s*253,\s*246,\s*0\.96\);[\s\S]*color:\s*#c96a10;/);
+  assert.match(wxss, /\.ready-btn\s*\{[\s\S]*background:\s*rgba\(255,\s*253,\s*246,\s*0\.96\);[\s\S]*color:\s*#c96a10;/);
+});
+
 test('home 页面在没有结算结果时点击历史 Tab 不会误跳转', () => {
   const calls = createWxStub();
   const gameStore = require('../utils/game-store');
@@ -287,6 +294,23 @@ test('home 页面在零经验时也会显示轻微进度填充', () => {
 
   assert.equal(homePage.data.progressPercent, 0);
   assert.equal(homePage.data.progressVisualPercent, 10);
+});
+
+test('home 景区卡片标题会缩小并使用景区主题色', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxml'), 'utf8');
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxss'), 'utf8');
+  const {STAGES} = require('../utils/constants');
+
+  assert.match(wxml, /--stage-title-color:\s*\{\{\s*item\.titleColor\s*\}\}/);
+  assert.match(wxml, /--stage-accent-color:\s*\{\{\s*item\.accentColor\s*\}\}/);
+  assert.match(wxss, /\.dest-name\s*\{[\s\S]*font-size:\s*48rpx;[\s\S]*color:\s*var\(--stage-title-color,\s*#c76d11\);/);
+  assert.match(wxss, /\.dest-meta\s*\{[\s\S]*color:\s*var\(--stage-accent-color,\s*#e08a18\);/);
+
+  for (const stage of STAGES) {
+    assert.match(stage.titleColor, /^#[0-9a-f]{6}$/i);
+    assert.match(stage.accentColor, /^#[0-9a-f]{6}$/i);
+  }
+  assert.notEqual(STAGES[0].titleColor, STAGES[1].titleColor);
 });
 
 test('boot 页面会引用开机动画并把进度条放进启动页', () => {
@@ -376,6 +400,89 @@ test('房间页邀请分享会带上房间号', async () => {
   assert.match(sharePayload.path, /scene=room/);
 });
 
+test('分享时间线会优先使用后台配置的朋友圈图片', () => {
+  createWxStub();
+  const runtimeConfig = require('../utils/runtime-config');
+  const originalGetValue = runtimeConfig.getValue;
+
+  runtimeConfig.getValue = (key, fallback = '') => {
+    if (key === 'wechat.share_timeline_title') return '朋友圈专用标题';
+    if (key === 'wechat.share_timeline_image_url') return 'https://example.com/timeline.png';
+    if (key === 'wechat.share_query') return 'from=admin_share';
+    return originalGetValue(key, fallback);
+  };
+
+  try {
+    const { buildShareTimeline } = require('../utils/share-config');
+    const payload = buildShareTimeline('result');
+    assert.equal(payload.title, '朋友圈专用标题');
+    assert.equal(payload.imageUrl, 'https://example.com/timeline.png');
+  } finally {
+    runtimeConfig.getValue = originalGetValue;
+  }
+});
+
+test('boot 页面在后台关闭微信登录时不会触发 wx.login', async () => {
+  const calls = createWxStub();
+  let loginCalled = 0;
+  const originalLogin = wx.login;
+  wx.login = (payload) => {
+    loginCalled += 1;
+    if (payload && typeof payload.fail === 'function') {
+      payload.fail(new Error('should not login'));
+    }
+  };
+
+  const runtimeConfig = require('../utils/runtime-config');
+  const originalGetBoolean = runtimeConfig.getBoolean;
+  runtimeConfig.getBoolean = (key, fallback = false) => {
+    if (key === 'wechat.login_enabled') return false;
+    return originalGetBoolean(key, fallback);
+  };
+
+  try {
+    const bootPage = createPageInstance(loadPage('../pages/boot/index.js'));
+    bootPage._bootMinMs = 20;
+    bootPage._bootMaxMs = 40;
+    bootPage._bootHoldMs = 10;
+    bootPage.onLoad();
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.equal(loginCalled, 0);
+    assert.equal(calls.reLaunch.length, 1);
+  } finally {
+    wx.login = originalLogin;
+    runtimeConfig.getBoolean = originalGetBoolean;
+  }
+});
+
+test('商城页会显示后台支付配置状态', () => {
+  createWxStub();
+  const runtimeConfig = require('../utils/runtime-config');
+  const originalGetBoolean = runtimeConfig.getBoolean;
+  const originalGetValue = runtimeConfig.getValue;
+
+  runtimeConfig.getBoolean = (key, fallback = false) => {
+    if (key === 'wechat.pay_enabled') return true;
+    return originalGetBoolean(key, fallback);
+  };
+  runtimeConfig.getValue = (key, fallback = '') => {
+    if (key === 'wechat.pay_goods_desc') return '锦鲤前程充值包';
+    if (key === 'wechat.pay_currency') return 'CNY';
+    return originalGetValue(key, fallback);
+  };
+
+  try {
+    const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
+    shopPage.syncPage();
+    assert.equal(shopPage.data.payEnabled, true);
+    assert.match(shopPage.data.payStatusText, /已开启/);
+    assert.match(shopPage.data.payHintText, /锦鲤前程充值包/);
+  } finally {
+    runtimeConfig.getBoolean = originalGetBoolean;
+    runtimeConfig.getValue = originalGetValue;
+  }
+});
+
 test('arena 页面把玩家名字渲染在头像之后的独立层，避免被头像遮挡', () => {
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
   const playerNodeIndex = wxml.indexOf('class="player-node');
@@ -451,15 +558,18 @@ test('arena 页的福袋会保持居中并保留足够的视觉权重', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
 
-  assert.match(wxss, /\.fortune-bag-wrap\s*\{[\s\S]*width:\s*178rpx;[\s\S]*height:\s*202rpx;/);
-  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*position:\s*absolute;[\s\S]*top:\s*0;[\s\S]*left:\s*0;/);
-  assert.match(wxss, /\.fortune-bag-countdown\s*\{[\s\S]*top:\s*148rpx;/);
+  assert.match(wxss, /\.fortune-bag-wrap\s*\{[\s\S]*width:\s*220rpx;[\s\S]*height:\s*250rpx;/);
+  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*position:\s*absolute;[\s\S]*top:\s*0;[\s\S]*left:\s*0;[\s\S]*width:\s*220rpx;[\s\S]*height:\s*220rpx;/);
+  assert.match(wxss, /\.fortune-bag-countdown\s*\{[\s\S]*top:\s*184rpx;/);
   assert.doesNotMatch(wxss, /\.fortune-bag-shell\s*\{/);
   assert.doesNotMatch(wxss, /\.fortune-bag-label\s*\{/);
   assert.match(wxml, /fortune-bag-countdown/);
   assert.match(wxml, /fortune-panel/);
   assert.match(wxml, /invest-head-icon/);
   assert.match(wxml, /确认卖出/);
+  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*left:\s*16rpx;[\s\S]*right:\s*16rpx;[\s\S]*min-height:\s*340rpx;/);
+  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*display:\s*flex;[\s\S]*flex-direction:\s*column;/);
+  assert.match(wxss, /\.invest-actions\s*\{[\s\S]*margin-top:\s*auto;/);
 });
 
 test('arena 页面不会再为自己头像额外渲染 我 标签', () => {

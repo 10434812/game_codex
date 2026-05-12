@@ -68,7 +68,10 @@ function buildShareTimeline(scene = 'default', options = {}) {
       runtimeConfig.getValue('wechat.share_query', 'from=admin_share'),
       joinQuery(extraQuery, `scene=${scene}`)
     ),
-    imageUrl: runtimeConfig.getValue('wechat.share_image_url', ''),
+    imageUrl: runtimeConfig.getValue(
+      'wechat.share_timeline_image_url',
+      runtimeConfig.getValue('wechat.share_image_url', '')
+    ),
   };
 }
 

@@ -21,16 +21,32 @@
   color: #302014;
 }
 
+.room-hero {
+  margin-top: 16rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.room-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .big-title {
-  margin-top: 26rpx;
-  font-size: 88rpx;
-  line-height: 1;
+  max-width: 100%;
+  font-size: 56rpx;
+  line-height: 1.08;
   font-weight: 900;
   color: #2f1c12;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .room-hint {
-  margin-top: 12rpx;
+  margin-top: 8rpx;
   font-size: 24rpx;
   line-height: 1.4;
   color: #7f5a32;
@@ -38,21 +54,25 @@
 }
 
 .tags {
-  margin-top: 12rpx;
+  flex: 0 0 auto;
   display: flex;
-  gap: 14rpx;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8rpx;
 }
 
 .tag {
   background: #cfb383;
   color: #4f361f;
   border-radius: 999rpx;
-  font-size: 24rpx;
-  padding: 10rpx 24rpx;
+  font-size: 20rpx;
+  line-height: 1.2;
+  padding: 8rpx 14rpx;
+  white-space: nowrap;
 }
 
 .slot-grid {
-  margin-top: 30rpx;
+  margin-top: 24rpx;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14rpx;
@@ -117,9 +137,9 @@
 }
 
 .voice-box {
-  margin-top: 30rpx;
+  margin-top: 24rpx;
   border-radius: 22rpx;
-  padding: 22rpx 28rpx 24rpx;
+  padding: 18rpx 24rpx 20rpx;
   background: rgba(255, 248, 234, 0.93);
   border: 2rpx solid rgba(205, 171, 114, 0.6);
   box-shadow: 0 8rpx 20rpx rgba(123, 87, 41, 0.12), inset 0 2rpx 0 rgba(255, 255, 255, 0.7);
@@ -133,12 +153,12 @@
 
 .voice-title {
   color: #6b4a2d;
-  font-size: 30rpx;
+  font-size: 26rpx;
   font-weight: 700;
 }
 
 .percent {
-  font-size: 52rpx;
+  font-size: 42rpx;
   line-height: 1;
   color: #dd7b15;
   font-weight: 900;
@@ -146,10 +166,10 @@
 }
 
 .track {
-  margin-top: 16rpx;
+  margin-top: 12rpx;
   background: rgba(220, 198, 162, 0.5);
   border-radius: 999rpx;
-  height: 20rpx;
+  height: 16rpx;
   padding: 3rpx;
   box-sizing: border-box;
   border: 2rpx solid rgba(197, 166, 118, 0.4);
@@ -183,10 +203,10 @@
   margin: 0;
   height: 92rpx;
   border-radius: 999rpx;
-  border: 3rpx solid #cc8a45;
-  box-shadow: inset 0 0 0 2rpx rgba(239, 178, 99, 0.35);
-  background: linear-gradient(180deg, #f4b24a, #e57c1f);
-  color: #fff6dd;
+  border: 3rpx solid rgba(224, 180, 111, 0.82);
+  box-shadow: 0 6rpx 14rpx rgba(122, 90, 48, 0.14), inset 0 2rpx 0 rgba(255, 255, 255, 0.82);
+  background: rgba(255, 253, 246, 0.96);
+  color: #c96a10;
   font-size: 34rpx;
   font-weight: 700;
   display: flex;
@@ -220,12 +240,12 @@
   margin: 0;
   border-radius: 999rpx;
   height: 92rpx;
-  border: 3rpx solid rgba(194, 156, 104, 0.62);
-  box-shadow: 0 6rpx 14rpx rgba(122, 90, 48, 0.2);
+  border: 3rpx solid rgba(224, 180, 111, 0.82);
+  box-shadow: 0 6rpx 14rpx rgba(122, 90, 48, 0.14), inset 0 2rpx 0 rgba(255, 255, 255, 0.82);
   font-size: 32rpx;
   font-weight: 700;
-  color: #fff7e5;
-  background: linear-gradient(135deg, #f5bc60, #e57c1f);
+  background: rgba(255, 253, 246, 0.96);
+  color: #c96a10;
   display: flex;
   align-items: center;
   justify-content: center;
