@@ -19,6 +19,7 @@
       <view class="avatar-section">
         <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
           <image wx:if="{{draft.avatarUrl}}" class="picked-avatar" src="{{draft.avatarUrl}}" mode="aspectFill"></image>
+          <image wx:elif="{{defaultAvatar}}" class="picked-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
           <view wx:else class="picked-avatar empty">+</view>
         </button>
         <view class="helper">点击选择微信头像</view>

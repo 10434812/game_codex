@@ -1,5 +1,5 @@
 const {getNavLayout} = require('../../utils/nav');
-const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, STAGES} = require('../../utils/constants');
+const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, STAGES} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
 const playerStats = require('../../utils/player-stats');
@@ -7,6 +7,8 @@ const {playCue, playStageBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency} = require('../../utils/format');
+const runtimeConfig = require('../../utils/runtime-config');
+const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
 
 const MIN_VISIBLE_PROGRESS_PERCENT = 10;
 
@@ -37,11 +39,15 @@ Page({
     showProfileCard: false,
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
+    defaultAvatar: DEFAULT_AVATAR,
   },
   onLoad() {
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}
+    runtimeConfig.fetchRemoteConfig().finally(() => {
+      enableShareMenu();
+    });
   },
   onShow() {
     this.syncUserProfile();
@@ -126,5 +132,11 @@ Page({
   },
   toggleProfileCard() {
     this.setData({showProfileCard: !this.data.showProfileCard});
+  },
+  onShareAppMessage() {
+    return buildShareAppMessage('home');
+  },
+  onShareTimeline() {
+    return buildShareTimeline('home');
   },
 });

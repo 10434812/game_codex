@@ -1,12 +1,14 @@
 const {getNavLayout} = require('../../utils/nav');
 const api = require('../../utils/api-client');
-const {MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
+const {DEFAULT_AVATAR, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const playerStats = require('../../utils/player-stats');
 const {playCue, stopBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency, formatNumber} = require('../../utils/format');
+const runtimeConfig = require('../../utils/runtime-config');
+const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
 
 // 烟花颜色配置
 const FIREWORK_COLORS = [
@@ -110,6 +112,7 @@ Page({
     },
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
+    defaultAvatar: DEFAULT_AVATAR,
     showScorePopup: false,
     selectedPlayer: null,
     scoreBreakdown: {
@@ -125,6 +128,9 @@ Page({
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}
+    runtimeConfig.fetchRemoteConfig().finally(() => {
+      enableShareMenu();
+    });
     this.refreshResult();
   },
   onShow() {
@@ -142,6 +148,16 @@ Page({
   onUnload() {
     this.stopResultFirework();
     this.stopNumberAnimations();
+  },
+  onShareAppMessage() {
+    return buildShareAppMessage('result', {
+      extraQuery: `resultId=${encodeURIComponent(this.data.resultId || '')}`,
+    });
+  },
+  onShareTimeline() {
+    return buildShareTimeline('result', {
+      extraQuery: `resultId=${encodeURIComponent(this.data.resultId || '')}`,
+    });
   },
   stopNumberAnimations() {
     if (this.gainAnimTimer) clearInterval(this.gainAnimTimer);

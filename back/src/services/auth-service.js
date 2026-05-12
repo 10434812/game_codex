@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const https = require('https');
 const config = require('../config');
 const db = require('../models/db');
+const configService = require('./admin-config-service');
 
 /**
  * Call WeChat jscode2session API to exchange login code for openid/session_key.
@@ -10,11 +11,11 @@ const db = require('../models/db');
  * @param {string} code - wx.login() code from mini-program client
  * @returns {Promise<{ openid: string, session_key: string }>}
  */
-function wechatCode2Session(code) {
+function wechatCode2Session(code, wxConfig) {
   return new Promise((resolve, reject) => {
     const params = new URLSearchParams({
-      appid: config.wx.appId,
-      secret: config.wx.secret,
+      appid: wxConfig.appId,
+      secret: wxConfig.secret,
       js_code: code,
       grant_type: 'authorization_code',
     });
@@ -94,8 +95,16 @@ function generateToken(user) {
  * @throws {Error} if WeChat API fails or code is invalid
  */
 async function login(code) {
+  const wxConfig = await configService.getWechatLoginSettings();
+  if (!wxConfig.enabled) {
+    throw new Error('WeChat login disabled');
+  }
+  if (!wxConfig.appId || !wxConfig.secret) {
+    throw new Error('WeChat login config missing');
+  }
+
   // 1. Exchange code for openid / session_key
-  const wxSession = await wechatCode2Session(code);
+  const wxSession = await wechatCode2Session(code, wxConfig);
 
   // 2. Find or create user
   const user = await findOrCreateUser(wxSession.openid);

@@ -1,4 +1,5 @@
 const db = require('../models/db');
+const { mapRoom, mapRoomPlayer } = require('../utils/admin-presenters');
 
 async function listRooms(status = '', page = 1, limit = 20) {
   const offset = (page - 1) * limit;
@@ -26,7 +27,7 @@ async function listRooms(status = '', page = 1, limit = 20) {
     [...params, String(limit), String(offset)]
   );
 
-  return { records, total: total?.total || 0, page: Number(page), limit: Number(limit) };
+  return { records: records.map(mapRoom), total: total?.total || 0, page: Number(page), limit: Number(limit) };
 }
 
 async function getRoomDetail(roomId) {
@@ -49,7 +50,10 @@ async function getRoomDetail(roomId) {
     [roomId]
   );
 
-  return { room, players };
+  return {
+    ...mapRoom(room),
+    players: players.map(mapRoomPlayer),
+  };
 }
 
 async function forceCloseRoom(roomId) {

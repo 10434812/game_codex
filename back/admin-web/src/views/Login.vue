@@ -168,6 +168,7 @@ async function handleLogin() {
 
 .login-card {
   width: 420px;
+  max-width: calc(100vw - 32px);
   border-radius: 16px !important;
   position: relative;
   z-index: 1;
@@ -299,5 +300,36 @@ async function handleLogin() {
   font-size: 12px;
   color: var(--el-text-color-placeholder);
   border-top: 1px solid rgba(205, 171, 114, 0.12);
+}
+
+@media (max-width: 640px) {
+  .login-page {
+    padding: 20px 16px;
+  }
+
+  .login-card {
+    max-width: 100%;
+  }
+
+  .login-card .el-card__header {
+    padding: 28px 18px 18px !important;
+  }
+
+  .login-card .el-card__body {
+    padding: 8px 18px 20px !important;
+  }
+
+  .login-title {
+    font-size: 22px;
+  }
+
+  .login-subtitle {
+    letter-spacing: 0.5px;
+  }
+
+  .login-btn {
+    height: 44px;
+    letter-spacing: 2px;
+  }
 }
 </style>

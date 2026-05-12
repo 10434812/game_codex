@@ -1,9 +1,11 @@
 const {getNavLayout} = require('../../utils/nav')
-const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, ROOM_UI_LIMIT, WAITING_SLOT_NAME} = require('../../utils/constants')
+const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, ROOM_UI_LIMIT, WAITING_SLOT_NAME} = require('../../utils/constants')
 const gameStore = require('../../utils/game-store')
 const {playCue, playStageBgm, playVibrate} = require('../../utils/audio')
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile')
 const api = require('../../utils/api-client')
+const runtimeConfig = require('../../utils/runtime-config')
+const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config')
 
 function buildEmptySlot() {
   return {
@@ -50,11 +52,15 @@ Page({
     roomHintText: '准备好后，游戏将在两分钟内开始',
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
+    defaultAvatar: DEFAULT_AVATAR,
   },
   onLoad() {
     try {
       this.setData({nav: getNavLayout()})
     } catch (error) {}
+    runtimeConfig.fetchRemoteConfig().finally(() => {
+      enableShareMenu()
+    })
     this.refreshRoom()
   },
   onShow() {
@@ -180,6 +186,10 @@ Page({
     const snapshot = gameStore.getState()
     playStageBgm(snapshot.stage || DEFAULT_STAGE, {volume: 0.38})
   },
+  refreshRoom() {
+    const snapshot = gameStore.getState()
+    this.observeState(snapshot)
+  },
   async initRoom() {
     try {
       const room = await api.post('/rooms', { stageId: 1 })
@@ -216,6 +226,16 @@ Page({
       gameStore.startGame()
       wx.redirectTo({ url: '/pages/arena/index' })
     }
+  },
+  onShareAppMessage() {
+    return buildShareAppMessage('room', {
+      extraQuery: `roomId=${encodeURIComponent(this.data.roomId || '')}`,
+    })
+  },
+  onShareTimeline() {
+    return buildShareTimeline('room', {
+      extraQuery: `roomId=${encodeURIComponent(this.data.roomId || '')}`,
+    })
   },
   clearPollTimer() {
     if (this.pollTimer) {

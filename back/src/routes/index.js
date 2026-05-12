@@ -24,6 +24,7 @@ tryMount('/games', './games');
 tryMount('/shop', './shop');
 tryMount('/stats', './stats');
 tryMount('/leaderboard', './leaderboard');
+tryMount('/configs', './configs');
 tryMount('/admin', './admin');
 
 module.exports = router;

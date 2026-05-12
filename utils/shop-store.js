@@ -6,8 +6,10 @@ const DEFAULT_STATE = {
   coins: INITIAL_COINS,
   ownedSkins: ['skin-default'],
   ownedPets: [],
+  ownedRings: [],
   equippedSkinId: 'skin-default',
   equippedPetId: '',
+  equippedRingId: '',
   records: [],
 };
 const MAX_RECORDS = 120;
@@ -351,6 +353,85 @@ const GOODS = {
       petImage: 'https://xcx.ukb88.com/assets/111/pets/momao.png',
     },
   ],
+  ring: [
+    {
+      id: 'ring-amber-glow',
+      category: 'ring',
+      name: '琥珀流光',
+      price: 880,
+      accent: '#d88a2f',
+      description: '暖金流动的基础光环，适合大部分头像。',
+      ringIcon: '✨',
+      ringLabel: '光环',
+      ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_01.png',
+    },
+    {
+      id: 'ring-cloud-bloom',
+      category: 'ring',
+      name: '云霞锦簇',
+      price: 1280,
+      accent: '#d57554',
+      description: '层叠花纹与暖霞边光，视觉更热闹。',
+      ringIcon: '🌺',
+      ringLabel: '光环',
+      ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_02.png',
+    },
+    {
+      id: 'ring-verdant-song',
+      category: 'ring',
+      name: '青岚回响',
+      price: 1580,
+      accent: '#6fa66f',
+      description: '偏青绿色系的雅致光环，风格清润。',
+      ringIcon: '🍃',
+      ringLabel: '光环',
+      ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_03.png',
+    },
+    {
+      id: 'ring-sun-feather',
+      category: 'ring',
+      name: '金羽朝曦',
+      price: 1880,
+      accent: '#e39a3a',
+      description: '羽纹外扩，适合强调主角位和高光时刻。',
+      ringIcon: '☀️',
+      ringLabel: '光环',
+      ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_04.png',
+    },
+    {
+      id: 'ring-flame-dance',
+      category: 'ring',
+      name: '焰纹流彩',
+      price: 2180,
+      accent: '#df6d49',
+      description: '更张扬的红金火纹，适合强存在感展示。',
+      ringIcon: '🔥',
+      ringLabel: '光环',
+      ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_05.png',
+    },
+    {
+      id: 'ring-moon-frost',
+      category: 'ring',
+      name: '月华霜晕',
+      price: 2480,
+      accent: '#8f93c9',
+      description: '偏冷调的环形光泽，适合静谧神秘风格。',
+      ringIcon: '🌙',
+      ringLabel: '光环',
+      ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_06.png',
+    },
+    {
+      id: 'ring-crown-auspice',
+      category: 'ring',
+      name: '瑞冠天光',
+      price: 2880,
+      accent: '#c88a2b',
+      description: '层次最完整的高级款，适合压轴登场。',
+      ringIcon: '👑',
+      ringLabel: '光环',
+      ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_07.png',
+    },
+  ],
 };
 
 function clone(value) {
@@ -400,6 +481,10 @@ function getPetById(id) {
   return GOODS.pet.find((item) => item.id === id) || null;
 }
 
+function getRingById(id) {
+  return GOODS.ring.find((item) => item.id === id) || null;
+}
+
 function normalizeState(raw) {
   const next = {
     ...DEFAULT_STATE,
@@ -408,6 +493,7 @@ function normalizeState(raw) {
   next.coins = Number.isFinite(Number(next.coins)) ? Math.max(0, Number(next.coins)) : DEFAULT_STATE.coins;
   next.ownedSkins = normalizeArray(next.ownedSkins);
   next.ownedPets = normalizeArray(next.ownedPets);
+  next.ownedRings = normalizeArray(next.ownedRings);
   next.records = normalizeRecords(next.records);
   if (!next.ownedSkins.includes('skin-default')) {
     next.ownedSkins.unshift('skin-default');
@@ -418,6 +504,9 @@ function normalizeState(raw) {
   }
   if (!next.equippedPetId || !getPetById(next.equippedPetId) || !next.ownedPets.includes(next.equippedPetId)) {
     next.equippedPetId = '';
+  }
+  if (!next.equippedRingId || !getRingById(next.equippedRingId) || !next.ownedRings.includes(next.equippedRingId)) {
+    next.equippedRingId = '';
   }
   return next;
 }
@@ -470,6 +559,9 @@ function getGoodsByCategory(category) {
   if (category === 'pet') {
     return clone(GOODS.pet);
   }
+  if (category === 'ring') {
+    return clone(GOODS.ring);
+  }
   return clone(GOODS.skin);
 }
 
@@ -494,8 +586,16 @@ function compareSkinItems(a, b) {
 
 function buildGoodsView(category, state = loadState()) {
   const current = normalizeState(state);
-  const ownedIds = category === 'pet' ? current.ownedPets : current.ownedSkins;
-  const equippedId = category === 'pet' ? current.equippedPetId : current.equippedSkinId;
+  const ownedIds = category === 'pet'
+    ? current.ownedPets
+    : category === 'ring'
+      ? current.ownedRings
+      : current.ownedSkins;
+  const equippedId = category === 'pet'
+    ? current.equippedPetId
+    : category === 'ring'
+      ? current.equippedRingId
+      : current.equippedSkinId;
   const list = getGoodsByCategory(category);
   const sortedList = category === 'skin' ? list.sort(compareSkinItems) : list;
   return sortedList.map((item) => ({
@@ -508,14 +608,14 @@ function buildGoodsView(category, state = loadState()) {
 }
 
 function purchaseItem(category, itemId) {
-  const list = category === 'pet' ? GOODS.pet : GOODS.skin;
+  const list = category === 'pet' ? GOODS.pet : category === 'ring' ? GOODS.ring : GOODS.skin;
   const item = list.find((goods) => goods.id === itemId);
   if (!item) {
     return {ok: false, code: 'NOT_FOUND', message: '商品不存在'};
   }
 
   const state = loadState();
-  const ownedKey = category === 'pet' ? 'ownedPets' : 'ownedSkins';
+  const ownedKey = category === 'pet' ? 'ownedPets' : category === 'ring' ? 'ownedRings' : 'ownedSkins';
   if (state[ownedKey].includes(itemId)) {
     return {
       ok: false,
@@ -566,6 +666,17 @@ function equipItem(category, itemId) {
     return {ok: true, code: 'EQUIPPED', message: '宠物已启用', state: clone(nextState)};
   }
 
+  if (category === 'ring') {
+    if (!state.ownedRings.includes(itemId)) {
+      return {ok: false, code: 'NOT_OWNED', message: '请先购买该光环', state: clone(state)};
+    }
+    const nextState = saveState({
+      ...state,
+      equippedRingId: itemId,
+    });
+    return {ok: true, code: 'EQUIPPED', message: '光环已启用', state: clone(nextState)};
+  }
+
   if (!state.ownedSkins.includes(itemId)) {
     return {ok: false, code: 'NOT_OWNED', message: '请先购买该皮肤', state: clone(state)};
   }
@@ -580,13 +691,18 @@ function getEquippedDisplay() {
   const state = loadState();
   const skin = getSkinById(state.equippedSkinId) || getSkinById('skin-default');
   const pet = state.equippedPetId ? getPetById(state.equippedPetId) : null;
+  const ring = state.equippedRingId ? getRingById(state.equippedRingId) : null;
   return {
     coins: state.coins,
     equippedSkinId: state.equippedSkinId,
     equippedPetId: state.equippedPetId,
+    equippedRingId: state.equippedRingId,
     skinClass: skin && skin.skinClass ? skin.skinClass : 'skin-default',
     skinName: skin && skin.name ? skin.name : '旅人本色',
     skinImage: skin && skin.skinImage ? skin.skinImage : '',
+    ringName: ring && ring.name ? ring.name : '',
+    ringImage: ring && ring.ringImage ? ring.ringImage : '',
+    ringAccent: ring && ring.accent ? ring.accent : '',
     petIcon: pet && pet.petIcon ? pet.petIcon : '',
     petLabel: pet && pet.petLabel ? pet.petLabel : '',
     petImage: pet && pet.petImage ? pet.petImage : '',
@@ -676,8 +792,10 @@ async function equipViaApi(itemId, category) {
     const state = loadState();
     if (category === 'skin') {
       state.equippedSkinId = itemId;
-    } else {
+    } else if (category === 'pet') {
       state.equippedPetId = itemId;
+    } else if (category === 'ring') {
+      state.equippedRingId = itemId;
     }
     saveState(state);
     return true;
@@ -692,14 +810,18 @@ async function refreshInventory() {
     const items = await api.get('/shop/inventory');
     const skins = items.filter(i => i.category === 'skin').map(i => i.item_id);
     const pets = items.filter(i => i.category === 'pet').map(i => i.item_id);
+    const rings = items.filter(i => i.category === 'ring').map(i => i.item_id);
     const equippedSkin = items.find(i => i.category === 'skin' && i.is_equipped);
     const equippedPet = items.find(i => i.category === 'pet' && i.is_equipped);
+    const equippedRing = items.find(i => i.category === 'ring' && i.is_equipped);
 
     const state = loadState();
     state.ownedSkins = [...new Set([...state.ownedSkins, ...skins])];
     state.ownedPets = [...new Set([...state.ownedPets, ...pets])];
+    state.ownedRings = [...new Set([...state.ownedRings, ...rings])];
     if (equippedSkin) state.equippedSkinId = equippedSkin.item_id;
     if (equippedPet) state.equippedPetId = equippedPet.item_id;
+    if (equippedRing) state.equippedRingId = equippedRing.item_id;
     saveState(state);
   } catch (err) {
     console.warn('[shop-store] refreshInventory error:', err);

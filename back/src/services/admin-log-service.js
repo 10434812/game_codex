@@ -1,4 +1,5 @@
 const db = require('../models/db');
+const { mapLog } = require('../utils/admin-presenters');
 
 async function listLogs(filters = {}, page = 1, limit = 20) {
   const offset = (page - 1) * limit;
@@ -16,6 +17,17 @@ async function listLogs(filters = {}, page = 1, limit = 20) {
   if (filters.adminId) {
     conditions.push('admin_id = ?');
     params.push(filters.adminId);
+  }
+  if (filters.adminQuery) {
+    const query = String(filters.adminQuery).trim();
+    const numericId = Number(query);
+    if (Number.isFinite(numericId) && query !== '') {
+      conditions.push('(admin_id = ? OR admin_name LIKE ?)');
+      params.push(numericId, `%${query}%`);
+    } else if (query) {
+      conditions.push('admin_name LIKE ?');
+      params.push(`%${query}%`);
+    }
   }
   if (filters.dateFrom) {
     conditions.push('created_at >= ?');
@@ -37,11 +49,12 @@ async function listLogs(filters = {}, page = 1, limit = 20) {
     [...params, String(limit), String(offset)]
   );
 
-  return { records, total: total?.total || 0, page: Number(page), limit: Number(limit) };
+  return { records: records.map(mapLog), total: total?.total || 0, page: Number(page), limit: Number(limit) };
 }
 
 async function getLog(id) {
-  return db.queryOne('SELECT * FROM operation_logs WHERE id = ?', [id]);
+  const log = await db.queryOne('SELECT * FROM operation_logs WHERE id = ?', [id]);
+  return mapLog(log);
 }
 
 async function getLogStats() {
@@ -54,7 +67,12 @@ async function getLogStats() {
     ),
   ]);
 
-  return { actionCounts, dailyCounts };
+  return {
+    total: actionCounts.reduce((sum, item) => sum + Number(item.count || 0), 0),
+    distribution: actionCounts,
+    actionCounts,
+    dailyCounts,
+  };
 }
 
 module.exports = {

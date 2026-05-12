@@ -3,7 +3,7 @@
   <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
     <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
       <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
-      <view wx:else class="app-user-avatar"></view>
+      <image wx:else class="app-user-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
       <text class="app-user-name">{{userProfile.nickName}}</text>
     </view>
     <view class="app-header-right">
@@ -39,7 +39,10 @@
 
       <view class="player-node {{ item.isSelf ? 'self-node' : '' }}" wx:for="{{ players }}" wx:key="id" style="left: {{ item.x }}rpx; top: {{ item.y }}rpx;" data-player-id="{{ item.id }}" bindtap="onPlayerTap">
         <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }}" hover-class="clickable-hover">
-          <image class="avatar" src="{{ item.avatar || 'https://xcx.ukb88.com/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill"></image>
+          <view class="avatar-core">
+            <image class="avatar" src="{{ item.avatar || 'https://xcx.ukb88.com/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill"></image>
+          </view>
+          <image wx:if="{{ item.isSelf && item.ringImage }}" class="avatar-ring-overlay" src="{{ item.ringImage }}" mode="aspectFit"></image>
         </view>
         <view
           class="pet-follower"
@@ -56,7 +59,6 @@
           </view>
         </view>
         <view class="emote-bubble emote-{{ item.chatPos || 'upper-center' }}" wx:if="{{ item.emoteText }}">{{ item.emoteText }}</view>
-        <view class="self-tag" wx:if="{{ item.isSelf }}">我</view>
       </view>
 
       <view class="player-name-layer">

@@ -530,7 +530,7 @@ function normalizeStage(stage) {
 
 function createRoomState(stage, options = {}) {
   const roomSize = clamp(options.roomSize || chooseRoomPlayerCount(options), MIN_PLAYERS, ROOM_UI_LIMIT);
-  const players = createInitialPlayers({count: roomSize, random: getRandom(options)});
+  const players = createInitialPlayers({count: roomSize, random: getRandom(options), selfAvatar: options.selfAvatar, selfName: options.selfName, selfScore: options.selfScore});
   return {
     roomId: createRoomId(options),
     stage: normalizeStage(stage),

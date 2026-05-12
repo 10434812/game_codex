@@ -8,9 +8,9 @@ const INVESTMENT_POOL = [
 ];
 
 const FORTUNE_BAG_ASSETS = {
-  房产: '/assets/battle/fortune-fangchan.png',
-  股票: '/assets/battle/fortune-gupiao.png',
-  比特币: '/assets/battle/fortune-bitebi.png',
+  房产: 'https://xcx.ukb88.com/assets/battle/fortune-fangchan.png',
+  股票: 'https://xcx.ukb88.com/assets/battle/fortune-gupiao.png',
+  比特币: 'https://xcx.ukb88.com/assets/battle/fortune-bitebi.png',
 };
 
 function randomInt(min, max, random = Math.random) {

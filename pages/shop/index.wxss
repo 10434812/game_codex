@@ -172,11 +172,44 @@
   border: 2rpx solid #dbc7a1;
 }
 
+.goods-visual.ring-photo {
+  width: 280rpx;
+  height: 280rpx;
+  align-self: center;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 241, 206, 0.96) 0%, rgba(244, 230, 204, 0.92) 38%, rgba(235, 221, 195, 0.98) 100%);
+  border: 2rpx solid #dbc7a1;
+}
+
 /* Pets Backgrounds */
 .goods-visual.pet-photo {
   height: 330rpx;
   background: #efe5d3;
   border: 2rpx solid #dbc7a1;
+}
+
+.ring-preview-shell {
+  position: relative;
+  width: 180rpx;
+  height: 180rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-preview-avatar {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: #f7edd8;
+  box-shadow: 0 6rpx 16rpx rgba(132, 90, 41, 0.16);
+}
+
+.ring-preview-overlay {
+  position: absolute;
+  inset: -26rpx;
+  width: auto;
+  height: auto;
 }
 
 .goods-info {

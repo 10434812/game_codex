@@ -5,7 +5,7 @@ const adminService = require('../../services/admin-admin-service');
 const { success, fail } = require('../../utils/response');
 
 router.get('/', adminAuth, async (req, res) => {
-  try { const data = await adminService.listAdmins(Number(req.query.page) || 1, Number(req.query.limit) || 20); res.json(success(data)); }
+  try { const data = await adminService.listAdmins(Number(req.query.page) || 1, Number(req.query.limit) || 20, req.query.keyword || ''); res.json(success(data)); }
   catch (err) { console.error('[Admin Admins]', err); res.status(500).json(fail('获取管理员列表失败', 500)); }
 });
 
@@ -29,7 +29,12 @@ router.post('/', adminAuth, async (req, res) => {
 
 router.put('/:id', adminAuth, async (req, res) => {
   try { const data = await adminService.updateAdmin(req.params.id, req.body); res.json(success(data, '更新成功')); }
-  catch (err) { console.error('[Admin Admin Update]', err); res.status(500).json(fail('更新管理员失败', 500)); }
+  catch (err) {
+    if (err.message === '用户名已存在') return res.status(409).json(fail('用户名已存在', 409));
+    if (err.message === '用户名不能为空') return res.status(400).json(fail('用户名不能为空', 400));
+    console.error('[Admin Admin Update]', err);
+    res.status(500).json(fail('更新管理员失败', 500));
+  }
 });
 
 router.delete('/:id', adminAuth, async (req, res) => {

@@ -10,7 +10,11 @@ router.get('/', adminAuth, async (req, res) => {
 });
 
 router.get('/:id', adminAuth, async (req, res) => {
-  try { const data = await gameService.getGameDetail(req.params.id); res.json(success(data)); }
+  try {
+    const data = await gameService.getGameDetail(req.params.id);
+    if (!data) return res.status(404).json(fail('对局不存在', 404));
+    res.json(success(data));
+  }
   catch (err) { console.error('[Admin Game Detail]', err); res.status(500).json(fail('获取对局详情失败', 500)); }
 });
 

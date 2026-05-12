@@ -84,16 +84,16 @@ test('福袋会按机会类别携带对应图标', () => {
 
 test('福袋会落在当前棋盘布局的正中间', () => {
   const opportunity = buildOpportunity(300, () => 0);
-  const bag = buildFortuneBagByPlayers('case', makePlayers(10), opportunity);
+  const bag = buildFortuneBagByPlayers('case', buildBoardPlayers(makePlayers(10)), opportunity);
 
   assert.equal(bag.x, 360);
-  assert.equal(bag.y, 390);
+  assert.equal(bag.y, 450);
 });
 
 test('福袋尺寸调整不会改变其居中锚点规则', () => {
   const opportunity = buildOpportunity(300, () => 0);
-  const bag = buildFortuneBagByPlayers('case', makePlayers(4), opportunity);
+  const bag = buildFortuneBagByPlayers('case', buildBoardPlayers(makePlayers(4)), opportunity);
 
   assert.equal(bag.x, 360);
-  assert.equal(bag.y, 320);
+  assert.equal(bag.y, 380);
 });

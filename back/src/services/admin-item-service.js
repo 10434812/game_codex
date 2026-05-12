@@ -1,4 +1,5 @@
 const db = require('../models/db');
+const { mapItem } = require('../utils/admin-presenters');
 
 const DEFAULT_ITEMS = [
   { item_id:'skin-default', category:'skin', name:'旅人本色', price:0, rarity:'base', theme:'经典', sort_order:1 },
@@ -42,17 +43,46 @@ async function ensureItemsSeeded() {
 
 async function listItems() {
   await ensureItemsSeeded();
-  return db.queryAll(
+  const rows = await db.queryAll(
     'SELECT * FROM shop_items WHERE is_active = 1 ORDER BY sort_order ASC, id ASC'
   );
+  return rows.map(mapItem);
 }
 
 async function getItem(itemId) {
-  return db.queryOne('SELECT * FROM shop_items WHERE id = ?', [itemId]);
+  const item = await db.queryOne('SELECT * FROM shop_items WHERE id = ?', [itemId]);
+  return mapItem(item);
+}
+
+function slugify(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function normalizeItemData(data = {}, options = {}) {
+  const category = data.category ?? (options.forCreate ? 'skin' : undefined);
+  const itemId = data.item_id ?? data.itemId ?? (options.forCreate ? `${category}-custom-${Date.now()}` : undefined);
+  return {
+    item_id: itemId !== undefined ? (slugify(itemId) || `${category || 'item'}-custom-${Date.now()}`) : undefined,
+    name: data.name,
+    category,
+    price: data.price !== undefined ? Number(data.price) || 0 : (options.forCreate ? 0 : undefined),
+    rarity: data.rarity ?? (options.forCreate ? 'common' : undefined),
+    theme: data.theme ?? (options.forCreate ? '' : undefined),
+    description: data.description ?? (options.forCreate ? '' : undefined),
+    image_url: data.image_url ?? data.imageUrl ?? (options.forCreate ? '' : undefined),
+    sort_order: data.sort_order !== undefined || data.sortOrder !== undefined
+      ? Number(data.sort_order ?? data.sortOrder) || 0
+      : (options.forCreate ? 0 : undefined),
+    is_active: data.is_active ?? data.isActive,
+  };
 }
 
 async function createItem(data) {
-  const { item_id, name, category, price, rarity, theme, description, image_url, sort_order } = data;
+  const { item_id, name, category, price, rarity, theme, description, image_url, sort_order } = normalizeItemData(data, { forCreate: true });
 
   if (item_id) {
     const existing = await db.queryOne('SELECT id FROM shop_items WHERE item_id = ?', [item_id]);
@@ -65,18 +95,19 @@ async function createItem(data) {
     [item_id || '', name, category || 'skin', price || 0, rarity || 'common', theme || '', description || '', image_url || '', sort_order || 0]
   );
 
-  return db.queryOne('SELECT * FROM shop_items WHERE id = ?', [result.insertId]);
+  return getItem(result.insertId);
 }
 
 async function updateItem(itemId, data) {
+  const normalized = normalizeItemData(data);
   const allowedFields = ['item_id', 'name', 'category', 'price', 'rarity', 'theme', 'description', 'image_url', 'is_active', 'sort_order'];
   const setClauses = [];
   const params = [];
 
   for (const field of allowedFields) {
-    if (data[field] !== undefined) {
+    if (normalized[field] !== undefined) {
       setClauses.push(`${field} = ?`);
-      params.push(data[field]);
+      params.push(normalized[field]);
     }
   }
 

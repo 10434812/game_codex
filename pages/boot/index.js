@@ -1,6 +1,7 @@
 const {createBootLoader, createImagePreloadTask, getBootAssetQueue} = require('../../utils/boot-loader');
 const api = require('../../utils/api-client');
 const userProfile = require('../../utils/user-profile');
+const runtimeConfig = require('../../utils/runtime-config');
 
 const DEFAULT_MIN_MS = 2000;
 const DEFAULT_MAX_MS = 2700;
@@ -79,6 +80,7 @@ Page({
       Promise.all([loadingDone, minTimer]),
       maxTimer,
     ]).then(async () => {
+      await runtimeConfig.fetchRemoteConfig();
       await tryAutoLogin();
       this.finishBoot();
     });

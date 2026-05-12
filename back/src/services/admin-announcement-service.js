@@ -1,4 +1,5 @@
 const db = require('../models/db');
+const { mapAnnouncement } = require('../utils/admin-presenters');
 
 async function listAnnouncements(status, type, page = 1, limit = 20) {
   const offset = (page - 1) * limit;
@@ -25,11 +26,12 @@ async function listAnnouncements(status, type, page = 1, limit = 20) {
     [...params, String(limit), String(offset)]
   );
 
-  return { records, total: total?.total || 0, page: Number(page), limit: Number(limit) };
+  return { records: records.map(mapAnnouncement), total: total?.total || 0, page: Number(page), limit: Number(limit) };
 }
 
 async function getAnnouncement(id) {
-  return db.queryOne('SELECT * FROM announcements WHERE id = ?', [id]);
+  const row = await db.queryOne('SELECT * FROM announcements WHERE id = ?', [id]);
+  return mapAnnouncement(row);
 }
 
 async function createAnnouncement(data, adminId) {
@@ -46,7 +48,7 @@ async function createAnnouncement(data, adminId) {
     [title, content, type, status, priority, adminId, publishedAt]
   );
 
-  return db.queryOne('SELECT * FROM announcements WHERE id = ?', [result.insertId]);
+  return getAnnouncement(result.insertId);
 }
 
 async function updateAnnouncement(id, data) {
@@ -66,7 +68,7 @@ async function updateAnnouncement(id, data) {
     fields.push('published_at = NOW()');
   }
 
-  if (fields.length === 0) return existing;
+  if (fields.length === 0) return mapAnnouncement(existing);
 
   params.push(id);
   await db.execute(
@@ -74,7 +76,7 @@ async function updateAnnouncement(id, data) {
     params
   );
 
-  return db.queryOne('SELECT * FROM announcements WHERE id = ?', [id]);
+  return getAnnouncement(id);
 }
 
 async function deleteAnnouncement(id) {
@@ -87,7 +89,7 @@ async function publishAnnouncement(id) {
     "UPDATE announcements SET status = 'published', published_at = NOW() WHERE id = ?",
     [id]
   );
-  return db.queryOne('SELECT * FROM announcements WHERE id = ?', [id]);
+  return getAnnouncement(id);
 }
 
 async function archiveAnnouncement(id) {
@@ -95,7 +97,7 @@ async function archiveAnnouncement(id) {
     "UPDATE announcements SET status = 'archived' WHERE id = ?",
     [id]
   );
-  return db.queryOne('SELECT * FROM announcements WHERE id = ?', [id]);
+  return getAnnouncement(id);
 }
 
 module.exports = {

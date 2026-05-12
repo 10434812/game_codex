@@ -1,5 +1,5 @@
 const {getNavLayout} = require('../../utils/nav');
-const {DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
+const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const {buildVisibleScoreState} = require('../../utils/game-engine');
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
@@ -76,6 +76,7 @@ Page({
     activeTab: 'play',
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
+    defaultAvatar: DEFAULT_AVATAR,
     shopDisplay: shopStore.getEquippedDisplay(),
   },
   onLoad() {
@@ -113,6 +114,24 @@ Page({
 
     if (arenaSessionId) {
       this.connectArena(arenaSessionId);
+    } else {
+      // Local mode: subscribe to gameStore for state updates
+      this.localMode = true;
+      this.unsubscribeStore();
+      this.storeUnsubscribe = gameStore.subscribe((state) => {
+        if (state.status === 'playing') {
+          this.syncArena(state);
+        } else if (state.status === 'finished') {
+          this.clearBagTimers();
+          this.clearEmoteTimers();
+          gameStore.finishGame();
+          wx.redirectTo({url: '/pages/result/index'});
+        }
+      });
+      const snapshot = gameStore.getState();
+      if (snapshot.status === 'playing') {
+        this.syncArena(snapshot);
+      }
     }
 
     this.scheduleNextBagDrop();
@@ -862,6 +881,10 @@ Page({
     if (typeof this.unsubscribe === 'function') {
       this.unsubscribe();
       this.unsubscribe = null;
+    }
+    if (typeof this.storeUnsubscribe === 'function') {
+      this.storeUnsubscribe();
+      this.storeUnsubscribe = null;
     }
   },
   toResult() {

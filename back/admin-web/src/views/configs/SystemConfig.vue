@@ -1,94 +1,198 @@
 <template>
   <div class="system-config-page">
-    <el-card class="batch-bar-card">
-      <template #header>
-        <div class="card-header">
-          <span>系统配置</span>
-          <div class="batch-actions">
-            <el-button
-              type="primary"
-              :disabled="!hasDirty"
-              :loading="batchSaving"
-              @click="handleBatchSave"
-            >
-              批量保存
-            </el-button>
-            <el-badge :value="dirtyCount" :hidden="!hasDirty" type="danger" class="dirty-badge">
-              <span>待保存</span>
-            </el-badge>
+    <section class="page-hero config-hero">
+      <div class="hero-copy">
+        <span class="hero-kicker">SYSTEM CONFIGURATION</span>
+        <h1>系统配置中心</h1>
+        <p>把微信登录、分享、支付和业务参数统一管理。修改后可直接保存到服务端配置中心，适合运营与开发共用。</p>
+      </div>
+      <div class="hero-actions">
+        <div class="hero-summary">
+          <span>未保存变更</span>
+          <strong>{{ dirtyCount }} 项</strong>
+        </div>
+        <el-button @click="fetchConfigs" :loading="loading">刷新配置</el-button>
+        <el-button
+          type="primary"
+          :disabled="!hasDirty"
+          :loading="batchSaving"
+          @click="handleBatchSave"
+        >
+          批量保存
+        </el-button>
+      </div>
+    </section>
+
+    <section class="config-status-grid">
+      <el-card
+        v-for="item in statusCards"
+        :key="item.title"
+        shadow="never"
+        class="status-card"
+      >
+        <div class="status-head">
+          <span class="status-label">{{ item.title }}</span>
+          <el-tag size="small" :type="item.type">{{ item.tag }}</el-tag>
+        </div>
+        <div class="status-value">{{ item.value }}</div>
+        <div class="status-note">{{ item.note }}</div>
+      </el-card>
+    </section>
+
+    <section class="capability-grid">
+      <el-card
+        v-for="card in capabilityCards"
+        :key="card.key"
+        shadow="never"
+        class="capability-card"
+      >
+        <div class="capability-header">
+          <div>
+            <strong>{{ card.title }}</strong>
+            <p>{{ card.description }}</p>
+          </div>
+          <el-tag :type="card.type">{{ card.status }}</el-tag>
+        </div>
+        <div class="capability-metrics">
+          <div class="capability-metric">
+            <span>完成度</span>
+            <strong>{{ card.percent }}%</strong>
+          </div>
+          <div class="capability-metric">
+            <span>必填完成</span>
+            <strong>{{ card.readyCount }}/{{ card.requiredCount }}</strong>
           </div>
         </div>
-      </template>
-      <p class="config-hint">修改配置后点击行尾的「保存」按钮单独保存，或使用「批量保存」保存所有修改。</p>
-    </el-card>
+        <div class="capability-tips">{{ card.tip }}</div>
+      </el-card>
+    </section>
+
+    <section class="group-anchor-row">
+      <button
+        v-for="group in configGroups"
+        :key="group.prefix"
+        type="button"
+        class="group-anchor"
+        @click="activeGroup = group.prefix"
+      >
+        <strong>{{ group.label }}</strong>
+        <span>{{ group.items.length }} 项</span>
+      </button>
+    </section>
 
     <el-card
-      v-for="group in configGroups"
+      v-for="group in visibleGroups"
       :key="group.prefix"
       class="config-group-card"
+      shadow="never"
     >
       <template #header>
         <div class="card-header group-header">
-          <span>{{ group.label }}</span>
+          <div>
+            <strong>{{ group.label }}</strong>
+            <p>{{ group.description }}</p>
+          </div>
           <el-tag size="small" type="info">{{ group.items.length }} 项</el-tag>
         </div>
       </template>
 
-      <div class="config-table-wrapper">
-        <table class="config-table">
-          <thead>
-            <tr>
-              <th class="col-key">配置键</th>
-              <th class="col-desc">说明</th>
-              <th class="col-value">当前值</th>
-              <th class="col-actions">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="cfg in group.items"
-              :key="cfg.key"
-              :class="{ 'row-dirty': cfg.isDirty }"
-            >
-              <td class="col-key">
-                <code class="config-key">{{ cfg.key }}</code>
-              </td>
-              <td class="col-desc">{{ cfg.description }}</td>
-              <td class="col-value">
-                <el-switch
-                  v-if="cfg.valueType === 'boolean'"
-                  v-model="cfg.typedValue"
-                  active-text="开启"
-                  inactive-text="关闭"
-                  @change="onConfigChange(cfg)"
-                />
-                <el-input-number
-                  v-else-if="cfg.valueType === 'number'"
-                  v-model="cfg.typedValue"
-                  :min="0"
-                  :max="999999"
+      <el-alert
+        v-if="group.tip"
+        :title="group.tip"
+        type="success"
+        :closable="false"
+        class="group-tip"
+      />
+
+      <div
+        v-for="section in group.sections"
+        :key="section.key"
+        class="config-section"
+      >
+        <div class="section-title-row">
+          <div>
+            <h3>{{ section.label }}</h3>
+            <p>{{ section.description }}</p>
+          </div>
+          <el-tag v-if="section.items.some(item => item.isDirty)" size="small" type="warning">
+            有未保存修改
+          </el-tag>
+        </div>
+
+        <div class="config-field-grid">
+          <article
+            v-for="cfg in section.items"
+            :key="cfg.key"
+            class="config-field-card"
+            :class="{ 'is-dirty': cfg.isDirty }"
+          >
+            <div class="field-head">
+              <div>
+                <div class="field-title">{{ cfg.label }}</div>
+                <code class="field-key">{{ cfg.key }}</code>
+              </div>
+              <div class="field-tags">
+                <el-tag v-if="cfg.isRequired" size="small" type="danger" effect="plain">必填</el-tag>
+                <el-tag v-if="cfg.isPublic" size="small" type="success">前端可见</el-tag>
+                <el-tag v-if="cfg.isSensitive" size="small" type="warning">敏感</el-tag>
+                <el-tag v-if="cfg.isDirty" size="small" type="danger">待保存</el-tag>
+              </div>
+            </div>
+
+            <p class="field-description">{{ cfg.description }}</p>
+
+            <div class="field-control">
+              <el-switch
+                v-if="cfg.valueType === 'boolean'"
+                v-model="cfg.typedValue"
+                inline-prompt
+                active-text="开"
+                inactive-text="关"
+                @change="onConfigChange(cfg)"
+              />
+              <el-input-number
+                v-else-if="cfg.valueType === 'number'"
+                v-model="cfg.typedValue"
+                :min="0"
+                :max="999999999"
+                controls-position="right"
+                class="full-control"
+                @change="onConfigChange(cfg)"
+              />
+              <el-input
+                v-else-if="cfg.valueType === 'password'"
+                v-model="cfg.typedValue"
+                type="password"
+                show-password
+                class="full-control"
+                @input="onConfigChange(cfg)"
+              />
+              <el-input
+                v-else-if="cfg.valueType === 'textarea'"
+                v-model="cfg.typedValue"
+                type="textarea"
+                :rows="3"
+                class="full-control"
+                @input="onConfigChange(cfg)"
+              />
+              <el-input
+                v-else
+                v-model="cfg.typedValue"
+                class="full-control"
+                @input="onConfigChange(cfg)"
+              />
+            </div>
+
+            <div class="field-footer">
+              <span class="default-value">默认值：{{ formatDefaultValue(cfg) }}</span>
+              <div class="field-actions">
+                <el-button
                   size="small"
-                  style="width: 160px"
-                  @change="onConfigChange(cfg)"
-                />
-                <el-input
-                  v-else-if="cfg.valueType === 'textarea'"
-                  v-model="cfg.typedValue"
-                  type="textarea"
-                  :rows="2"
-                  size="small"
-                  style="width: 100%"
-                  @input="onConfigChange(cfg)"
-                />
-                <el-input
-                  v-else
-                  v-model="cfg.typedValue"
-                  size="small"
-                  style="width: 240px"
-                  @input="onConfigChange(cfg)"
-                />
-              </td>
-              <td class="col-actions">
+                  :disabled="!cfg.isDirty"
+                  @click="handleReset(cfg)"
+                >
+                  重置
+                </el-button>
                 <el-button
                   type="primary"
                   size="small"
@@ -98,119 +202,432 @@
                 >
                   保存
                 </el-button>
-                <el-button
-                  size="small"
-                  :disabled="!cfg.isDirty"
-                  @click="handleReset(cfg)"
-                >
-                  重置
-                </el-button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </article>
+        </div>
       </div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
 
 const configs = ref([])
 const loading = ref(false)
 const batchSaving = ref(false)
+const activeGroup = ref('wechat')
+const originalValuesMap = new Map()
 
 const groupedPrefixes = [
-  { prefix: 'game', label: '游戏配置' },
-  { prefix: 'shop', label: '商城配置' },
-  { prefix: 'system', label: '系统配置' }
+  {
+    prefix: 'wechat',
+    label: '微信能力配置',
+    description: '集中维护微信登录、分享、支付与外部回调相关参数。',
+    tip: '敏感字段只会保存在服务端配置中心，前端不会直接拿到登录密钥或支付密钥。'
+  },
+  {
+    prefix: 'game',
+    label: '游戏配置',
+    description: '控制局时长、人数、金币和基础玩法参数。',
+    tip: ''
+  },
+  {
+    prefix: 'shop',
+    label: '商城配置',
+    description: '控制商城刷新节奏、支付后落地和商品体验。',
+    tip: ''
+  },
+  {
+    prefix: 'system',
+    label: '系统配置',
+    description: '维护模式、全局公告和后台基础治理开关。',
+    tip: ''
+  }
 ]
 
+const fieldMetaMap = {
+  'wechat.login_enabled': {
+    label: '微信登录开关',
+    section: 'login',
+    sectionLabel: '登录配置',
+    sectionDescription: '控制小程序是否允许通过微信授权登录。'
+  },
+  'wechat.login_app_id': {
+    label: '小程序 AppID',
+    section: 'login',
+    sectionLabel: '登录配置',
+    sectionDescription: '服务端发起 `code2session` 时使用。'
+  },
+  'wechat.login_secret': {
+    label: '小程序 AppSecret',
+    section: 'login',
+    sectionLabel: '登录配置',
+    sectionDescription: '微信登录核心密钥，仅服务端保存。'
+  },
+  'wechat.login_token_ttl': {
+    label: '登录态有效期（秒）',
+    section: 'login',
+    sectionLabel: '登录配置',
+    sectionDescription: '服务端签发的业务登录态默认有效期。'
+  },
+  'wechat.login_agreement_url': {
+    label: '用户协议链接',
+    section: 'login',
+    sectionLabel: '登录配置',
+    sectionDescription: '登录弹窗或资料页展示的用户协议地址。'
+  },
+  'wechat.login_privacy_url': {
+    label: '隐私政策链接',
+    section: 'login',
+    sectionLabel: '登录配置',
+    sectionDescription: '登录前确认的隐私政策地址。'
+  },
+  'wechat.share_enabled': {
+    label: '分享功能开关',
+    section: 'share',
+    sectionLabel: '分享配置',
+    sectionDescription: '控制发送给好友、朋友圈等分享能力。'
+  },
+  'wechat.share_title': {
+    label: '好友分享标题',
+    section: 'share',
+    sectionLabel: '分享配置',
+    sectionDescription: '默认分享标题，未配置页面级标题时使用。'
+  },
+  'wechat.share_desc': {
+    label: '好友分享描述',
+    section: 'share',
+    sectionLabel: '分享配置',
+    sectionDescription: '分享落地页说明文案，可用于投放活动。'
+  },
+  'wechat.share_path': {
+    label: '默认落地页路径',
+    section: 'share',
+    sectionLabel: '分享配置',
+    sectionDescription: '例如 `/pages/home/index`。'
+  },
+  'wechat.share_query': {
+    label: '默认附加参数',
+    section: 'share',
+    sectionLabel: '分享配置',
+    sectionDescription: '不带问号，系统会自动拼接场景参数。'
+  },
+  'wechat.share_image_url': {
+    label: '好友分享卡片图',
+    section: 'share',
+    sectionLabel: '分享配置',
+    sectionDescription: '建议使用稳定的 HTTPS 图片素材。'
+  },
+  'wechat.share_timeline_title': {
+    label: '朋友圈标题',
+    section: 'share',
+    sectionLabel: '分享配置',
+    sectionDescription: '朋友圈分享时优先使用的文案。'
+  },
+  'wechat.share_timeline_image_url': {
+    label: '朋友圈分享图片',
+    section: 'share',
+    sectionLabel: '分享配置',
+    sectionDescription: '朋友圈卡片专用图片，建议突出活动主题。'
+  },
+  'wechat.pay_enabled': {
+    label: '微信支付开关',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '控制前端是否展示微信支付相关入口。'
+  },
+  'wechat.pay_mch_id': {
+    label: '商户号 MchId',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '微信支付商户平台分配的商户号。'
+  },
+  'wechat.pay_api_v3_key': {
+    label: 'APIv3 Key',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '用于解密支付回调报文，属于敏感信息。'
+  },
+  'wechat.pay_cert_serial_no': {
+    label: '商户证书序列号',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '用于签名校验和支付下单。'
+  },
+  'wechat.pay_notify_url': {
+    label: '支付回调通知地址',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '微信支付异步通知会回调到这里。'
+  },
+  'wechat.pay_success_path': {
+    label: '支付成功回跳页',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '支付完成后小程序展示结果的默认页面。'
+  },
+  'wechat.pay_currency': {
+    label: '支付货币',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '默认币种，建议保持 `CNY`。'
+  },
+  'wechat.pay_goods_desc': {
+    label: '订单商品描述',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '发起统一下单时默认的商品说明。'
+  },
+  'wechat.pay_sandbox_mode': {
+    label: '支付沙箱模式',
+    section: 'payment',
+    sectionLabel: '支付配置',
+    sectionDescription: '联调阶段建议开启，上线前记得关闭。'
+  }
+}
+
+const requiredFields = new Set([
+  'wechat.login_app_id',
+  'wechat.login_secret',
+  'wechat.login_agreement_url',
+  'wechat.login_privacy_url',
+  'wechat.share_title',
+  'wechat.share_path',
+  'wechat.share_image_url',
+  'wechat.share_timeline_title',
+  'wechat.pay_mch_id',
+  'wechat.pay_api_v3_key',
+  'wechat.pay_notify_url',
+  'wechat.pay_goods_desc'
+])
+
+function humanizeLabel(key) {
+  const tail = key.split('.').pop() || key
+  return tail
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
 function detectValueType(cfg) {
-  if (cfg.value === 'true' || cfg.value === 'false') return 'boolean'
-  if (cfg.key.includes('message')) return 'textarea'
-  if (cfg.value !== '' && !isNaN(Number(cfg.value))) return 'number'
+  if (cfg.valueType) return cfg.valueType
+  if (cfg.value === 'true' || cfg.value === 'false' || cfg.value === '1' || cfg.value === '0') return 'boolean'
+  if (cfg.key.includes('message') || cfg.key.includes('desc')) return 'textarea'
+  if (cfg.value !== '' && !Number.isNaN(Number(cfg.value))) return 'number'
   return 'text'
 }
 
 function parseTypedValue(cfg) {
-  if (cfg.valueType === 'boolean') return cfg.value === 'true'
-  if (cfg.valueType === 'number') return Number(cfg.value)
-  return cfg.value
+  if (cfg.valueType === 'boolean') {
+    return cfg.value === true || cfg.value === 'true' || cfg.value === 1 || cfg.value === '1'
+  }
+  if (cfg.valueType === 'number') {
+    return Number(cfg.value)
+  }
+  return cfg.value ?? ''
 }
 
 function stringifyTypedValue(cfg) {
   if (cfg.valueType === 'boolean') return cfg.typedValue ? 'true' : 'false'
-  if (cfg.valueType === 'number') return String(cfg.typedValue)
-  return cfg.typedValue
+  if (cfg.valueType === 'number') return String(cfg.typedValue ?? 0)
+  return String(cfg.typedValue ?? '')
 }
 
-const configGroups = computed(() => {
-  return groupedPrefixes.map(g => {
-    const items = configs.value
-      .filter(c => c.key.startsWith(g.prefix + '.'))
-      .map(c => ({
-        ...c,
-        typedValue: parseTypedValue(c),
-        // isDirty & originalTypedValue set during init
-      }))
-    return { ...g, items }
-  })
-})
-
-// Track original values for dirty comparison
-const originalValuesMap = new Map()
+function inferFieldMeta(raw) {
+  const fieldMeta = fieldMetaMap[raw.key] || {}
+  return {
+    label: fieldMeta.label || humanizeLabel(raw.key),
+    section: fieldMeta.section || 'general',
+    sectionLabel: fieldMeta.sectionLabel || '通用配置',
+    sectionDescription: fieldMeta.sectionDescription || '这里是该分组下的基础配置项。'
+  }
+}
 
 function initConfigs(rawList) {
-  // Build flat config list with enriched metadata
-  const list = []
-  for (const raw of rawList) {
-    const key = raw.key
+  return rawList.map((raw) => {
     const valueType = detectValueType(raw)
     const typedValue = parseTypedValue({ ...raw, valueType })
-    originalValuesMap.set(key, typedValue)
+    const fieldMeta = inferFieldMeta(raw)
+    originalValuesMap.set(raw.key, typedValue)
 
-    list.push({
+    return {
       key: raw.key,
       value: raw.value,
       typedValue,
       description: raw.description || '',
       defaultValue: raw.defaultValue !== undefined ? raw.defaultValue : raw.value,
       valueType,
+      isPublic: !!raw.isPublic,
+      isSensitive: !!raw.isSensitive,
       isDirty: false,
       saving: false,
-      prefix: key.split('.')[0]
-    })
-  }
-  return list
+      prefix: raw.key.split('.')[0],
+      label: fieldMeta.label,
+      section: fieldMeta.section,
+      sectionLabel: fieldMeta.sectionLabel,
+      sectionDescription: fieldMeta.sectionDescription,
+      isRequired: requiredFields.has(raw.key)
+    }
+  })
 }
+
+const configGroups = computed(() => {
+  return groupedPrefixes
+    .map((group) => {
+      const items = configs.value.filter(item => item.key.startsWith(`${group.prefix}.`))
+      const sectionMap = new Map()
+
+      items.forEach((item) => {
+        if (!sectionMap.has(item.section)) {
+          sectionMap.set(item.section, {
+            key: item.section,
+            label: item.sectionLabel,
+            description: item.sectionDescription,
+            items: []
+          })
+        }
+        sectionMap.get(item.section).items.push(item)
+      })
+
+      return {
+        ...group,
+        items,
+        sections: Array.from(sectionMap.values())
+      }
+    })
+    .filter(group => group.items.length > 0)
+})
+
+const visibleGroups = computed(() => {
+  if (!activeGroup.value) return configGroups.value
+  return configGroups.value.filter(group => group.prefix === activeGroup.value)
+})
+
+const hasDirty = computed(() => configs.value.some(item => item.isDirty))
+const dirtyCount = computed(() => configs.value.filter(item => item.isDirty).length)
+
+function getConfigItem(key) {
+  return configs.value.find(entry => entry.key === key)
+}
+
+function hasFilledValue(key) {
+  const item = getConfigItem(key)
+  if (!item) return false
+  if (item.valueType === 'boolean') return item.typedValue === true
+  return String(item.typedValue ?? '').trim() !== ''
+}
+
+const statusCards = computed(() => {
+  const loginEnabled = hasFilledValue('wechat.login_enabled')
+  const shareEnabled = hasFilledValue('wechat.share_enabled')
+  const payEnabled = hasFilledValue('wechat.pay_enabled')
+
+  return [
+    {
+      title: '微信登录',
+      value: loginEnabled ? '已开启' : '已关闭',
+      note: '决定用户能否通过微信授权进入小游戏',
+      tag: loginEnabled ? '运行中' : '关闭',
+      type: loginEnabled ? 'success' : 'info'
+    },
+    {
+      title: '微信分享',
+      value: shareEnabled ? '已开启' : '已关闭',
+      note: '控制转发、活动裂变和朋友圈传播',
+      tag: shareEnabled ? '可投放' : '关闭',
+      type: shareEnabled ? 'success' : 'info'
+    },
+    {
+      title: '微信支付',
+      value: payEnabled ? '已开启' : '未启用',
+      note: '仅配置参数，实际下单回调仍需后端业务接口联调',
+      tag: payEnabled ? '待联调' : '关闭',
+      type: payEnabled ? 'warning' : 'info'
+    },
+    {
+      title: '待保存修改',
+      value: dirtyCount.value ? `${dirtyCount.value} 项` : '0 项',
+      note: dirtyCount.value ? '建议确认后统一批量保存' : '当前配置已同步',
+      tag: dirtyCount.value ? '注意' : '最新',
+      type: dirtyCount.value ? 'danger' : 'success'
+    }
+  ]
+})
+
+const capabilityCards = computed(() => {
+  const capabilityDefs = [
+    {
+      key: 'login',
+      title: '微信登录能力',
+      description: '账号接入、登录态和协议配置',
+      keys: ['wechat.login_app_id', 'wechat.login_secret', 'wechat.login_agreement_url', 'wechat.login_privacy_url'],
+      enabledKey: 'wechat.login_enabled'
+    },
+    {
+      key: 'share',
+      title: '微信分享能力',
+      description: '裂变传播、活动转发和素材管理',
+      keys: ['wechat.share_title', 'wechat.share_path', 'wechat.share_image_url', 'wechat.share_timeline_title'],
+      enabledKey: 'wechat.share_enabled'
+    },
+    {
+      key: 'payment',
+      title: '微信支付能力',
+      description: '商户参数、支付回调和联调准备',
+      keys: ['wechat.pay_mch_id', 'wechat.pay_api_v3_key', 'wechat.pay_notify_url', 'wechat.pay_goods_desc'],
+      enabledKey: 'wechat.pay_enabled'
+    }
+  ]
+
+  return capabilityDefs.map((item) => {
+    const enabled = hasFilledValue(item.enabledKey)
+    const readyCount = item.keys.filter(hasFilledValue).length
+    const requiredCount = item.keys.length
+    const percent = Math.round((readyCount / requiredCount) * 100)
+    const isReady = readyCount === requiredCount
+
+    return {
+      ...item,
+      enabled,
+      readyCount,
+      requiredCount,
+      percent,
+      status: !enabled ? '已关闭' : isReady ? '已就绪' : '待补齐',
+      type: !enabled ? 'info' : isReady ? 'success' : 'warning',
+      tip: !enabled
+        ? '当前能力已关闭，不影响其他模块。'
+        : isReady
+          ? '关键参数完整，可以进入业务联调或投放阶段。'
+          : '建议先补齐必填项，再交给开发或运营上线。'
+    }
+  })
+})
 
 function onConfigChange(cfg) {
-  const original = originalValuesMap.get(cfg.key)
-  cfg.isDirty = cfg.typedValue !== original
+  cfg.isDirty = cfg.typedValue !== originalValuesMap.get(cfg.key)
 }
 
-const hasDirty = computed(() => {
-  return configs.value.some(c => c.isDirty)
-})
-
-const dirtyCount = computed(() => {
-  return configs.value.filter(c => c.isDirty).length
-})
+function formatDefaultValue(cfg) {
+  if (cfg.defaultValue === '' || cfg.defaultValue === null || cfg.defaultValue === undefined) {
+    return '空'
+  }
+  return String(cfg.defaultValue)
+}
 
 async function fetchConfigs() {
   loading.value = true
   try {
     const res = await request.get('/api/admin/configs')
     if (res.data.code === 0) {
-      const rawList = res.data.data || []
       originalValuesMap.clear()
-      configs.value = initConfigs(rawList)
+      configs.value = initConfigs(res.data.data || [])
+    } else {
+      ElMessage.error(res.data.message || '获取配置失败')
     }
-  } catch (err) {
+  } catch (_err) {
     ElMessage.error('获取配置失败')
   } finally {
     loading.value = false
@@ -223,32 +640,36 @@ async function handleSaveSingle(cfg) {
     await request.put('/api/admin/configs', {
       configs: [{ key: cfg.key, value: stringifyTypedValue(cfg) }]
     })
-    ElMessage.success(`「${cfg.key}」已保存`)
     originalValuesMap.set(cfg.key, cfg.typedValue)
     cfg.isDirty = false
-  } catch (err) {
-    ElMessage.error(`保存「${cfg.key}」失败`)
+    ElMessage.success(`已保存：${cfg.label}`)
+  } catch (_err) {
+    ElMessage.error(`保存失败：${cfg.label}`)
   } finally {
     cfg.saving = false
   }
 }
 
 async function handleBatchSave() {
-  const dirtyConfigs = configs.value.filter(c => c.isDirty)
-  if (dirtyConfigs.length === 0) return
+  const dirtyConfigs = configs.value.filter(item => item.isDirty)
+  if (!dirtyConfigs.length) return
 
   batchSaving.value = true
   try {
-    const payload = {
-      configs: dirtyConfigs.map(c => ({ key: c.key, value: stringifyTypedValue(c) }))
-    }
-    await request.put('/api/admin/configs', payload)
-    ElMessage.success(`已批量保存 ${dirtyConfigs.length} 项配置`)
-    dirtyConfigs.forEach(c => {
-      originalValuesMap.set(c.key, c.typedValue)
-      c.isDirty = false
+    await request.put('/api/admin/configs', {
+      configs: dirtyConfigs.map(item => ({
+        key: item.key,
+        value: stringifyTypedValue(item)
+      }))
     })
-  } catch (err) {
+
+    dirtyConfigs.forEach((item) => {
+      originalValuesMap.set(item.key, item.typedValue)
+      item.isDirty = false
+    })
+
+    ElMessage.success(`已批量保存 ${dirtyConfigs.length} 项配置`)
+  } catch (_err) {
     ElMessage.error('批量保存失败')
   } finally {
     batchSaving.value = false
@@ -266,104 +687,330 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.batch-bar-card {
+.config-hero {
   margin-bottom: 16px;
 }
 
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.hero-copy {
+  max-width: 760px;
 }
 
-.batch-actions {
+.hero-kicker {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #c96a10;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.hero-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12px;
 }
 
-.dirty-badge :deep(.el-badge__content) {
-  position: static;
-  transform: none;
-  margin-left: 4px;
+.hero-summary {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  padding: 10px 14px;
+  border: 1px solid rgba(177, 129, 66, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.46);
+  color: #8a7051;
+  font-size: 12px;
 }
 
-.config-hint {
-  margin: 0;
+.hero-summary strong {
+  margin-top: 4px;
+  color: #4a2d1a;
+  font-size: 16px;
+}
+
+.config-status-grid,
+.capability-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.capability-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.status-card,
+.capability-card,
+.config-group-card {
+  background: rgba(255, 252, 246, 0.88);
+}
+
+.status-head,
+.capability-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.status-label {
   font-size: 13px;
-  color: #909399;
+  color: #8a7051;
+}
+
+.status-value {
+  margin-top: 10px;
+  font-size: 26px;
+  font-weight: 800;
+  color: #4a2d1a;
+}
+
+.status-note,
+.capability-header p,
+.capability-tips {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #9c7a52;
+  line-height: 1.6;
+}
+
+.capability-header strong {
+  color: #4a2d1a;
+  font-size: 16px;
+}
+
+.capability-header p {
+  margin-bottom: 0;
+}
+
+.capability-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.capability-metric {
+  padding: 12px;
+  border: 1px solid rgba(177, 129, 66, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.capability-metric span {
+  color: #8a7051;
+  font-size: 12px;
+}
+
+.capability-metric strong {
+  display: block;
+  margin-top: 6px;
+  color: #4a2d1a;
+  font-size: 22px;
+}
+
+.group-anchor-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.group-anchor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(177, 129, 66, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 253, 245, 0.88);
+  color: #4a2d1a;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.group-anchor:hover {
+  transform: translateY(-1px);
+  border-color: rgba(229, 124, 31, 0.34);
+  box-shadow: 0 10px 22px rgba(96, 61, 27, 0.08);
+}
+
+.group-anchor strong {
+  font-size: 14px;
+}
+
+.group-anchor span {
+  color: #8a7051;
+  font-size: 12px;
+}
+
+.group-header {
+  align-items: flex-start;
+}
+
+.group-header p {
+  margin: 6px 0 0;
+  color: #8a7051;
+  font-size: 13px;
+}
+
+.group-tip {
+  margin-bottom: 18px;
 }
 
 .config-group-card {
   margin-bottom: 16px;
 }
 
-.group-header {
-  font-weight: 600;
+.config-section + .config-section {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(177, 129, 66, 0.14);
+}
+
+.section-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-title-row h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #4a2d1a;
+}
+
+.section-title-row p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #8a7051;
+}
+
+.config-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.config-field-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(177, 129, 66, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.config-field-card.is-dirty {
+  border-color: rgba(229, 124, 31, 0.46);
+  box-shadow: 0 12px 26px rgba(229, 124, 31, 0.1);
+}
+
+.config-field-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(96, 61, 27, 0.08);
+}
+
+.field-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-title {
+  color: #4a2d1a;
   font-size: 15px;
+  font-weight: 760;
 }
 
-.config-table-wrapper {
-  overflow-x: auto;
-}
-
-.config-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.config-table th {
-  text-align: left;
-  padding: 10px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
-  color: #606266;
-  font-weight: 600;
-}
-
-.config-table td {
-  padding: 12px;
-  border-bottom: 1px solid #ebeef5;
-  vertical-align: middle;
-}
-
-.config-table tbody tr:hover {
-  background: #f5f7fa;
-}
-
-.config-table tbody tr.row-dirty {
-  background: #fef6ec;
-}
-
-.config-table tbody tr.row-dirty:hover {
-  background: #fef0db;
-}
-
-.col-key {
-  width: 260px;
-}
-
-.col-desc {
-  width: 220px;
-}
-
-.col-value {
-  min-width: 260px;
-}
-
-.col-actions {
-  width: 180px;
-  white-space: nowrap;
-}
-
-.config-key {
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
-  border-radius: 3px;
-  padding: 2px 6px;
+.field-key {
+  display: inline-block;
+  margin-top: 6px;
+  color: #9c7a52;
   font-size: 12px;
-  color: #606266;
-  user-select: all;
+}
+
+.field-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.field-description {
+  margin: 0;
+  color: #8a7051;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.field-control {
+  min-width: 0;
+}
+
+.full-control {
+  width: 100%;
+}
+
+.field-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.default-value {
+  color: rgba(92, 63, 32, 0.58);
+  font-size: 12px;
+}
+
+.field-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 1280px) {
+  .config-status-grid,
+  .capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .config-field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .config-status-grid,
+  .capability-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .capability-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .field-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 </style>

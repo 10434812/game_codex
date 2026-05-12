@@ -121,6 +121,9 @@ function applySelfDecorations(players, display) {
       avatar: display && display.skinImage ? display.skinImage : player.avatar,
       skinClass: display && display.skinClass ? display.skinClass : 'skin-default',
       skinName: display && display.skinName ? display.skinName : '',
+      ringName: display && display.ringName ? display.ringName : '',
+      ringImage: display && display.ringImage ? display.ringImage : '',
+      ringAccent: display && display.ringAccent ? display.ringAccent : '',
       petIcon: display && display.petIcon ? display.petIcon : '',
       petLabel: display && display.petLabel ? display.petLabel : '',
       petImage: display && display.petImage ? display.petImage : '',
@@ -153,11 +156,26 @@ function buildFortuneBagByPlayers(idSeed, players = [], opportunity = null) {
   const asset = opportunity && opportunity.asset
     ? opportunity.asset
     : getFortuneBagAsset(opportunity && opportunity.category);
-  const layout = getLayoutForPlayerCount(players.length);
+  const list = Array.isArray(players) ? players.filter(Boolean) : [];
+  const fallbackLayout = getLayoutForPlayerCount(list.length);
+  const anchor = list.length
+    ? list.reduce((result, player) => {
+      const center = getNodeCenter(player);
+      return {
+        x: result.x + center.x,
+        y: result.y + center.y,
+      };
+    }, {x: 0, y: 0})
+    : {
+      x: fallbackLayout.centerX,
+      y: fallbackLayout.centerY + 60,
+    };
+  const x = list.length ? Math.round(anchor.x / list.length) : fallbackLayout.centerX;
+  const y = list.length ? Math.round(anchor.y / list.length) : fallbackLayout.centerY + 60;
   return {
     id,
-    x: layout.centerX,
-    y: layout.centerY,
+    x,
+    y,
     asset,
     category: opportunity && opportunity.category ? opportunity.category : '',
     opportunity: opportunity || null,

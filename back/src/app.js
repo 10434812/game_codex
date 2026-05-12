@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -25,8 +26,14 @@ app.use('/api', routes);
 // ─── Static: uploaded avatars ────────────────────────────
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
-// ─── Static (admin panel, to be built later) ─────────────
-// app.use('/admin', express.static(path.join(__dirname, '../admin/dist')));
+// ─── Static: admin panel ─────────────────────────────────
+const adminDistPath = path.resolve(__dirname, '../admin-web/dist');
+const adminIndexPath = path.join(adminDistPath, 'index.html');
+app.use('/admin', express.static(adminDistPath));
+app.get('/admin/*', (_req, res, next) => {
+  if (!fs.existsSync(adminIndexPath)) return next();
+  return res.sendFile(adminIndexPath);
+});
 
 // ─── Error Handler (must be last) ────────────────────────
 app.use(errorHandler);

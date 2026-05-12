@@ -10,7 +10,11 @@ router.get('/', adminAuth, async (req, res) => {
 });
 
 router.get('/:id', adminAuth, async (req, res) => {
-  try { const data = await userService.getUserDetail(req.params.id); res.json(success(data)); }
+  try {
+    const data = await userService.getUserDetail(req.params.id);
+    if (!data) return res.status(404).json(fail('用户不存在', 404));
+    res.json(success(data));
+  }
   catch (err) { console.error('[Admin User Detail]', err); res.status(500).json(fail('获取用户详情失败', 500)); }
 });
 

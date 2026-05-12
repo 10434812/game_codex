@@ -1,4 +1,5 @@
 const {getNavLayout} = require('../../utils/nav');
+const {DEFAULT_AVATAR} = require('../../utils/constants');
 const api = require('../../utils/api-client');
 const {getCachedProfile, hasValidProfile, updateProfile, requestUpdate} = require('../../utils/user-profile');
 const {playCue, playVibrate} = require('../../utils/audio');
@@ -12,6 +13,8 @@ Page({
     },
     draft: getCachedProfile(),
     canSave: false,
+    defaultAvatar: DEFAULT_AVATAR,
+    uploading: false,
   },
   onLoad() {
     try {

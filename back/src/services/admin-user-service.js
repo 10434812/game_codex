@@ -1,4 +1,5 @@
 const db = require('../models/db');
+const { formatDateTime, mapUser, mapItem, mapGameSession } = require('../utils/admin-presenters');
 
 async function listUsers(page = 1, limit = 20, keyword = '') {
   const offset = (page - 1) * limit;
@@ -7,20 +8,46 @@ async function listUsers(page = 1, limit = 20, keyword = '') {
   if (keyword) { where = 'WHERE nick_name LIKE ? OR openid LIKE ?'; params.push(`%${keyword}%`, `%${keyword}%`); }
   const total = await db.queryOne(`SELECT COUNT(*) as total FROM users ${where}`, params);
   const records = await db.queryAll(`SELECT * FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, String(limit), String(offset)]);
-  return { records, total: total?.total || 0, page: Number(page), limit: Number(limit) };
+  return { records: records.map(mapUser), total: total?.total || 0, page: Number(page), limit: Number(limit) };
 }
 
 async function getUserDetail(userId) {
   const user = await db.queryOne('SELECT * FROM users WHERE id = ?', [userId]);
+  if (!user) return null;
   const items = await db.queryAll('SELECT * FROM user_items WHERE user_id = ?', [userId]);
   const games = await db.queryAll('SELECT gp.*, gs.started_at, gs.stage_id, gs.status as game_status, gs.duration FROM game_players gp JOIN game_sessions gs ON gp.session_id = gs.id WHERE gp.user_id = ? ORDER BY gs.started_at DESC LIMIT 20', [userId]);
   const coinRecords = await db.queryAll('SELECT * FROM coin_records WHERE user_id = ? ORDER BY created_at DESC LIMIT 50', [userId]);
-  return { user, items, games, coinRecords };
+  return {
+    user: mapUser(user),
+    items: items.map((item) => ({
+      ...mapItem(item),
+      name: item.item_id,
+      acquiredAt: formatDateTime(item.acquired_at),
+    })),
+    games: games.map((game) => ({
+      ...mapGameSession({
+        id: game.session_id,
+        stage_id: game.stage_id,
+        status: game.game_status,
+        duration: game.duration,
+        started_at: game.started_at,
+      }),
+      rank: game.rank,
+      score: game.final_score,
+      playedAt: formatDateTime(game.started_at),
+    })),
+    coinRecords: coinRecords.map((record) => ({
+      ...record,
+      reason: record.title,
+      createdAt: formatDateTime(record.created_at),
+    })),
+  };
 }
 
 async function toggleBan(userId, isBanned, reason = '') {
   await db.execute('UPDATE users SET is_banned = ?, banned_reason = ? WHERE id = ?', [isBanned ? 1 : 0, reason, userId]);
-  return db.queryOne('SELECT id, nick_name, is_banned, banned_reason FROM users WHERE id = ?', [userId]);
+  const user = await db.queryOne('SELECT id, nick_name, avatar_url, game_count, win_count, total_income, total_exp, coins, level, is_banned, banned_reason FROM users WHERE id = ?', [userId]);
+  return mapUser(user);
 }
 
 async function adjustCoins(userId, amount, reason = '') {

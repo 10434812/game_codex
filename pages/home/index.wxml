@@ -3,7 +3,7 @@
   <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
     <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
       <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
-      <view wx:else class="app-user-avatar"></view>
+      <image wx:else class="app-user-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
       <text class="app-user-name">{{userProfile.nickName}}</text>
     </view>
     <view class="app-header-right">

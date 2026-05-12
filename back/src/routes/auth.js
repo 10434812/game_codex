@@ -16,6 +16,12 @@ router.post('/login', async (req, res) => {
     const result = await authService.login(code);
     res.json(success(result, '登录成功'));
   } catch (err) {
+    if (err.message === 'WeChat login disabled') {
+      return res.status(403).json(fail('微信登录已关闭', 403));
+    }
+    if (err.message === 'WeChat login config missing') {
+      return res.status(500).json(fail('微信登录配置缺失，请先在后台完成配置', 500));
+    }
     // Handle WeChat API errors specifically
     if (err.message && err.message.startsWith('WeChat API error')) {
       return res.status(502).json(fail('微信服务暂不可用，请稍后重试', 502));

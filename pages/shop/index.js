@@ -2,11 +2,13 @@ const {getNavLayout} = require('../../utils/nav');
 const api = require('../../utils/api-client');
 const shopStore = require('../../utils/shop-store');
 const userProfile = require('../../utils/user-profile');
+const {DEFAULT_AVATAR} = require('../../utils/constants');
 const {formatCurrency} = require('../../utils/format');
 const {playCue, playVibrate} = require('../../utils/audio');
 
 const CATEGORY_OPTIONS = [
   {key: 'skin', label: '皮肤'},
+  {key: 'ring', label: '光环'},
   {key: 'pet', label: '宠物'},
 ];
 
@@ -60,6 +62,7 @@ Page({
     balanceText: '¥0',
     goods: [],
     avatarUrl: '',
+    defaultAvatar: DEFAULT_AVATAR,
   },
   onLoad() {
     try {

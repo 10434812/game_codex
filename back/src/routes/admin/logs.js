@@ -19,7 +19,7 @@ router.get('/', adminAuth, async (req, res) => {
     const filters = {};
     if (req.query.action) filters.action = req.query.action;
     if (req.query.targetType) filters.targetType = req.query.targetType;
-    if (req.query.adminId) filters.adminId = Number(req.query.adminId);
+    if (req.query.adminId) filters.adminQuery = req.query.adminId;
     if (req.query.dateFrom) filters.dateFrom = req.query.dateFrom;
     if (req.query.dateTo) filters.dateTo = req.query.dateTo;
 

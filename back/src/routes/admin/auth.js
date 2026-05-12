@@ -6,6 +6,19 @@ const config = require('../../config');
 const { success, fail } = require('../../utils/response');
 
 const router = express.Router();
+const SALT_ROUNDS = 10;
+
+async function ensureBootstrapAdmin(username, password) {
+  const count = await db.queryOne('SELECT COUNT(*) as total FROM admins');
+  if ((count?.total || 0) > 0) return;
+  if (username !== config.admin.username || password !== config.admin.password) return;
+
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  await db.execute(
+    'INSERT INTO admins (username, password_hash, role, is_active) VALUES (?, ?, ?, 1)',
+    [username, passwordHash, 'super']
+  );
+}
 
 // POST /api/admin/auth/login
 router.post('/login', async (req, res) => {
@@ -15,6 +28,8 @@ router.post('/login', async (req, res) => {
     if (!username || !password) {
       return res.status(400).json(fail('请输入用户名和密码', 400));
     }
+
+    await ensureBootstrapAdmin(username, password);
 
     const admin = await db.queryOne(
       'SELECT id, username, password_hash, role, is_active FROM admins WHERE username = ?',

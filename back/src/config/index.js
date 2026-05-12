@@ -3,13 +3,18 @@ const path = require('path');
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+function parseInteger(value, fallback) {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 module.exports = {
-  port: parseInt(process.env.PORT, 10) || 3000,
+  port: parseInteger(process.env.PORT, 3000),
   nodeEnv: process.env.NODE_ENV || 'development',
 
   db: {
     host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT, 10) || 3306,
+    port: parseInteger(process.env.DB_PORT, 3306),
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'game_codex_pass',
     database: process.env.DB_NAME || 'game_codex',

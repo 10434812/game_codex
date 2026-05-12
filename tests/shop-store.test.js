@@ -28,8 +28,10 @@ test('getStoreState 会返回默认商城状态', () => {
   assert.equal(state.coins, 8820);
   assert.deepEqual(state.ownedSkins, ['skin-default']);
   assert.deepEqual(state.ownedPets, []);
+  assert.deepEqual(state.ownedRings, []);
   assert.equal(state.equippedSkinId, 'skin-default');
   assert.equal(state.equippedPetId, '');
+  assert.equal(state.equippedRingId, '');
   assert.deepEqual(state.records, []);
 });
 
@@ -88,21 +90,36 @@ test('purchaseItem 对已拥有商品不会重复扣费', () => {
 });
 
 test('equipItem 会更新当前装备状态', () => {
+  shopStore.addCoins(1200, {type: 'test_credit', title: '测试补充金币'});
   shopStore.purchaseItem('skin', 'skin-storm');
   shopStore.purchaseItem('pet', 'pet-fox');
+  shopStore.purchaseItem('ring', 'ring-crown-auspice');
 
   const skinResult = shopStore.equipItem('skin', 'skin-storm');
   const petResult = shopStore.equipItem('pet', 'pet-fox');
+  const ringResult = shopStore.equipItem('ring', 'ring-crown-auspice');
   const display = shopStore.getEquippedDisplay();
 
   assert.equal(skinResult.ok, true);
   assert.equal(petResult.ok, true);
+  assert.equal(ringResult.ok, true);
   assert.equal(display.equippedSkinId, 'skin-storm');
   assert.equal(display.equippedPetId, 'pet-fox');
+  assert.equal(display.equippedRingId, 'ring-crown-auspice');
   assert.equal(display.skinClass, 'skin-storm');
+  assert.equal(display.ringName, '瑞冠天光');
+  assert.equal(display.ringImage, 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_07.png');
   assert.equal(display.petIcon, '🦊');
   assert.equal(display.petImage, 'https://xcx.ukb88.com/assets/111/pets/linghu.png');
   assert.equal(display.petAccent, '#de6a45');
+});
+
+test('buildGoodsView 支持头像光环类目', () => {
+  const goods = shopStore.buildGoodsView('ring');
+
+  assert.equal(goods.length, 7);
+  assert.equal(goods[0].category, 'ring');
+  assert.match(goods[0].ringImage, /assets\/avatar-rings\/avatar_ring_0[1-7]\.png/);
 });
 
 test('addCoins 会累加金币余额', () => {
