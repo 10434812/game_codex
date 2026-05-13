@@ -18,6 +18,7 @@
   background: linear-gradient(180deg, #d9bc86 0%, #cba56b 100%);
   border: 4rpx solid #b48d54;
   box-shadow: 0 16rpx 32rpx rgba(118, 84, 38, 0.2);
+  animation: timer-land 0.5s ease-out both;
 }
 
 .time {
@@ -25,6 +26,7 @@
   line-height: 1;
   font-weight: 900;
   color: #4a2f17;
+  text-shadow: 0 3rpx 0 rgba(255, 238, 197, 0.6);
 }
 
 .hint {
@@ -123,6 +125,15 @@
   flex-direction: column;
   align-items: center;
   z-index: 4;
+  animation: player-drop-in 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.player-node:nth-child(2n) {
+  animation-delay: 0.05s;
+}
+
+.player-node:nth-child(3n) {
+  animation-delay: 0.1s;
 }
 
 .self-node {
@@ -156,6 +167,7 @@
 .self-avatar-shell {
   background: linear-gradient(145deg, #ffdd78 0%, #f09529 100%);
   box-shadow: 0 0 0 3rpx rgba(255, 223, 136, 0.36), 0 8rpx 18rpx rgba(188, 101, 33, 0.28);
+  animation: self-avatar-pulse 2s ease-in-out infinite;
 }
 
 .avatar-shell.skin-default.self-avatar-shell {
@@ -202,6 +214,7 @@
   height: auto;
   z-index: 2;
   pointer-events: none;
+  animation: ring-sparkle 4.8s linear 1;
 }
 
 .emote-bubble {
@@ -225,6 +238,7 @@
   white-space: nowrap;
   word-break: keep-all;
   z-index: 7;
+  animation: emote-pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .emote-bubble.emote-upper-center {
@@ -383,6 +397,7 @@
   border-radius: 999rpx;
   background: linear-gradient(90deg, #f5bc60 0%, #e57c1f 100%);
   box-shadow: 0 0 10rpx rgba(233, 137, 42, 0.28);
+  transition: width 0.32s ease;
 }
 
 .team-success-toast {
@@ -412,12 +427,13 @@
   box-sizing: border-box;
   padding: 28rpx 28rpx 24rpx;
   border-radius: 22rpx;
-  background: rgba(255, 248, 234, 0.93);
-  border: 2rpx solid rgba(205, 171, 114, 0.56);
-  box-shadow: 0 10rpx 20rpx rgba(123, 87, 41, 0.16);
-  z-index: 10;
+  background: #fff8ea;
+  border: 2rpx solid rgba(205, 171, 114, 0.78);
+  box-shadow: 0 14rpx 30rpx rgba(96, 65, 30, 0.24);
+  z-index: 30;
   display: flex;
   flex-direction: column;
+  animation: panel-dock-in 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .fortune-panel {
@@ -519,8 +535,8 @@
 
 .invest-btn.ghost {
   color: #6a4b2a;
-  background: rgba(241, 225, 195, 0.9);
-  border: 2rpx solid rgba(198, 161, 109, 0.64);
+  background: #f3e5c7;
+  border: 2rpx solid rgba(198, 161, 109, 0.82);
 }
 
 .quick-emote {
@@ -538,6 +554,7 @@
   align-items: center;
   justify-content: center;
   z-index: 9;
+  animation: side-tool-pop 0.36s ease-out both;
 }
 
 .shop-entry {
@@ -559,6 +576,7 @@
   gap: 8rpx;
   z-index: 9;
   box-sizing: border-box;
+  animation: side-tool-pop 0.36s ease-out 0.06s both;
 }
 
 .shop-entry-icon {
@@ -572,10 +590,11 @@
   width: 180rpx;
   padding: 12rpx 10rpx;
   border-radius: 16rpx;
-  background: rgba(251, 243, 226, 0.96);
+  background: #fbf3e2;
   border: 2rpx solid rgba(198, 163, 110, 0.75);
   box-shadow: 0 10rpx 18rpx rgba(116, 82, 41, 0.22);
-  z-index: 9;
+  z-index: 28;
+  animation: emote-panel-in 0.24s ease-out both;
 }
 
 .quick-emote-item {
@@ -597,10 +616,12 @@
   bottom: 176rpx;
   border-radius: 20rpx;
   padding: 10rpx 14rpx 10rpx;
-  background: rgba(255, 248, 232, 0.95);
-  border: 2rpx solid rgba(205, 171, 114, 0.58);
-  box-shadow: 0 10rpx 20rpx rgba(123, 87, 41, 0.16);
-  z-index: 9;
+  background: #fff8e8;
+  border: 2rpx solid rgba(205, 171, 114, 0.78);
+  box-shadow: 0 14rpx 30rpx rgba(96, 65, 30, 0.22);
+  z-index: 26;
+  transition: padding 0.22s ease, transform 0.22s ease;
+  animation: panel-dock-in 0.38s ease-out 0.16s both;
 }
 
 .message-reply-card.collapsed {
@@ -626,7 +647,7 @@
   padding: 0 12rpx;
   border-radius: 999rpx;
   border: 2rpx solid rgba(198, 163, 110, 0.66);
-  background: rgba(236, 216, 180, 0.76);
+  background: #ecd8b4;
   color: #7e5630;
   font-size: 20rpx;
   line-height: 30rpx;
@@ -685,7 +706,7 @@
   height: 44rpx;
   padding: 0 12rpx;
   border-radius: 999rpx;
-  background: rgba(233, 210, 171, 0.86);
+  background: #ead2ab;
   color: #734b25;
   font-size: 22rpx;
   font-weight: 700;
@@ -701,6 +722,115 @@
   }
   to {
     opacity: 0.95;
+  }
+}
+
+@keyframes timer-land {
+  from {
+    opacity: 0;
+    transform: translateY(-22rpx) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes timer-breathe {
+  0%, 100% {
+    box-shadow: 0 16rpx 32rpx rgba(118, 84, 38, 0.2);
+  }
+  50% {
+    box-shadow: 0 20rpx 42rpx rgba(209, 126, 31, 0.28);
+  }
+}
+
+@keyframes link-flow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 180% 0;
+  }
+}
+
+@keyframes player-drop-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(22rpx) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes avatar-idle-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4rpx);
+  }
+}
+
+@keyframes self-avatar-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5rpx) scale(1.04);
+  }
+}
+
+@keyframes ring-sparkle {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes emote-pop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes panel-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(34rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes side-tool-pop {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes emote-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12rpx) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

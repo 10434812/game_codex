@@ -23,9 +23,11 @@ const FIREWORK_COLORS = [
   '#FF8C00', // 橙色
 ];
 
+const FIREWORK_MAX_AUDIO_BURSTS = 3;
+
 // 生成单个烟花
 function createFirework(index) {
-  const particleCount = 12 + Math.floor(Math.random() * 8);
+  const particleCount = 8 + Math.floor(Math.random() * 5);
   const particles = [];
   const baseAngle = (360 / particleCount);
 
@@ -54,6 +56,34 @@ function generateFireworks(count) {
     fireworks.push(createFirework(i));
   }
   return fireworks;
+}
+
+function generateKoiBlessings() {
+  return [
+    {id: 'coin_1', label: '福', left: 76, delay: 0},
+    {id: 'coin_2', label: '喜', left: 198, delay: 160},
+    {id: 'coin_3', label: '运', left: 512, delay: 80},
+    {id: 'coin_4', label: '鲤', left: 636, delay: 240},
+    {id: 'coin_5', label: '财', left: 332, delay: 320},
+  ];
+}
+
+function findSelfRank(payload = {}) {
+  if (Number(payload.rank) > 0) {
+    return Number(payload.rank);
+  }
+
+  const ranking = Array.isArray(payload.ranking) ? payload.ranking : [];
+  const rankedSelf = ranking.find((player) => player && player.isSelf);
+  if (rankedSelf && Number(rankedSelf.rank) > 0) {
+    return Number(rankedSelf.rank);
+  }
+
+  if (payload.top3 && payload.top3.first && payload.top3.first.isSelf) {
+    return 1;
+  }
+
+  return 0;
 }
 
 function createEmptyTop3() {
@@ -147,6 +177,10 @@ Page({
     },
     showFireworks: false,
     fireworkParticles: [],
+    showKoiEffect: false,
+    koiCtaVisible: false,
+    isKoiWinner: false,
+    koiBlessings: generateKoiBlessings(),
   },
   onLoad() {
     try {
@@ -155,22 +189,24 @@ Page({
     runtimeConfig.fetchRemoteConfig().finally(() => {
       enableShareMenu();
     });
-    this.refreshResult();
   },
-  onShow() {
+  async onShow() {
     this.syncUserProfile();
     stopBgm();
-    this.refreshResult();
+    await this.refreshResult();
     if (this.data.resultId && this.data.resultId !== this.lastPlayedResultId) {
       this.playResultFirework();
+      this.playKoiEffect();
       this.lastPlayedResultId = this.data.resultId;
     }
   },
   onHide() {
     this.stopResultFirework();
+    this.closeKoiEffect({silent: true});
   },
   onUnload() {
     this.stopResultFirework();
+    this.closeKoiEffect({silent: true});
     this.stopNumberAnimations();
   },
   onShareAppMessage() {
@@ -184,11 +220,21 @@ Page({
     });
   },
   stopNumberAnimations() {
-    if (this.gainAnimTimer) clearInterval(this.gainAnimTimer);
-    if (this.incomeAnimTimer) clearInterval(this.incomeAnimTimer);
+    if (this.gainAnimTimer) {
+      clearInterval(this.gainAnimTimer);
+      this.gainAnimTimer = null;
+    }
+    if (this.incomeAnimTimer) {
+      clearInterval(this.incomeAnimTimer);
+      this.incomeAnimTimer = null;
+    }
   },
   playResultWinAudio() {
     if (!this.resultFireworkActive) {
+      return;
+    }
+    if ((this.fireworkAudioPlayCount || 0) >= FIREWORK_MAX_AUDIO_BURSTS) {
+      this.stopResultFirework();
       return;
     }
 
@@ -205,12 +251,17 @@ Page({
     audio.loop = false;
     audio.volume = 0.8;
     audio.src = 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3';
+    this.fireworkAudioPlayCount = (this.fireworkAudioPlayCount || 0) + 1;
     audio.onEnded(() => {
       if (!this.resultFireworkActive) {
         return;
       }
+      if ((this.fireworkAudioPlayCount || 0) >= FIREWORK_MAX_AUDIO_BURSTS) {
+        this.stopResultFirework();
+        return;
+      }
       this.setData({
-        fireworkParticles: generateFireworks(4),
+        fireworkParticles: generateFireworks(3),
       });
       playVibrate('medium');
       this.playResultWinAudio();
@@ -257,16 +308,18 @@ Page({
   playResultFirework() {
     this.stopResultFirework();
     this.resultFireworkActive = true;
+    this.fireworkAudioPlayCount = 0;
     // 显示烟花特效
     this.setData({
       showFireworks: true,
-      fireworkParticles: generateFireworks(6),
+      fireworkParticles: generateFireworks(4),
     });
     playVibrate('heavy');
     this.playResultWinAudio();
   },
   stopResultFirework() {
     this.resultFireworkActive = false;
+    this.fireworkAudioPlayCount = 0;
     if (this.resultWinAudio) {
       try {
         this.resultWinAudio.stop();
@@ -279,6 +332,44 @@ Page({
       showFireworks: false,
       fireworkParticles: [],
     });
+  },
+  playKoiEffect() {
+    if (!this.data.isKoiWinner || this.data.resultId === this.lastPlayedKoiResultId) {
+      return;
+    }
+
+    this.lastPlayedKoiResultId = this.data.resultId;
+    if (this.koiCtaTimer) {
+      clearTimeout(this.koiCtaTimer);
+    }
+
+    this.setData({
+      showKoiEffect: true,
+      koiCtaVisible: false,
+      koiBlessings: generateKoiBlessings(),
+    });
+
+    playCue('resultWin', {volume: 0.86});
+    playVibrate('heavy');
+    this.koiCtaTimer = setTimeout(() => {
+      this.setData({koiCtaVisible: true});
+    }, 1400);
+  },
+  closeKoiEffect(options = {}) {
+    if (this.koiCtaTimer) {
+      clearTimeout(this.koiCtaTimer);
+      this.koiCtaTimer = null;
+    }
+    if (!options.silent) {
+      playCue('tap', {volume: 0.68});
+      playVibrate('light');
+    }
+    if (this.data.showKoiEffect || this.data.koiCtaVisible) {
+      this.setData({
+        showKoiEffect: false,
+        koiCtaVisible: false,
+      });
+    }
   },
   async refreshResult() {
     // Try API first
@@ -302,6 +393,7 @@ Page({
             resultId: result.resultId || '',
             totalText: `总计 ${(result.ranking || []).length} 玩家`,
             expProgress: buildExpProgress(playerStats.getSummary().totalExp),
+            isKoiWinner: findSelfRank(result) === 1,
           });
           this.gainAnimTimer = this.animateNumber(result.gain || 0, formatNumber, 'gainText', 1200);
           this.incomeAnimTimer = this.animateNumber(result.coins || 0, formatCurrency, 'incomeText', 1500);
@@ -333,6 +425,7 @@ Page({
       resultId: state.result.resultId || '',
       totalText: `总计 ${state.result.ranking.length} 玩家`,
       expProgress: buildExpProgress(playerStats.getSummary().totalExp),
+      isKoiWinner: findSelfRank(state.result) === 1,
     });
 
     // 播放数字滚动动画

@@ -335,6 +335,85 @@ const GOODS = [
     petLabel: '墨猫',
     petImage: 'https://xcx.ukb88.com/assets/111/pets/momao.png',
   },
+
+  // ── Avatar Rings ─────────────────────────────────────
+  {
+    id: 'ring-amber-glow',
+    category: 'ring',
+    name: '琥珀流光',
+    price: 880,
+    accent: '#d88a2f',
+    description: '暖金流动的基础光环，适合大部分头像。',
+    ringIcon: '✨',
+    ringLabel: '光环',
+    ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_01.png',
+  },
+  {
+    id: 'ring-cloud-bloom',
+    category: 'ring',
+    name: '云霞锦簇',
+    price: 1280,
+    accent: '#d57554',
+    description: '层叠花纹与暖霞边光，视觉更热闹。',
+    ringIcon: '🌺',
+    ringLabel: '光环',
+    ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_02.png',
+  },
+  {
+    id: 'ring-verdant-song',
+    category: 'ring',
+    name: '青岚回响',
+    price: 1580,
+    accent: '#6fa66f',
+    description: '偏青绿色系的雅致光环，风格清润。',
+    ringIcon: '🍃',
+    ringLabel: '光环',
+    ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_03.png',
+  },
+  {
+    id: 'ring-sun-feather',
+    category: 'ring',
+    name: '金羽朝曦',
+    price: 1880,
+    accent: '#e39a3a',
+    description: '羽纹外扩，适合强调主角位和高光时刻。',
+    ringIcon: '☀️',
+    ringLabel: '光环',
+    ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_04.png',
+  },
+  {
+    id: 'ring-flame-dance',
+    category: 'ring',
+    name: '焰纹流彩',
+    price: 2180,
+    accent: '#df6d49',
+    description: '更张扬的红金火纹，适合强存在感展示。',
+    ringIcon: '🔥',
+    ringLabel: '光环',
+    ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_05.png',
+  },
+  {
+    id: 'ring-moon-frost',
+    category: 'ring',
+    name: '月华霜晕',
+    price: 2480,
+    accent: '#8f93c9',
+    description: '偏冷调的环形光泽，适合静谧神秘风格。',
+    ringIcon: '🌙',
+    ringLabel: '光环',
+    ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_06.png',
+  },
+  {
+    id: 'ring-crown-auspice',
+    category: 'ring',
+    name: '瑞冠天光',
+    price: 2880,
+    accent: '#c88a2b',
+    description: '层次最完整的高级款，适合压轴登场。',
+    ringIcon: '👑',
+    ringLabel: '光环',
+    ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_07.png',
+  },
 ];
 
 /**
@@ -400,7 +479,7 @@ async function buyItem(userId, itemId) {
     // Insert coin record
     await conn.execute(
       'INSERT INTO coin_records (user_id, amount, balance_after, type, title) VALUES (?, ?, ?, ?, ?)',
-      [userId, -item.price, coins, 'buy', `购买 ${item.name}`]
+      [userId, -item.price, coins, 'purchase', `购买 ${item.name}`]
     );
 
     await conn.commit();
@@ -468,7 +547,17 @@ async function equipItem(userId, itemId, category) {
  */
 async function getInventory(userId) {
   const items = await db.queryAll(
-    'SELECT item_id AS id, category, is_equipped AS isEquipped, acquired_at AS acquiredAt FROM user_items WHERE user_id = ? ORDER BY acquired_at DESC',
+    `SELECT
+       item_id,
+       item_id AS id,
+       category,
+       is_equipped,
+       is_equipped AS isEquipped,
+       acquired_at,
+       acquired_at AS acquiredAt
+     FROM user_items
+     WHERE user_id = ?
+     ORDER BY acquired_at DESC`,
     [userId]
   );
   return items;

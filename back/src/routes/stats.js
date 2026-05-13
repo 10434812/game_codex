@@ -32,4 +32,15 @@ router.get('/history', async (req, res, next) => {
   }
 });
 
+// GET /api/stats/coin-records — account ledger with pagination
+router.get('/coin-records', async (req, res, next) => {
+  try {
+    const { page, limit } = req.query;
+    const result = await statsService.getCoinRecords(req.user.userId, page, limit);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

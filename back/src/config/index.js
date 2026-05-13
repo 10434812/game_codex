@@ -8,9 +8,38 @@ function parseInteger(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+const nodeEnv = process.env.NODE_ENV || 'development';
+
+function requireProductionEnv(name, fallback = '') {
+  const value = process.env[name];
+  if (value) {
+    return value;
+  }
+  if (nodeEnv === 'production') {
+    throw new Error(`${name} is required in production`);
+  }
+  return fallback;
+}
+
+function parseCorsOrigin(value) {
+  if (!value) {
+    return nodeEnv === 'production' ? false : '*';
+  }
+
+  const origins = String(value)
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  if (origins.length === 0) {
+    return nodeEnv === 'production' ? false : '*';
+  }
+  return origins.length === 1 ? origins[0] : origins;
+}
+
 module.exports = {
   port: parseInteger(process.env.PORT, 3000),
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
 
   db: {
     host: process.env.DB_HOST || 'localhost',
@@ -21,7 +50,7 @@ module.exports = {
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'change-this-to-random-secret-in-production',
+    secret: requireProductionEnv('JWT_SECRET', 'dev-jwt-secret'),
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
 
@@ -32,6 +61,10 @@ module.exports = {
 
   admin: {
     username: process.env.ADMIN_USERNAME || 'admin',
-    password: process.env.ADMIN_PASSWORD || 'admin123',
+    password: requireProductionEnv('ADMIN_PASSWORD', ''),
+  },
+
+  cors: {
+    origin: parseCorsOrigin(process.env.CORS_ORIGIN),
   },
 };

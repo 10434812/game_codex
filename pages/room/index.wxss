@@ -27,6 +27,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 18rpx;
+  animation: room-hero-in 0.52s ease-out both;
 }
 
 .room-heading {
@@ -43,6 +44,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  animation: room-title-glow 3s ease-in-out infinite;
 }
 
 .room-hint {
@@ -69,6 +71,11 @@
   line-height: 1.2;
   padding: 8rpx 14rpx;
   white-space: nowrap;
+  animation: room-tag-pop 0.36s ease-out both;
+}
+
+.tag:nth-child(2) {
+  animation-delay: 0.08s;
 }
 
 .slot-grid {
@@ -88,11 +95,27 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  animation: slot-rise 0.48s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+
+.slot:nth-child(2) { animation-delay: 0.04s; }
+.slot:nth-child(3) { animation-delay: 0.08s; }
+.slot:nth-child(4) { animation-delay: 0.12s; }
+.slot:nth-child(5) { animation-delay: 0.16s; }
+.slot:nth-child(6) { animation-delay: 0.2s; }
+.slot:nth-child(7) { animation-delay: 0.24s; }
+.slot:nth-child(8) { animation-delay: 0.28s; }
+.slot:nth-child(9) { animation-delay: 0.32s; }
+.slot:nth-child(10) { animation-delay: 0.36s; }
 
 .slot.empty {
   border-style: dashed;
   background: rgba(251, 241, 219, 0.65);
+  animation-name: slot-rise, empty-slot-breathe;
+  animation-duration: 0.48s, 2.4s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1), ease-in-out;
+  animation-fill-mode: both, none;
+  animation-iteration-count: 1, infinite;
 }
 
 .slot .avatar {
@@ -101,6 +124,7 @@
   border-radius: 50%;
   border: 4rpx solid #d2ad67;
   background: linear-gradient(145deg, #4d6478, #1e3549);
+  animation: avatar-settle 0.5s ease-out both;
 }
 
 .plus {
@@ -113,6 +137,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: plus-pulse 1.8s ease-in-out infinite;
 }
 
 .slot-name {
@@ -180,6 +205,9 @@
   border-radius: inherit;
   background: linear-gradient(90deg, #f4b24a, #e57c1f);
   box-shadow: 0 2rpx 8rpx rgba(171, 58, 52, 0.3);
+  transition: width 0.35s ease;
+  animation: activity-flow 1.4s linear infinite;
+  background-size: 180% 100%;
 }
 
 .bottom-actions {
@@ -215,21 +243,22 @@
 }
 
 .start-btn {
-  width: 100% !important;
-  max-width: none !important;
+  width: 560rpx !important;
+  max-width: calc(100% - 80rpx) !important;
   min-width: 0;
-  margin: 0 0 16rpx;
+  margin: 0 auto 18rpx;
   border-radius: 999rpx;
-  height: 100rpx;
+  height: 92rpx;
   border: 3rpx solid rgba(204, 120, 22, 0.55);
   box-shadow: 0 10rpx 24rpx rgba(179, 101, 24, 0.3);
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 700;
   color: #fff7e5;
   background: linear-gradient(135deg, #f5bc60, #e57c1f);
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: ready-breathe 2.2s ease-in-out infinite;
 }
 
 .ready-btn {
@@ -261,4 +290,99 @@
   margin-right: 10rpx;
   font-size: 34rpx;
   line-height: 1;
+}
+
+@keyframes room-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes room-title-glow {
+  0%, 100% {
+    text-shadow: 0 3rpx 0 rgba(255, 242, 205, 0.72);
+  }
+  50% {
+    text-shadow: 0 3rpx 0 rgba(255, 242, 205, 0.95), 0 12rpx 22rpx rgba(218, 125, 22, 0.24);
+  }
+}
+
+@keyframes room-tag-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slot-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26rpx) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes empty-slot-breathe {
+  0%, 100% {
+    border-color: #d4b98a;
+    box-shadow: none;
+  }
+  50% {
+    border-color: #e3a94b;
+    box-shadow: 0 8rpx 18rpx rgba(190, 127, 36, 0.14);
+  }
+}
+
+@keyframes avatar-settle {
+  from {
+    transform: scale(0.78) rotate(-8deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes plus-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.72;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes activity-flow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 180% 0;
+  }
+}
+
+@keyframes ready-breathe {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 10rpx 24rpx rgba(179, 101, 24, 0.3);
+  }
+  50% {
+    transform: translateY(-4rpx);
+    box-shadow: 0 16rpx 30rpx rgba(179, 101, 24, 0.38);
+  }
 }

@@ -141,12 +141,12 @@
     </view>
 
     <view class="quick-emote" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onToggleEmotePanel" hover-class="clickable-hover">☺</view>
-  </view>
 
-  <view class="bottom-nav">
-    <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
-      <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
-      <text>{{ item.label }}</text>
+    <view class="bottom-nav">
+      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
+        <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
+        <text>{{ item.label }}</text>
+      </view>
     </view>
   </view>
 </view>

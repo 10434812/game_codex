@@ -2,7 +2,36 @@
 // Handles JWT, base URL, error handling
 
 const TOKEN_KEY = 'game_codex_api_token_v1';
-const BASE_URL = 'http://localhost:3000/api'; // Dev URL, change in production
+const BASE_URL_KEY = 'game_codex_api_base_url_v1';
+const DEFAULT_BASE_URL = 'https://xcx.ukb88.com/api';
+
+function normalizeBaseUrl(url) {
+  return String(url || '').trim().replace(/\/+$/, '');
+}
+
+function getBaseUrl() {
+  try {
+    const stored = normalizeBaseUrl(wx.getStorageSync(BASE_URL_KEY));
+    if (stored) {
+      return stored;
+    }
+  } catch (e) {}
+  return DEFAULT_BASE_URL;
+}
+
+function setBaseUrl(url) {
+  const normalized = normalizeBaseUrl(url);
+  try {
+    if (normalized) {
+      wx.setStorageSync(BASE_URL_KEY, normalized);
+    } else {
+      wx.removeStorageSync(BASE_URL_KEY);
+    }
+  } catch (e) {
+    console.warn('[api-client] setBaseUrl error:', e);
+  }
+  return getBaseUrl();
+}
 
 /**
  * Get stored JWT token
@@ -62,7 +91,7 @@ function request(method, path, data = null, options = {}) {
     }
 
     wx.request({
-      url: BASE_URL + path,
+      url: getBaseUrl() + path,
       method: method,
       data: data,
       header: header,
@@ -110,16 +139,13 @@ function del(path) {
   return request('DELETE', path);
 }
 
-function getBaseUrl() {
-  return BASE_URL;
-}
-
 module.exports = {
   getToken,
   setToken,
   clearToken,
   isLoggedIn,
   getBaseUrl,
+  setBaseUrl,
   request,
   get,
   post,

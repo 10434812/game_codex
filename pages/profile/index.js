@@ -1,6 +1,5 @@
 const {getNavLayout} = require('../../utils/nav');
 const {DEFAULT_AVATAR} = require('../../utils/constants');
-const api = require('../../utils/api-client');
 const {getCachedProfile, hasValidProfile, updateProfile, requestUpdate} = require('../../utils/user-profile');
 const {playCue, playVibrate} = require('../../utils/audio');
 
@@ -14,7 +13,6 @@ Page({
     draft: getCachedProfile(),
     canSave: false,
     defaultAvatar: DEFAULT_AVATAR,
-    uploading: false,
   },
   onLoad() {
     try {
@@ -32,41 +30,28 @@ Page({
       canSave: hasValidProfile(draft),
     });
   },
-  onChooseAvatar(e) {
+  onRequestWechatProfile() {
+    playCue('tap', {volume: 0.7});
     playVibrate('light');
-    const tempUrl = e.detail && e.detail.avatarUrl ? e.detail.avatarUrl : '';
-    if (!tempUrl) {
+
+    if (!wx.getUserProfile) {
+      wx.showToast({title: '当前微信版本不支持授权资料', icon: 'none'});
       return;
     }
-    this.setData({uploading: true});
-    const token = api.getToken();
-    const uploadTask = wx.uploadFile({
-      url: api.getBaseUrl() + '/user/avatar',
-      filePath: tempUrl,
-      name: 'file',
-      header: token ? {Authorization: 'Bearer ' + token} : {},
+
+    wx.getUserProfile({
+      desc: '用于完善游戏头像和昵称',
       success: (res) => {
-        try {
-          const body = JSON.parse(res.data);
-          if (body && body.code === 0 && body.data && body.data.avatarUrl) {
-            const permanentUrl = body.data.avatarUrl;
-            const updated = updateProfile({avatarUrl: permanentUrl});
-            this.setData({draft: updated, canSave: hasValidProfile(updated), uploading: false});
-            requestUpdate({nickName: updated.nickName, avatarUrl: updated.avatarUrl}).catch(() => {});
-          } else {
-            this.setData({uploading: false});
-            wx.showToast({title: '头像上传失败', icon: 'none'});
-          }
-        } catch (err) {
-          this.setData({uploading: false});
-          wx.showToast({title: '头像上传失败', icon: 'none'});
-        }
+        const info = res && res.userInfo ? res.userInfo : {};
+        const updated = updateProfile({
+          nickName: info.nickName,
+          avatarUrl: info.avatarUrl,
+        });
+        this.setData({draft: updated, canSave: hasValidProfile(updated)});
+        requestUpdate({nickName: updated.nickName, avatarUrl: updated.avatarUrl}).catch(() => {});
       },
       fail: () => {
-        this.setData({uploading: false});
-        const draft = {...this.data.draft, avatarUrl: tempUrl};
-        this.setData({draft, canSave: hasValidProfile(draft)});
-        wx.showToast({title: '已暂存，稍后上传', icon: 'none'});
+        wx.showToast({title: '未获取微信资料', icon: 'none'});
       },
     });
   },

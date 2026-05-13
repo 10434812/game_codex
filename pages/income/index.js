@@ -8,6 +8,7 @@ function buildTypeLabel(type) {
   const map = {
     game_reward: '对局结算',
     purchase: '商城购买',
+    buy: '商城购买',
     trade_buy: '机会买入',
     trade_sell: '机会卖出',
   };
@@ -46,7 +47,7 @@ Page({
   async syncRecords() {
     try {
       if (api.isLoggedIn()) {
-        const data = await api.get('/stats/history', { page: 1, limit: 50 });
+        const data = await api.get('/stats/coin-records', { page: 1, limit: 50 });
         if (data && data.records) {
           const userData = await api.get('/user/profile');
           this.setData({

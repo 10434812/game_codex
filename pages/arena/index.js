@@ -40,8 +40,20 @@ function parseScoreText(scoreText) {
   return Number.isFinite(value) ? value : 0;
 }
 
-// Socket connection state
-let socketTask = null;
+function buildPlayersSignature(players) {
+  return JSON.stringify(players || []);
+}
+
+function buildLinksSignature(links) {
+  return JSON.stringify(links || []);
+}
+
+function assignIfChanged(patch, currentData, key, value) {
+  if (!currentData || currentData[key] !== value) {
+    patch[key] = value;
+  }
+}
+
 let arenaSessionId = '';
 
 Page({
@@ -98,6 +110,8 @@ Page({
       playerCount: 0,
       visibleIds: [],
     };
+    this.lastPlayersSignature = '';
+    this.lastTeamLinksSignature = '';
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}
@@ -107,13 +121,12 @@ Page({
     this.syncShopDisplay();
     this.syncStageMusic();
 
-    // Get sessionId from URL params and connect via WebSocket
     const pages = getCurrentPages();
     const currentPage = pages[pages.length - 1];
-    arenaSessionId = currentPage.options.sessionId;
+    arenaSessionId = (currentPage.options || {}).sessionId || '';
 
     if (arenaSessionId) {
-      this.connectArena(arenaSessionId);
+      this.startArenaPolling(arenaSessionId);
     } else {
       // Local mode: subscribe to gameStore for state updates
       this.localMode = true;
@@ -124,7 +137,6 @@ Page({
         } else if (state.status === 'finished') {
           this.clearBagTimers();
           this.clearEmoteTimers();
-          gameStore.finishGame();
           wx.redirectTo({url: '/pages/result/index'});
         }
       });
@@ -138,7 +150,7 @@ Page({
     this.scheduleRemoteEmote();
   },
   onHide() {
-    this.disconnectArena();
+    this.clearArenaPolling();
     this.clearInviteTimers();
     this.clearBagTimers();
     this.clearEmoteTimers();
@@ -153,7 +165,7 @@ Page({
     this.unsubscribeStore();
   },
   onUnload() {
-    this.disconnectArena();
+    this.clearArenaPolling();
     this.clearInviteTimers();
     this.clearBagTimers();
     this.clearEmoteTimers();
@@ -176,77 +188,47 @@ Page({
     const snapshot = gameStore.getState();
     playStageBgm(snapshot.stage || DEFAULT_STAGE, {volume: 0.38});
   },
-  connectArena(sessionId) {
-    const token = api.getToken();
-    socketTask = wx.connectSocket({
-      url: `ws://localhost:3000?token=${token}`,
-      success: () => {},
-      fail: (err) => {
-        console.warn('[arena] connectSocket failed:', err);
-      },
-    });
-
-    socketTask.onOpen(() => {
-      socketTask.send({
-        data: JSON.stringify({ event: 'join_arena', data: { sessionId } }),
-      });
-    });
-
-    socketTask.onMessage((res) => {
-      try {
-        const msg = JSON.parse(res.data);
-        this.handleSocketMessage(msg);
-      } catch (e) {
-        console.warn('[arena] parse socket message error:', e);
-      }
-    });
-
-    socketTask.onError((err) => {
-      console.warn('[arena] socket error:', err);
-    });
+  startArenaPolling(sessionId) {
+    this.clearArenaPolling();
+    this.fetchArenaState(sessionId);
+    this.arenaPollTimer = setInterval(() => {
+      this.fetchArenaState(sessionId);
+    }, 1000);
   },
-  handleSocketMessage(msg) {
-    const { event, data } = msg;
-    switch (event) {
-      case 'game_tick':
-        this.handleGameTick(data);
-        break;
-      case 'time_update':
-        this.setData({ timeText: (data.timeLeft || 180) + 's' });
-        break;
-      case 'game_finished':
+  async fetchArenaState(sessionId) {
+    if (!sessionId) {
+      return;
+    }
+    try {
+      const state = await api.get(`/games/${sessionId}`);
+      if (String(sessionId) !== String(arenaSessionId)) {
+        return;
+      }
+      if (state && state.status === 'finished') {
         this.clearBagTimers();
         this.clearEmoteTimers();
-        this.disconnectArena();
-        wx.redirectTo({ url: `/pages/result/index?sessionId=${arenaSessionId}` });
-        break;
-      case 'emote_broadcast':
-        if (data && data.playerId && data.emoteText) {
-          this.setPlayerEmote(data.playerId, data.emoteText);
-        }
-        break;
+        this.clearArenaPolling();
+        wx.redirectTo({url: `/pages/result/index?sessionId=${sessionId}`});
+        return;
+      }
+      if (state && Array.isArray(state.players) && Array.isArray(state.teams)) {
+        this.syncArena(state);
+      }
+    } catch (err) {
+      console.warn('[arena] poll state error:', err);
     }
   },
-  handleGameTick(data) {
-    if (!data) return;
-    // Reuse syncArena with socket data in gameStore-compatible format
-    this.syncArena(data);
-  },
-  disconnectArena() {
-    if (socketTask) {
-      socketTask.close({});
-      socketTask = null;
+  clearArenaPolling() {
+    if (this.arenaPollTimer) {
+      clearInterval(this.arenaPollTimer);
+      this.arenaPollTimer = null;
     }
   },
-  sendEmoteViaSocket(emoteId) {
-    if (socketTask) {
-      socketTask.send({
-        data: JSON.stringify({
-          event: 'emote',
-          data: { sessionId: arenaSessionId, emoteId },
-        }),
-      });
+  sendEmoteToBackend(emoteId) {
+    if (!arenaSessionId || !emoteId) {
+      return;
     }
+    api.post(`/games/${arenaSessionId}/emotes`, {emoteId}).catch(() => {});
   },
   onTapProfile() {
     wx.navigateTo({url: '/pages/profile/index'});
@@ -310,14 +292,37 @@ Page({
       ? stateTeamLinks.filter((link) => !previousKeySet.has(link.pairKey))
       : [];
 
-    this.setData({
-      players: decoratedPlayers,
-      teamLinks: mergedLinks,
-      timeText: formatTimeLeft(state.timeLeft),
-      hintText: state.feedText || `等待下一轮事件（${state.modeText || MATCH_MODE_TEXT}）`,
-      modeText: state.modeText || MATCH_MODE_TEXT,
-      activePositionHoldText: formatHoldTime(this.data.activePosition),
-    });
+    const nextPatch = {};
+    assignIfChanged(nextPatch, this.data, 'timeText', formatTimeLeft(state.timeLeft));
+    assignIfChanged(
+      nextPatch,
+      this.data,
+      'hintText',
+      state.feedText || `等待下一轮事件（${state.modeText || MATCH_MODE_TEXT}）`
+    );
+    assignIfChanged(nextPatch, this.data, 'modeText', state.modeText || MATCH_MODE_TEXT);
+    assignIfChanged(
+      nextPatch,
+      this.data,
+      'activePositionHoldText',
+      formatHoldTime(this.data.activePosition)
+    );
+
+    const nextPlayersSignature = buildPlayersSignature(decoratedPlayers);
+    if (nextPlayersSignature !== this.lastPlayersSignature) {
+      nextPatch.players = decoratedPlayers;
+      this.lastPlayersSignature = nextPlayersSignature;
+    }
+
+    const nextTeamLinksSignature = buildLinksSignature(mergedLinks);
+    if (nextTeamLinksSignature !== this.lastTeamLinksSignature) {
+      nextPatch.teamLinks = mergedLinks;
+      this.lastTeamLinksSignature = nextTeamLinksSignature;
+    }
+
+    if (Object.keys(nextPatch).length) {
+      this.setData(nextPatch);
+    }
 
     if (newRemoteLinks.length) {
       this.playRemoteTeamAnimation(newRemoteLinks[0]);
@@ -377,7 +382,7 @@ Page({
     playCue('tap', {volume: 0.72});
     playVibrate('light');
     this.setPlayerEmote(selfPlayer.id, option.text);
-    this.sendEmoteViaSocket(option.key);
+    this.sendEmoteToBackend(option.key);
     this.setData({
       emotePanelVisible: false,
       actionHintText: `你发送了消息：${option.label}`,

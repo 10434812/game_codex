@@ -17,7 +17,7 @@ async function getSummary(userId) {
     return null;
   }
 
-  const [{ recordCount }] = await db.execute(
+  const [[{ recordCount }]] = await db.execute(
     'SELECT COUNT(*) AS recordCount FROM game_players WHERE user_id = ?',
     [userId]
   );
@@ -77,6 +77,37 @@ async function getHistory(userId, page = 1, limit = 20) {
   return { records, page: pageNum, limit: pageSize, total };
 }
 
+async function getCoinRecords(userId, page = 1, limit = 50) {
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const pageSize = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
+  const offset = (pageNum - 1) * pageSize;
+
+  const [[{ total }]] = await db.execute(
+    'SELECT COUNT(*) AS total FROM coin_records WHERE user_id = ?',
+    [userId]
+  );
+
+  const rows = await db.queryAll(
+    `SELECT id, amount, balance_after, type, title, created_at
+     FROM coin_records
+     WHERE user_id = ?
+     ORDER BY created_at DESC, id DESC
+     LIMIT ? OFFSET ?`,
+    [userId, pageSize, offset]
+  );
+
+  const records = rows.map((row) => ({
+    id: row.id,
+    amount: row.amount,
+    balanceAfter: row.balance_after,
+    type: row.type,
+    title: row.title,
+    createdAt: row.created_at,
+  }));
+
+  return { records, page: pageNum, limit: pageSize, total };
+}
+
 /**
  * Get global leaderboard.
  *
@@ -121,4 +152,4 @@ async function getLeaderboard(type = 'income', limit = 50) {
   return players;
 }
 
-module.exports = { getSummary, getHistory, getLeaderboard };
+module.exports = { getSummary, getHistory, getCoinRecords, getLeaderboard };

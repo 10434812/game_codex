@@ -16,13 +16,6 @@
     </view>
   </view>
 
-  <!-- 烟花特效容器 -->
-  <view class="fireworks-container" wx:if="{{showFireworks}}">
-    <view class="firework" wx:for="{{fireworkParticles}}" wx:key="id" style="left: {{item.left}}rpx; top: {{item.top}}rpx; animation-delay: {{item.delay}}ms;">
-      <view class="firework-particle" wx:for="{{item.particles}}" wx:key="index" style="--angle: {{item.angle}}deg; --color: {{item.color}}; --size: {{item.size}}rpx; animation-delay: {{item.pDelay}}ms;"></view>
-    </view>
-  </view>
-
   <view class="page-content">
     <view class="main-title">获得胜利</view>
     <view class="sub-title">本局结算成绩</view>
@@ -114,6 +107,39 @@
     </view>
 
     <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 烟花特效容器 -->
+  <view class="fireworks-container" wx:if="{{showFireworks}}">
+    <view class="firework" wx:for="{{fireworkParticles}}" wx:key="id" style="left: {{item.left}}rpx; top: {{item.top}}rpx; animation-delay: {{item.delay}}ms;">
+      <view class="firework-particle" wx:for="{{item.particles}}" wx:key="index" style="--angle: {{item.angle}}deg; --color: {{item.color}}; --size: {{item.size}}rpx; animation-delay: {{item.pDelay}}ms;"></view>
+    </view>
+  </view>
+
+  <!-- 锦鲤揭晓特效 -->
+  <view class="koi-effect-layer" wx:if="{{showKoiEffect}}">
+    <view class="koi-effect-mask" bindtap="closeKoiEffect"></view>
+    <view class="koi-blessing" wx:for="{{koiBlessings}}" wx:key="id" style="left: {{item.left}}rpx; animation-delay: {{item.delay}}ms;">
+      <text>{{item.label}}</text>
+    </view>
+    <view class="koi-reveal-card">
+      <view class="koi-aura"></view>
+      <view class="koi-fish koi-fish-left">
+        <view class="koi-fish-body"></view>
+        <view class="koi-fish-tail"></view>
+      </view>
+      <view class="koi-fish koi-fish-right">
+        <view class="koi-fish-body"></view>
+        <view class="koi-fish-tail"></view>
+      </view>
+      <view class="koi-card-inner">
+        <view class="koi-eyebrow">本局天选</view>
+        <view class="koi-title">你是锦鲤</view>
+        <view class="koi-seal">福</view>
+        <view class="koi-copy">好运已到账</view>
+        <button wx:if="{{koiCtaVisible}}" class="koi-accept-btn" bindtap="closeKoiEffect" hover-class="btn-hover">收下好运</button>
+      </view>
+    </view>
   </view>
 
   <!-- 玩家分数明细弹窗 -->

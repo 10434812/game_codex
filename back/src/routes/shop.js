@@ -43,8 +43,8 @@ router.post('/equip', async (req, res, next) => {
     if (!itemId || !category) {
       return res.status(400).json(fail('缺少 itemId 或 category'));
     }
-    if (!['skin', 'pet'].includes(category)) {
-      return res.status(400).json(fail('category 必须为 skin 或 pet'));
+    if (!['skin', 'pet', 'ring'].includes(category)) {
+      return res.status(400).json(fail('category 必须为 skin、pet 或 ring'));
     }
 
     const result = await shopService.equipItem(req.user.userId, itemId, category);

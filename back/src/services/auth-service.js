@@ -59,7 +59,7 @@ async function findOrCreateUser(openid, startCoins = 100) {
 
   // Create new user with defaults
   const defaultNickName = '锦鲤玩家';
-  const defaultAvatarUrl = 'https://xcx.ukb88.com/assets/avatar/default.png';
+  const defaultAvatarUrl = 'https://xcx.ukb88.com/assets/bg/avatars/avatar_01.png';
   const [result] = await db.execute(
     `INSERT INTO users (openid, nick_name, avatar_url, level, total_exp, total_income, coins, game_count, win_count, is_banned)
      VALUES (?, ?, ?, 1, 0, 0, ?, 0, 0, 0)`,

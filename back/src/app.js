@@ -14,7 +14,7 @@ const initArenaSocket = require('./socket/arena-handler');
 const app = express();
 
 // ─── Middleware ───────────────────────────────────────────
-app.use(cors());
+app.use(cors({ origin: config.cors.origin }));
 app.use(helmet());
 app.use(morgan(config.nodeEnv === 'development' ? 'dev' : 'combined'));
 app.use(express.json());
@@ -43,7 +43,7 @@ const server = http.createServer(app);
 
 const io = new SocketIOServer(server, {
   cors: {
-    origin: '*',
+    origin: config.cors.origin,
     methods: ['GET', 'POST'],
   },
 });

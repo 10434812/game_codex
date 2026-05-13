@@ -45,6 +45,7 @@ Page({
     slots: Array.from({length: ROOM_UI_LIMIT}, buildEmptySlot),
     stageName: DEFAULT_STAGE.name,
     roomId: '----',
+    backendRoomId: '',
     activePercent: 0,
     selfReady: true,
     starting: false,
@@ -192,9 +193,19 @@ Page({
   },
   async initRoom() {
     try {
-      const room = await api.post('/rooms', { stageId: 1 })
-      const roomId = room.id
-      this.setData({ roomId: room.roomCode || roomId })
+      const snapshot = gameStore.getState()
+      const stageId = snapshot.stage && snapshot.stage.id ? snapshot.stage.id : DEFAULT_STAGE.id
+      const result = await api.post('/rooms', {stageId})
+      const room = result && result.room ? result.room : result
+      const roomId = room && room.id ? room.id : ''
+      const roomCode = room && (room.roomCode || room.room_code) ? (room.roomCode || room.room_code) : ''
+      if (!roomId) {
+        return
+      }
+      this.setData({
+        backendRoomId: String(roomId),
+        roomId: roomCode || String(roomId),
+      })
       this.pollRoom(roomId)
     } catch (err) {
       console.warn('[room] initRoom error:', err)
@@ -220,7 +231,8 @@ Page({
   },
   async onStartGame() {
     try {
-      const result = await api.post(`/rooms/${this.data.roomId}/start`)
+      const roomId = this.data.backendRoomId || this.data.roomId
+      const result = await api.post(`/rooms/${roomId}/start`)
       wx.redirectTo({ url: `/pages/arena/index?sessionId=${result.sessionId}` })
     } catch (err) {
       gameStore.startGame()

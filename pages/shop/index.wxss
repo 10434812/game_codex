@@ -24,6 +24,20 @@
   padding: 30rpx 36rpx;
   position: relative;
   box-shadow: 0 10rpx 24rpx rgba(125, 87, 43, 0.08), inset 0 2rpx 0 rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  animation: shop-card-in 0.5s ease-out both;
+}
+
+.asset-card::before {
+  content: '';
+  position: absolute;
+  left: -40%;
+  top: 0;
+  width: 32%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.52), transparent);
+  transform: skewX(-18deg);
+  animation: asset-sheen 3.4s ease-in-out infinite;
 }
 
 .asset-header {
@@ -56,6 +70,7 @@
   line-height: 1;
   letter-spacing: 1rpx;
   text-shadow: 0 2rpx 0 #eed9bf;
+  animation: balance-pop 0.62s ease-out 0.18s both;
 }
 
 .payment-banner {
@@ -64,6 +79,7 @@
   border-radius: 20rpx;
   border: 2rpx solid rgba(194, 139, 74, 0.18);
   background: rgba(255, 248, 235, 0.88);
+  animation: shop-card-in 0.42s ease-out 0.16s both;
 }
 
 .payment-banner.enabled {
@@ -103,6 +119,7 @@
   color: #927555;
   font-weight: 600;
   transition: all 0.2s;
+  animation: shop-card-in 0.4s ease-out both;
 }
 
 .tab-item.active {
@@ -119,6 +136,7 @@
   height: 6rpx;
   background: #e57c1f;
   border-radius: 4rpx;
+  animation: tab-line-grow 0.24s ease-out both;
 }
 
 .goods-grid {
@@ -139,7 +157,14 @@
   flex-direction: column;
   min-width: 0;
   box-sizing: border-box;
+  animation: goods-rise 0.48s ease-out both;
 }
+
+.goods-card:nth-child(2) { animation-delay: 0.05s; }
+.goods-card:nth-child(3) { animation-delay: 0.1s; }
+.goods-card:nth-child(4) { animation-delay: 0.15s; }
+.goods-card:nth-child(5) { animation-delay: 0.2s; }
+.goods-card:nth-child(6) { animation-delay: 0.25s; }
 
 .goods-head {
   display: flex;
@@ -178,6 +203,7 @@
   position: relative;
   overflow: hidden;
   background: #f1ebd8;
+  animation: visual-float 3s ease-in-out infinite;
 }
 
 .visual-placeholder {
@@ -240,6 +266,7 @@
   inset: -26rpx;
   width: auto;
   height: auto;
+  animation: ring-preview-spin 6.4s linear infinite;
 }
 
 .goods-info {
@@ -280,6 +307,7 @@
   box-shadow: 0 4rpx 12rpx rgba(179, 101, 24, 0.2);
   box-sizing: border-box;
   white-space: nowrap;
+  transition: transform 0.16s ease, filter 0.16s ease;
 }
 
 .goods-action-btn::after {
@@ -302,4 +330,84 @@
 .cursor-hover:active {
   transform: scale(0.97);
   transition: transform 0.1s;
+}
+
+@keyframes shop-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(22rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes asset-sheen {
+  0%, 48% {
+    left: -42%;
+    opacity: 0;
+  }
+  62% {
+    opacity: 1;
+  }
+  100% {
+    left: 112%;
+    opacity: 0;
+  }
+}
+
+@keyframes balance-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tab-line-grow {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 48rpx;
+    opacity: 1;
+  }
+}
+
+@keyframes goods-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26rpx) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes visual-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5rpx);
+  }
+}
+
+@keyframes ring-preview-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

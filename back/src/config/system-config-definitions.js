@@ -106,7 +106,7 @@ const CONFIG_DEFINITIONS = [
   },
   {
     key: 'wechat.login_agreement_url',
-    defaultValue: 'https://xcx.ukb88.com/legal/user-agreement.html',
+    defaultValue: '',
     description: '用户协议链接',
     valueType: 'url',
     group: 'wechat',
@@ -114,7 +114,7 @@ const CONFIG_DEFINITIONS = [
   },
   {
     key: 'wechat.login_privacy_url',
-    defaultValue: 'https://xcx.ukb88.com/legal/privacy-policy.html',
+    defaultValue: '',
     description: '隐私政策链接',
     valueType: 'url',
     group: 'wechat',

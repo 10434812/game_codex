@@ -11,6 +11,7 @@ const SALT_ROUNDS = 10;
 async function ensureBootstrapAdmin(username, password) {
   const count = await db.queryOne('SELECT COUNT(*) as total FROM admins');
   if ((count?.total || 0) > 0) return;
+  if (!config.admin.password) return;
   if (username !== config.admin.username || password !== config.admin.password) return;
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);

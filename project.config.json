@@ -34,11 +34,7 @@
     "include": [
       {
         "type": "file",
-        "value": "assets/icons/2657.png_300.png"
-      },
-      {
-        "type": "file",
-        "value": "assets/icons/2657.png_30012.png"
+        "value": "assets/iocns/2657.png_300.png"
       }
     ]
   },

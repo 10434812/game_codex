@@ -328,6 +328,7 @@ function applyRoundEvents(players, teams, events) {
       return;
     }
 
+    const teammateIndex = indexMap[teammateId];
     const teammateDelta = getLinkedDelta(event.delta);
     nextPlayers[teammateIndex].score = Math.max(0, nextPlayers[teammateIndex].score + teammateDelta);
   });

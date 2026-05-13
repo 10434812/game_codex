@@ -2,8 +2,8 @@ const api = require('./api-client');
 
 const DEFAULT_CONFIG = {
   'wechat.login_enabled': 'true',
-  'wechat.login_agreement_url': 'https://xcx.ukb88.com/legal/user-agreement.html',
-  'wechat.login_privacy_url': 'https://xcx.ukb88.com/legal/privacy-policy.html',
+  'wechat.login_agreement_url': '',
+  'wechat.login_privacy_url': '',
   'wechat.share_enabled': 'true',
   'wechat.share_title': '锦鲤前程邀你一起组队闯世界',
   'wechat.share_desc': '选景区、组战队、拼手气，一起冲上好运榜。',

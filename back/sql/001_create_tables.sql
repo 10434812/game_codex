@@ -120,12 +120,12 @@ CREATE TABLE IF NOT EXISTS game_results (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='对局结果表';
 
 
--- 9. user_items: 用户已购物品(皮肤/宠物)
+-- 9. user_items: 用户已购物品(皮肤/宠物/头像光环)
 CREATE TABLE IF NOT EXISTS user_items (
     id          INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY  COMMENT '记录ID',
     user_id     INT UNSIGNED    NOT NULL                    COMMENT '用户ID',
     item_id     VARCHAR(64)     NOT NULL                    COMMENT '物品ID',
-    category    ENUM('skin','pet') NOT NULL                 COMMENT '物品分类',
+    category    ENUM('skin','pet','ring') NOT NULL          COMMENT '物品分类',
     is_equipped TINYINT(1)      DEFAULT 0                   COMMENT '是否装备',
     acquired_at DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '获得时间',
     UNIQUE KEY uk_user_item (user_id, item_id)

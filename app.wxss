@@ -63,6 +63,7 @@ page {
   padding-bottom: 14rpx;
   min-height: 88rpx;
   margin-bottom: 6rpx;
+  animation: header-enter 0.46s ease-out both;
 }
 
 .app-user {
@@ -114,6 +115,7 @@ page {
   font-size: 18rpx;
   color: #2bbf9f;
   margin-right: 8rpx;
+  animation: status-breathe 1.6s ease-in-out infinite;
 }
 
 .app-status-text {
@@ -140,6 +142,7 @@ page {
 .page-content {
   position: relative;
   z-index: 1;
+  animation: page-rise-in 0.54s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .card {
@@ -171,6 +174,7 @@ page {
   padding: 12rpx 8rpx;
   min-height: 124rpx;
   backdrop-filter: blur(6rpx);
+  animation: nav-dock-in 0.52s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .nav-item {
@@ -219,6 +223,7 @@ page {
   border-color: rgba(206, 115, 19, 0.72);
   color: #fff5e5;
   box-shadow: 0 6rpx 14rpx rgba(183, 102, 18, 0.24);
+  animation: nav-active-bob 1.8s ease-in-out infinite;
 }
 
 /* --- 全局游戏化交互动效 --- */
@@ -233,4 +238,55 @@ page {
   opacity: 0.7;
   transform: scale(0.97);
   transition: all 0.1s ease;
+}
+
+@keyframes header-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-18rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-rise-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nav-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(36rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nav-active-bob {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5rpx) scale(1.05);
+  }
+}
+
+@keyframes status-breathe {
+  0%, 100% {
+    opacity: 0.64;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
 }
