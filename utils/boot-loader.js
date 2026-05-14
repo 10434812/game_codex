@@ -4,11 +4,13 @@ const LOCAL_BOOT_ASSETS = [
   'https://xcx.ukb88.com/assets/bg/bg.png',
   'https://xcx.ukb88.com/assets/bg/bg2.png',
   'https://xcx.ukb88.com/assets/bg/bg6.png',
-  'https://xcx.ukb88.com/assets/bg/gamebg.png',
+  'https://xcx.ukb88.com/assets/bg/gamebg-compressed.png',
 ];
 
 function getRemoteBootAssets() {
-  const stageImages = [DEFAULT_STAGE, ...STAGES.slice(1)].map((stage) => stage.image);
+  const stageImages = [DEFAULT_STAGE, ...STAGES.slice(1)]
+    .filter((stage) => stage.image && !stage.video)
+    .map((stage) => stage.image);
   const navIcons = NAV_TABS.reduce((list, tab) => {
     list.push(tab.icon, tab.iconActive);
     return list;

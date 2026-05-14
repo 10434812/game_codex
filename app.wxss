@@ -268,26 +268,58 @@ page {
   left: 20rpx;
   right: 20rpx;
   bottom: 16rpx;
-  background: rgba(255, 248, 232, 0.76);
-  border: 0;
+  background:
+    radial-gradient(circle at 18% 12%, var(--stage-glow, rgba(245, 188, 96, 0.32)) 0%, transparent 34%),
+    radial-gradient(circle at 82% 0%, rgba(255, 255, 255, 0.56) 0%, transparent 38%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.62) 0%, var(--stage-panel, rgba(255, 248, 232, 0.58)) 44%, rgba(255, 246, 224, 0.42) 100%);
+  border: 2rpx solid var(--stage-border, rgba(255, 238, 199, 0.5));
   border-radius: 38rpx;
-  box-shadow: 0 18rpx 40rpx rgba(8, 12, 20, 0.2), inset 0 1rpx 0 rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 24rpx 54rpx rgba(6, 10, 18, 0.28),
+    0 4rpx 12rpx var(--stage-glow, rgba(229, 124, 31, 0.16)),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1rpx 0 rgba(68, 42, 18, 0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12rpx 8rpx;
   min-height: 124rpx;
-  -webkit-backdrop-filter: blur(38rpx) saturate(1.08);
-  backdrop-filter: blur(38rpx) saturate(1.08);
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(46rpx) saturate(1.24) brightness(1.04);
+  backdrop-filter: blur(46rpx) saturate(1.24) brightness(1.04);
   animation: nav-dock-in 0.52s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+.bottom-nav::before {
+  content: '';
+  position: absolute;
+  left: 28rpx;
+  right: 28rpx;
+  top: 10rpx;
+  height: 2rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.78), transparent);
+  opacity: 0.86;
+  pointer-events: none;
+}
+
+.bottom-nav::after {
+  content: '';
+  position: absolute;
+  inset: 8rpx;
+  border-radius: 30rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.26);
+  pointer-events: none;
+}
+
 .nav-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: var(--stage-deep, #9a7a4f);
+  color: var(--stage-ink, #6d4b2a);
   font-size: 20rpx;
   line-height: 1.2;
   flex: 1;
@@ -300,8 +332,10 @@ page {
   height: 54rpx;
   border-radius: 50%;
   margin-bottom: 6rpx;
-  background: rgba(255, 232, 181, 0.66);
-  border: 0;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.86) 0%, transparent 38%),
+    linear-gradient(150deg, rgba(255, 246, 222, 0.78), var(--stage-chip, rgba(240, 213, 167, 0.62)));
+  border: 1rpx solid rgba(255, 255, 255, 0.54);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -310,6 +344,7 @@ page {
   line-height: 1;
   box-sizing: border-box;
   transform: translateY(0);
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.6), 0 8rpx 16rpx rgba(8, 12, 20, 0.12);
 }
 
 .nav-icon {
@@ -320,13 +355,19 @@ page {
 
 .nav-item.active {
   color: var(--stage-primary, #d97a12);
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .nav-item.active .nav-dot {
-  background: linear-gradient(160deg, var(--stage-bright, #f5b95a), var(--stage-primary, #e57c1f));
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.7) 0%, transparent 32%),
+    linear-gradient(160deg, var(--stage-bright, #f5b95a), var(--stage-primary, #e57c1f));
   color: #fff5e5;
-  box-shadow: 0 8rpx 18rpx var(--stage-glow, rgba(183, 102, 18, 0.28));
+  border-color: rgba(255, 248, 229, 0.74);
+  box-shadow:
+    0 10rpx 22rpx var(--stage-glow, rgba(183, 102, 18, 0.34)),
+    0 0 0 8rpx var(--stage-wash, rgba(245, 188, 96, 0.18)),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.52);
   animation: nav-active-bob 1.8s ease-in-out infinite;
 }
 

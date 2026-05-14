@@ -17,12 +17,11 @@
 
   <view class="page-content">
     <view class="scene-backdrop" wx:if="{{stageImage || stageVideo}}">
-      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <image wx:if="{{!stageVideo && stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
       <video
         wx:if="{{stageVideo}}"
         class="scene-backdrop-video"
         src="{{stageVideo}}"
-        poster="{{stageImage}}"
         autoplay
         muted
         loop

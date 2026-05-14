@@ -1,5 +1,5 @@
 <view class="paper-bg arena-page scene-theme-{{stageThemeKey}}" style="{{stageThemeStyle}}">
-  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/gamebg.png" mode="scaleToFill"></image>
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/gamebg-compressed.png" mode="scaleToFill"></image>
   <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
     <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
       <image wx:if="{{userProfile.avatarUrl}}" class="app-user-avatar" src="{{userProfile.avatarUrl}}" mode="aspectFill"></image>
@@ -17,12 +17,11 @@
 
   <view class="page-content">
     <view class="scene-backdrop" wx:if="{{stageImage || stageVideo}}">
-      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <image wx:if="{{!stageVideo && stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
       <video
         wx:if="{{stageVideo}}"
         class="scene-backdrop-video"
         src="{{stageVideo}}"
-        poster="{{stageImage}}"
         autoplay
         muted
         loop

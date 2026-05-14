@@ -15,8 +15,22 @@
   </view>
 
   <view class="page-content profile-content">
-    <view class="scene-backdrop theme-page-backdrop profile-scene-backdrop" wx:if="{{stageImage}}">
-      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+    <view class="scene-backdrop theme-page-backdrop profile-scene-backdrop" wx:if="{{stageImage || stageVideo}}">
+      <image wx:if="{{!stageVideo && stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <video
+        wx:if="{{stageVideo}}"
+        class="scene-backdrop-video"
+        src="{{stageVideo}}"
+        autoplay
+        muted
+        loop
+        controls="{{false}}"
+        show-center-play-btn="{{false}}"
+        show-play-btn="{{false}}"
+        show-fullscreen-btn="{{false}}"
+        enable-progress-gesture="{{false}}"
+        object-fit="cover"
+      ></video>
       <view class="scene-template"></view>
       <view class="scene-backdrop-mask"></view>
     </view>

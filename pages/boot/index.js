@@ -8,10 +8,10 @@ const DEFAULT_MAX_MS = 2700;
 const DEFAULT_HOLD_MS = 300;
 
 const BOOT_VIDEOS = [
-  'https://xcx.ukb88.com/assets/bg/开机动画1.mp4',
-  'https://xcx.ukb88.com/assets/bg/开机动画2.mp4',
-  'https://xcx.ukb88.com/assets/bg/开机动画3.mp4',
-  'https://xcx.ukb88.com/assets/bg/开机动画4.mp4',
+  'https://xcx.ukb88.com/assets/bg/开机动画1-compressed.mp4',
+  'https://xcx.ukb88.com/assets/bg/开机动画2-compressed.mp4',
+  'https://xcx.ukb88.com/assets/bg/开机动画3-compressed.mp4',
+  'https://xcx.ukb88.com/assets/bg/开机动画4-compressed.mp4',
 ];
 
 async function tryAutoLogin() {

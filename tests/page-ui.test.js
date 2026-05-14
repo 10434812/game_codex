@@ -320,8 +320,8 @@ test('arena 底部导航仍属于 page-content 主内容容器', () => {
 test('room 页面下方两个社交操作按钮使用景区主题色毛玻璃', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.invite-btn\s*\{[\s\S]*background:\s*rgba\(255,\s*248,\s*232,\s*0\.52\);[\s\S]*backdrop-filter:\s*blur\(18rpx\) saturate\(1\.12\);[\s\S]*color:\s*var\(--stage-primary,\s*#c96a10\);/);
-  assert.match(wxss, /\.ready-btn\s*\{[\s\S]*background:\s*rgba\(255,\s*248,\s*232,\s*0\.52\);[\s\S]*backdrop-filter:\s*blur\(18rpx\) saturate\(1\.12\);[\s\S]*color:\s*var\(--stage-primary,\s*#c96a10\);/);
+  assert.match(wxss, /\.invite-btn\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-panel,[\s\S]*backdrop-filter:\s*blur\(26rpx\) saturate\(1\.2\);[\s\S]*color:\s*var\(--stage-primary,\s*#c96a10\);/);
+  assert.match(wxss, /\.ready-btn\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-panel,[\s\S]*backdrop-filter:\s*blur\(26rpx\) saturate\(1\.2\);[\s\S]*color:\s*var\(--stage-primary,\s*#c96a10\);/);
 });
 
 test('room 页面开始游戏按钮会变小并居中', () => {
@@ -890,13 +890,13 @@ test('arena 页的聊天气泡会保持单行横排，不会把中间玩家的�
   assert.match(wxss, /\.emote-bubble\s*\{[\s\S]*white-space:\s*nowrap;[\s\S]*word-break:\s*keep-all;/);
 });
 
-test('arena 页底部浮层使用透明毛玻璃并去掉硬描边', () => {
+test('arena 页底部浮层使用主题自适应毛玻璃', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*background:\s*rgba\(255,\s*248,\s*232,\s*0\.76\);[\s\S]*border:\s*0;[\s\S]*backdrop-filter:\s*blur\(40rpx\) saturate\(1\.08\);[\s\S]*z-index:\s*30;/);
-  assert.match(wxss, /\.message-reply-card\s*\{[\s\S]*background:\s*rgba\(255,\s*248,\s*232,\s*0\.76\);[\s\S]*border:\s*0;[\s\S]*backdrop-filter:\s*blur\(40rpx\) saturate\(1\.08\);[\s\S]*z-index:\s*26;/);
-  assert.match(wxss, /\.invest-btn\.ghost\s*\{[\s\S]*background:\s*rgba\(255,\s*224,\s*166,\s*0\.68\);[\s\S]*border:\s*0;/);
-  assert.match(wxss, /\.quick-reply-chip\s*\{[\s\S]*background:\s*rgba\(255,\s*224,\s*166,\s*0\.68\);/);
+  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-glow,[\s\S]*var\(--stage-panel,[\s\S]*border:\s*1rpx solid var\(--stage-border,[\s\S]*backdrop-filter:\s*blur\(48rpx\) saturate\(1\.22\) brightness\(1\.03\);[\s\S]*z-index:\s*30;/);
+  assert.match(wxss, /\.message-reply-card\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-glow,[\s\S]*var\(--stage-panel,[\s\S]*border:\s*1rpx solid var\(--stage-border,[\s\S]*backdrop-filter:\s*blur\(48rpx\) saturate\(1\.22\) brightness\(1\.03\);[\s\S]*z-index:\s*26;/);
+  assert.match(wxss, /\.invest-btn\.ghost\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-chip,[\s\S]*border:\s*1rpx solid rgba\(255,\s*255,\s*255,\s*0\.34\);/);
+  assert.match(wxss, /\.quick-reply-chip\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-chip,/);
 });
 
 test('arena 页高频战场元素不使用大面积无限动画', () => {
@@ -906,6 +906,13 @@ test('arena 页高频战场元素不使用大面积无限动画', () => {
   assert.doesNotMatch(wxss, /\.team-link\s*\{[\s\S]*animation:\s*link-flow[^;]*infinite/);
   assert.doesNotMatch(wxss, /\.avatar-shell\s*\{[\s\S]*animation:\s*avatar-idle-float[^;]*infinite/);
   assert.doesNotMatch(wxss, /\.avatar-ring-overlay\s*\{[\s\S]*animation:\s*ring-sparkle[^;]*infinite/);
+});
+
+test('arena 页背景视频会做景深模糊以突出前景', () => {
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
+
+  assert.match(wxss, /\.arena-page \.scene-backdrop-video\s*\{[\s\S]*transform:\s*scale\(1\.08\);[\s\S]*filter:\s*blur\(9rpx\) saturate\(0\.96\) brightness\(0\.86\);/);
+  assert.match(wxss, /\.arena-scene-mask\s*\{[\s\S]*backdrop-filter:\s*blur\(3rpx\) saturate\(1\);[\s\S]*linear-gradient\(90deg/);
 });
 
 test('arena 页的福袋会保持居中并保留足够的视觉权重', () => {

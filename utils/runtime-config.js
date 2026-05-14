@@ -70,6 +70,7 @@ async function fetchRemoteConfig(force = false) {
     })
     .catch((error) => {
       console.warn('[runtime-config] fetchRemoteConfig error:', error);
+      lastFetchTime = Date.now();
       return getConfigMap();
     })
     .finally(() => {

@@ -67,9 +67,6 @@ Page({
     this.syncStageMusic();
     this.playActiveStageVideo();
   },
-  onReady() {
-    this.playActiveStageVideo();
-  },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
     playVibrate('light');
