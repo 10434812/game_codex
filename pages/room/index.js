@@ -1,11 +1,21 @@
 const {getNavLayout} = require('../../utils/nav')
-const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, ROOM_UI_LIMIT, WAITING_SLOT_NAME} = require('../../utils/constants')
+const {
+  buildStageThemeStyle,
+  DEFAULT_AVATAR,
+  DEFAULT_STAGE,
+  MATCH_MODE_TEXT,
+  NAV_TABS,
+  resolveStage,
+  ROOM_UI_LIMIT,
+  WAITING_SLOT_NAME,
+} = require('../../utils/constants')
 const gameStore = require('../../utils/game-store')
 const {playCue, playStageBgm, playVibrate} = require('../../utils/audio')
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile')
 const api = require('../../utils/api-client')
 const runtimeConfig = require('../../utils/runtime-config')
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config')
+const {saveStageTheme} = require('../../utils/stage-theme')
 
 function buildEmptySlot() {
   return {
@@ -44,6 +54,10 @@ Page({
     activeTab: 'social',
     slots: Array.from({length: ROOM_UI_LIMIT}, buildEmptySlot),
     stageName: DEFAULT_STAGE.name,
+    stageImage: DEFAULT_STAGE.image,
+    stageVideo: DEFAULT_STAGE.video || '',
+    stageThemeKey: DEFAULT_STAGE.theme.key,
+    stageThemeStyle: buildStageThemeStyle(DEFAULT_STAGE),
     roomId: '----',
     backendRoomId: '',
     activePercent: 0,
@@ -104,9 +118,15 @@ Page({
     const activePercent = Math.round((state.players.length / ROOM_UI_LIMIT) * 100)
     const selfPlayer = state.players.find((player) => player.isSelf) || state.players[0]
     const selfReady = !selfPlayer || selfPlayer.ready !== false
+    const stage = resolveStage(state.stage || DEFAULT_STAGE)
+    const theme = saveStageTheme(stage)
     this.setData({
       slots: mapRoomSlots(state.players),
-      stageName: state.stage.name,
+      stageName: stage.name,
+      stageImage: theme.stageImage,
+      stageVideo: theme.stageVideo,
+      stageThemeKey: theme.stageThemeKey,
+      stageThemeStyle: theme.stageThemeStyle,
       roomId: state.roomId,
       activePercent,
       selfReady,

@@ -13,6 +13,7 @@ const {
   ROBOT_PLAYER_STATE,
   ROOM_PLAYER_COUNT_OPTIONS,
   ROOM_UI_LIMIT,
+  resolveStage,
   SELF_PLAYER_NAME,
   SELF_PLAYER_STATE,
   SELF_POSITIVE_PROBABILITY,
@@ -522,10 +523,7 @@ function normalizeStage(stage) {
   if (!stage) {
     return {...DEFAULT_STAGE};
   }
-  return {
-    ...DEFAULT_STAGE,
-    ...stage,
-  };
+  return resolveStage(stage);
 }
 
 function createRoomState(stage, options = {}) {

@@ -1,4 +1,4 @@
-<view class="paper-bg arena-page">
+<view class="paper-bg arena-page scene-theme-{{stageThemeKey}}" style="{{stageThemeStyle}}">
   <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/gamebg.png" mode="scaleToFill"></image>
   <view class="app-header" style="padding-top: {{ nav.statusBarHeight }}px; padding-right: {{ nav.capsuleSpace }}px;">
     <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
@@ -16,6 +16,28 @@
   </view>
 
   <view class="page-content">
+    <view class="scene-backdrop" wx:if="{{stageImage || stageVideo}}">
+      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <video
+        wx:if="{{stageVideo}}"
+        class="scene-backdrop-video"
+        src="{{stageVideo}}"
+        poster="{{stageImage}}"
+        autoplay
+        muted
+        loop
+        controls="{{false}}"
+        show-center-play-btn="{{false}}"
+        show-play-btn="{{false}}"
+        show-fullscreen-btn="{{false}}"
+        enable-progress-gesture="{{false}}"
+        object-fit="cover"
+      ></video>
+      <view class="scene-template"></view>
+      <view class="scene-backdrop-mask arena-scene-mask"></view>
+    </view>
+
+    <view class="scene-layer">
     <view class="timer card">
       <view class="time">{{timeText}}</view>
       <view class="hint">{{actionHintText || hintText}}</view>
@@ -147,6 +169,7 @@
         <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
         <text>{{ item.label }}</text>
       </view>
+    </view>
     </view>
   </view>
 </view>

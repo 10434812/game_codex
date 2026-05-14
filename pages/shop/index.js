@@ -1,17 +1,20 @@
 const {getNavLayout} = require('../../utils/nav');
 const api = require('../../utils/api-client');
+const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
 const userProfile = require('../../utils/user-profile');
 const {DEFAULT_AVATAR} = require('../../utils/constants');
 const {formatCurrency} = require('../../utils/format');
 const {playCue, playVibrate} = require('../../utils/audio');
 const runtimeConfig = require('../../utils/runtime-config');
+const {createStageThemeData, resolveAmbientStage, saveStageTheme} = require('../../utils/stage-theme');
 
 const CATEGORY_OPTIONS = [
   {key: 'skin', label: '皮肤'},
   {key: 'ring', label: '光环'},
   {key: 'pet', label: '宠物'},
 ];
+const DEFAULT_STAGE_THEME_DATA = createStageThemeData();
 
 function buildStatus(item) {
   if (item.equipped) {
@@ -64,6 +67,11 @@ Page({
     goods: [],
     avatarUrl: '',
     defaultAvatar: DEFAULT_AVATAR,
+    stageName: DEFAULT_STAGE_THEME_DATA.stageName,
+    stageImage: DEFAULT_STAGE_THEME_DATA.stageImage,
+    stageVideo: DEFAULT_STAGE_THEME_DATA.stageVideo,
+    stageThemeKey: DEFAULT_STAGE_THEME_DATA.stageThemeKey,
+    stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
     payEnabled: false,
     payStatusText: '微信支付未开启',
     payHintText: '当前使用幸运金币完成购买，后续可在后台开启微信支付联调。',
@@ -81,6 +89,8 @@ Page({
   },
   syncPage() {
     const state = shopStore.getStoreState();
+    const gameState = gameStore.getState();
+    const theme = saveStageTheme(resolveAmbientStage(gameState));
     const profile = userProfile.getCachedProfile();
     const activeCategory = this.data.activeCategory || 'skin';
     const payEnabled = runtimeConfig.getBoolean('wechat.pay_enabled', false);
@@ -91,6 +101,11 @@ Page({
       balanceText: formatCurrency(state.coins),
       goods: buildGoods(activeCategory),
       avatarUrl: profile.avatarUrl,
+      stageName: theme.stageName,
+      stageImage: theme.stageImage,
+      stageVideo: theme.stageVideo,
+      stageThemeKey: theme.stageThemeKey,
+      stageThemeStyle: theme.stageThemeStyle,
       payEnabled,
       payStatusText: payEnabled ? '微信支付配置已开启' : '微信支付未开启',
       payHintText: payEnabled

@@ -16,7 +16,36 @@
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "../assets"
+      },
+      {
+        "type": "folder",
+        "value": "../素材"
+      },
+      {
+        "type": "folder",
+        "value": "../back"
+      },
+      {
+        "type": "folder",
+        "value": "../docs"
+      },
+      {
+        "type": "folder",
+        "value": "../tests"
+      },
+      {
+        "type": "file",
+        "value": "../assets/stages/gulangyu.mov"
+      },
+      {
+        "type": "file",
+        "value": "../assets/stages/xihhu.mov"
+      }
+    ],
     "include": []
   },
   "appid": "wx72a4b552a87b44cf",

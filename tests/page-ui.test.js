@@ -12,6 +12,8 @@ function createWxStub() {
     reLaunch: [],
     showToast: [],
     showShareMenu: [],
+    videoPlay: [],
+    videoStop: [],
   };
 
   global.getCurrentPages = () => [{ options: {} }];
@@ -53,6 +55,12 @@ function createWxStub() {
         seek() { },
         play() { },
         onError() { },
+      };
+    },
+    createVideoContext(id) {
+      return {
+        play() { calls.videoPlay.push(id); },
+        stop() { calls.videoStop.push(id); },
       };
     },
     navigateTo(payload) {
@@ -309,11 +317,11 @@ test('arena 底部导航仍属于 page-content 主内容容器', () => {
   assert.equal(pageContentCloseIndex, -1);
 });
 
-test('room 页面下方两个社交操作按钮使用白色背景', () => {
+test('room 页面下方两个社交操作按钮使用景区主题色毛玻璃', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.invite-btn\s*\{[\s\S]*background:\s*rgba\(255,\s*253,\s*246,\s*0\.96\);[\s\S]*color:\s*#c96a10;/);
-  assert.match(wxss, /\.ready-btn\s*\{[\s\S]*background:\s*rgba\(255,\s*253,\s*246,\s*0\.96\);[\s\S]*color:\s*#c96a10;/);
+  assert.match(wxss, /\.invite-btn\s*\{[\s\S]*background:\s*rgba\(255,\s*248,\s*232,\s*0\.52\);[\s\S]*backdrop-filter:\s*blur\(18rpx\) saturate\(1\.12\);[\s\S]*color:\s*var\(--stage-primary,\s*#c96a10\);/);
+  assert.match(wxss, /\.ready-btn\s*\{[\s\S]*background:\s*rgba\(255,\s*248,\s*232,\s*0\.52\);[\s\S]*backdrop-filter:\s*blur\(18rpx\) saturate\(1\.12\);[\s\S]*color:\s*var\(--stage-primary,\s*#c96a10\);/);
 });
 
 test('room 页面开始游戏按钮会变小并居中', () => {
@@ -372,6 +380,162 @@ test('home 景区卡片标题会缩小并使用景区主题色', () => {
     assert.match(stage.accentColor, /^#[0-9a-f]{6}$/i);
   }
   assert.notEqual(STAGES[0].titleColor, STAGES[1].titleColor);
+});
+
+test('home 景区卡片切换会渲染金色卡册控件', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxml'), 'utf8');
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxss'), 'utf8');
+  const {STAGES} = require('../utils/constants');
+
+  assert.match(wxml, /previous-margin="72rpx"/);
+  assert.match(wxml, /next-margin="72rpx"/);
+  assert.match(wxml, /class="stage-arrow stage-arrow-left" bindtap="onPrevStage"/);
+  assert.match(wxml, /class="stage-arrow stage-arrow-right" bindtap="onNextStage"/);
+  assert.match(wxml, /class="stage-frame-line"/);
+  assert.match(wxml, /class="stage-dots"/);
+  assert.match(wxss, /\.stage-item-active\s*\{/);
+  assert.match(wxss, /\.stage-item-side\s*\{/);
+  assert.match(wxss, /\.stage-arrow\s*\{/);
+  assert.match(wxss, /\.start-btn\s*\{[\s\S]*height:\s*88rpx;/);
+  assert.ok(STAGES.every((stage) => stage.slogan));
+});
+
+test('home 景区箭头切换会循环更新当前卡片', () => {
+  createWxStub();
+  const {STAGES} = require('../utils/constants');
+  const homePage = createPageInstance(loadPage('../pages/home/index.js'));
+
+  homePage.onPrevStage();
+  assert.equal(homePage.data.activeStage, STAGES.length - 1);
+
+  homePage.onNextStage();
+  assert.equal(homePage.data.activeStage, 0);
+});
+
+test('home 景区远端封面和视频会按实际场景配对', () => {
+  const {STAGES} = require('../utils/constants');
+  const stagesByName = Object.fromEntries(STAGES.map((stage) => [stage.name, stage]));
+
+  assert.match(stagesByName['万里长城'].image, /\/great-wall-bg\.jpg$/);
+  assert.match(stagesByName['万里长城'].video, /\/mount-fuji-bg\.mp4$/);
+  assert.match(stagesByName['富士山'].image, /\/mount-fuji-bg\.jpg$/);
+  assert.match(stagesByName['富士山'].video, /\/eiffel-bg\.mp4$/);
+  assert.match(stagesByName['巴黎铁塔'].image, /\/eiffel-bg\.jpg$/);
+  assert.match(stagesByName['巴黎铁塔'].video, /\/great-wall-bg\.mp4$/);
+});
+
+test('home 默认和切换后的动态景区视频会主动播放', () => {
+  const calls = createWxStub();
+  const homePage = createPageInstance(loadPage('../pages/home/index.js'));
+
+  homePage.onShow();
+  assert.ok(calls.videoPlay.includes('stage-video-0'));
+
+  homePage.onStageChange({detail: {current: 2}});
+  assert.equal(homePage.data.activeStage, 2);
+  assert.ok(calls.videoPlay.includes('stage-video-2'));
+});
+
+test('home 景区视频节点带稳定 id 并在加载后触发播放', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxml'), 'utf8');
+
+  assert.match(wxml, /id="stage-video-\{\{stageIndex\}\}"/);
+  assert.match(wxml, /data-stage-index="\{\{stageIndex\}\}"/);
+  assert.match(wxml, /autoplay="\{\{true\}\}"/);
+  assert.match(wxml, /muted="\{\{true\}\}"/);
+  assert.match(wxml, /bindloadedmetadata="onStageVideoReady"/);
+});
+
+test('核心页面会按当前景区注入主题模板', async () => {
+  createWxStub();
+  const {buildStageThemeStyle, resolveStage} = require('../utils/constants');
+  const gameStore = require('../utils/game-store');
+  const shopStore = require('../utils/shop-store');
+  const playerStats = require('../utils/player-stats');
+  const homeWxml = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxml'), 'utf8');
+  const roomWxml = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxml'), 'utf8');
+  const arenaWxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
+  const resultWxml = fs.readFileSync(path.join(__dirname, '../pages/result/index.wxml'), 'utf8');
+  const shopWxml = fs.readFileSync(path.join(__dirname, '../pages/shop/index.wxml'), 'utf8');
+  const incomeWxml = fs.readFileSync(path.join(__dirname, '../pages/income/index.wxml'), 'utf8');
+  const profileWxml = fs.readFileSync(path.join(__dirname, '../pages/profile/index.wxml'), 'utf8');
+  const appWxss = fs.readFileSync(path.join(__dirname, '../app.wxss'), 'utf8');
+  const homePage = createPageInstance(loadPage('../pages/home/index.js'));
+  const roomPage = createPageInstance(loadPage('../pages/room/index.js'));
+  const arenaPage = createPageInstance(loadPage('../pages/arena/index.js'));
+  const tajMahal = resolveStage({name: '泰姬陵'});
+
+  assert.equal(tajMahal.theme.key, 'taj-mahal');
+  assert.match(buildStageThemeStyle(tajMahal), /--stage-primary:\s*#b97d91/);
+  assert.match(homeWxml, /class="paper-bg home-page scene-theme-\{\{stageThemeKey\}\}" style="\{\{stageThemeStyle\}\}"/);
+  assert.match(roomWxml, /class="paper-bg room-page scene-theme-\{\{stageThemeKey\}\}" style="\{\{stageThemeStyle\}\}"/);
+  assert.match(arenaWxml, /class="paper-bg arena-page scene-theme-\{\{stageThemeKey\}\}" style="\{\{stageThemeStyle\}\}"/);
+  assert.match(resultWxml, /class="paper-bg result-page scene-theme-\{\{stageThemeKey\}\}" style="\{\{stageThemeStyle\}\}"/);
+  assert.match(shopWxml, /class="paper-bg shop-page scene-theme-\{\{stageThemeKey\}\}" style="\{\{stageThemeStyle\}\}"/);
+  assert.match(incomeWxml, /class="paper-bg income-page scene-theme-\{\{stageThemeKey\}\}" style="\{\{stageThemeStyle\}\}"/);
+  assert.match(profileWxml, /class="paper-bg profile-page scene-theme-\{\{stageThemeKey\}\}" style="\{\{stageThemeStyle\}\}"/);
+  assert.match(homeWxml, /class="scene-backdrop theme-page-backdrop home-scene-backdrop"/);
+  assert.match(roomWxml, /class="scene-template"/);
+  assert.match(arenaWxml, /class="scene-template"/);
+  assert.match(resultWxml, /class="scene-backdrop theme-page-backdrop result-scene-backdrop"/);
+  assert.match(shopWxml, /class="scene-backdrop theme-page-backdrop shop-scene-backdrop"/);
+  assert.match(appWxss, /\.scene-theme-taj-mahal \.scene-template/);
+  assert.match(appWxss, /\.theme-page-backdrop \.scene-backdrop-mask/);
+
+  homePage.onLoad();
+  homePage.onStageChange({detail: {current: 4}});
+  assert.equal(homePage.data.stageThemeKey, 'taj-mahal');
+  assert.match(homePage.data.stageThemeStyle, /--stage-primary:\s*#b97d91/);
+
+  roomPage.observeState({
+    status: 'room',
+    players: [],
+    stage: {name: '泰姬陵'},
+    roomId: 'T001',
+    modeText: '本地体验',
+  });
+
+  assert.equal(roomPage.data.stageThemeKey, 'taj-mahal');
+  assert.match(roomPage.data.stageImage, /\/taj-mahal-bg\.jpg$/);
+  assert.match(roomPage.data.stageThemeStyle, /--stage-primary:\s*#b97d91/);
+
+  arenaPage.onLoad();
+  arenaPage.syncArena({
+    status: 'playing',
+    players: [],
+    teams: [],
+    timeLeft: 179,
+    duration: 180,
+    stage: {id: 6},
+    modeText: '本地体验',
+  });
+
+  assert.equal(arenaPage.data.stageThemeKey, 'xihu');
+  assert.match(arenaPage.data.stageImage, /\/xihu\.png$/);
+  assert.match(arenaPage.data.stageThemeStyle, /--stage-primary:\s*#47a092/);
+
+  gameStore.__resetForTests();
+  shopStore.__resetForTests();
+  gameStore.createRoomFromStage({name: '富士山'});
+  const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
+  shopPage.syncPage();
+  assert.equal(shopPage.data.stageThemeKey, 'fuji');
+  assert.match(shopPage.data.stageThemeStyle, /--stage-primary:\s*#d7839e/);
+
+  gameStore.__resetForTests();
+  playerStats.__resetForTests();
+  shopStore.__resetForTests();
+  gameStore.createRoomFromStage({id: 6});
+  gameStore.startGame({autoStartTimer: false});
+  gameStore.finishGame();
+  const resultPage = createPageInstance(loadPage('../pages/result/index.js'));
+  await resultPage.refreshResult();
+  assert.equal(resultPage.data.stageThemeKey, 'xihu');
+  assert.match(resultPage.data.stageThemeStyle, /--stage-primary:\s*#47a092/);
+  resultPage.stopNumberAnimations();
+  gameStore.__resetForTests();
+  shopStore.__resetForTests();
+  playerStats.__resetForTests();
 });
 
 test('核心页面会保留游戏化动效反馈', () => {
@@ -726,13 +890,13 @@ test('arena 页的聊天气泡会保持单行横排，不会把中间玩家的�
   assert.match(wxss, /\.emote-bubble\s*\{[\s\S]*white-space:\s*nowrap;[\s\S]*word-break:\s*keep-all;/);
 });
 
-test('arena 页底部浮层使用实色纸面，避免玩家内容透出', () => {
+test('arena 页底部浮层使用透明毛玻璃并去掉硬描边', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*background:\s*#fff8ea;[\s\S]*z-index:\s*30;/);
-  assert.match(wxss, /\.message-reply-card\s*\{[\s\S]*background:\s*#fff8e8;[\s\S]*z-index:\s*26;/);
-  assert.match(wxss, /\.invest-btn\.ghost\s*\{[\s\S]*background:\s*#f3e5c7;/);
-  assert.match(wxss, /\.quick-reply-chip\s*\{[\s\S]*background:\s*#ead2ab;/);
+  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*background:\s*rgba\(255,\s*248,\s*232,\s*0\.76\);[\s\S]*border:\s*0;[\s\S]*backdrop-filter:\s*blur\(40rpx\) saturate\(1\.08\);[\s\S]*z-index:\s*30;/);
+  assert.match(wxss, /\.message-reply-card\s*\{[\s\S]*background:\s*rgba\(255,\s*248,\s*232,\s*0\.76\);[\s\S]*border:\s*0;[\s\S]*backdrop-filter:\s*blur\(40rpx\) saturate\(1\.08\);[\s\S]*z-index:\s*26;/);
+  assert.match(wxss, /\.invest-btn\.ghost\s*\{[\s\S]*background:\s*rgba\(255,\s*224,\s*166,\s*0\.68\);[\s\S]*border:\s*0;/);
+  assert.match(wxss, /\.quick-reply-chip\s*\{[\s\S]*background:\s*rgba\(255,\s*224,\s*166,\s*0\.68\);/);
 });
 
 test('arena 页高频战场元素不使用大面积无限动画', () => {

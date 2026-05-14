@@ -1,7 +1,11 @@
 const {getNavLayout} = require('../../utils/nav');
 const {DEFAULT_AVATAR} = require('../../utils/constants');
+const gameStore = require('../../utils/game-store');
 const {getCachedProfile, hasValidProfile, updateProfile, requestUpdate} = require('../../utils/user-profile');
 const {playCue, playVibrate} = require('../../utils/audio');
+const {createStageThemeData, resolveAmbientStage, saveStageTheme} = require('../../utils/stage-theme');
+
+const DEFAULT_STAGE_THEME_DATA = createStageThemeData();
 
 Page({
   data: {
@@ -13,6 +17,11 @@ Page({
     draft: getCachedProfile(),
     canSave: false,
     defaultAvatar: DEFAULT_AVATAR,
+    stageName: DEFAULT_STAGE_THEME_DATA.stageName,
+    stageImage: DEFAULT_STAGE_THEME_DATA.stageImage,
+    stageVideo: DEFAULT_STAGE_THEME_DATA.stageVideo,
+    stageThemeKey: DEFAULT_STAGE_THEME_DATA.stageThemeKey,
+    stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
   },
   onLoad() {
     try {
@@ -25,9 +34,16 @@ Page({
   },
   syncDraft() {
     const draft = getCachedProfile();
+    const gameState = gameStore.getState();
+    const theme = saveStageTheme(resolveAmbientStage(gameState));
     this.setData({
       draft,
       canSave: hasValidProfile(draft),
+      stageName: theme.stageName,
+      stageImage: theme.stageImage,
+      stageVideo: theme.stageVideo,
+      stageThemeKey: theme.stageThemeKey,
+      stageThemeStyle: theme.stageThemeStyle,
     });
   },
   onRequestWechatProfile() {

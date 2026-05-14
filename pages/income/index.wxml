@@ -1,4 +1,4 @@
-<view class="paper-bg income-page">
+<view class="paper-bg income-page scene-theme-{{stageThemeKey}}" style="{{stageThemeStyle}}">
   <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
 
   <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
@@ -15,6 +15,13 @@
   </view>
 
   <view class="page-content">
+    <view class="scene-backdrop theme-page-backdrop income-scene-backdrop" wx:if="{{stageImage}}">
+      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <view class="scene-template"></view>
+      <view class="scene-backdrop-mask"></view>
+    </view>
+
+    <view class="scene-layer income-scene-layer">
     <view class="card summary-card">
       <view class="summary-main">{{balanceText}}</view>
       <view class="summary-sub">统一资金账户</view>
@@ -40,5 +47,6 @@
     </view>
 
     <view wx:else class="empty-state">暂无资金记录，先开始一局吧</view>
+    </view>
   </view>
 </view>

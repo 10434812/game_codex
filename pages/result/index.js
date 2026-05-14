@@ -1,6 +1,6 @@
 const {getNavLayout} = require('../../utils/nav');
 const api = require('../../utils/api-client');
-const {DEFAULT_AVATAR, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
+const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const playerStats = require('../../utils/player-stats');
 const {playCue, stopBgm, playVibrate} = require('../../utils/audio');
@@ -10,6 +10,7 @@ const {formatCurrency, formatNumber} = require('../../utils/format');
 const {buildAchievementMedal} = require('../../utils/achievement-medals');
 const runtimeConfig = require('../../utils/runtime-config');
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
+const {createStageThemeData, loadStageTheme, saveStageTheme} = require('../../utils/stage-theme');
 
 // 烟花颜色配置
 const FIREWORK_COLORS = [
@@ -24,6 +25,7 @@ const FIREWORK_COLORS = [
 ];
 
 const FIREWORK_MAX_AUDIO_BURSTS = 3;
+const DEFAULT_STAGE_THEME_DATA = createStageThemeData(DEFAULT_STAGE);
 
 // 生成单个烟花
 function createFirework(index) {
@@ -139,6 +141,35 @@ function createResultMedal(result = {}) {
   });
 }
 
+function getStageFromResult(payload = {}) {
+  if (payload.stage) {
+    return payload.stage;
+  }
+  if (payload.stageId || payload.stageName) {
+    return {
+      id: payload.stageId,
+      name: payload.stageName,
+    };
+  }
+  return null;
+}
+
+function getFallbackStage() {
+  const state = gameStore.getState();
+  return loadStageTheme((state && state.stage) || DEFAULT_STAGE);
+}
+
+function buildSavedThemePatch(stage) {
+  const theme = saveStageTheme(stage || getFallbackStage());
+  return {
+    stageName: theme.stageName,
+    stageImage: theme.stageImage,
+    stageVideo: theme.stageVideo,
+    stageThemeKey: theme.stageThemeKey,
+    stageThemeStyle: theme.stageThemeStyle,
+  };
+}
+
 Page({
   data: {
     nav: {
@@ -151,6 +182,11 @@ Page({
     modeText: MATCH_MODE_TEXT,
     tabs: NAV_TABS,
     activeTab: 'history',
+    stageName: DEFAULT_STAGE_THEME_DATA.stageName,
+    stageImage: DEFAULT_STAGE_THEME_DATA.stageImage,
+    stageVideo: DEFAULT_STAGE_THEME_DATA.stageVideo,
+    stageThemeKey: DEFAULT_STAGE_THEME_DATA.stageThemeKey,
+    stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
     resultId: '',
     gainText: '0',
     incomeText: '¥0',
@@ -381,6 +417,7 @@ Page({
         const result = await api.get(`/games/${sessionId}/result`);
         if (result) {
           const achievementMedal = createResultMedal(result);
+          const themePatch = buildSavedThemePatch(getStageFromResult(result));
           this.stopNumberAnimations();
           this.setData({
             top3: result.top3 || this.data.top3,
@@ -394,6 +431,7 @@ Page({
             totalText: `总计 ${(result.ranking || []).length} 玩家`,
             expProgress: buildExpProgress(playerStats.getSummary().totalExp),
             isKoiWinner: findSelfRank(result) === 1,
+            ...themePatch,
           });
           this.gainAnimTimer = this.animateNumber(result.gain || 0, formatNumber, 'gainText', 1200);
           this.incomeAnimTimer = this.animateNumber(result.coins || 0, formatCurrency, 'incomeText', 1500);
@@ -413,6 +451,7 @@ Page({
 
     this.stopNumberAnimations();
     const achievementMedal = createResultMedal(state.result);
+    const themePatch = buildSavedThemePatch(state.stage || getStageFromResult(state.result));
 
     this.setData({
       top3: state.result.top3,
@@ -426,6 +465,7 @@ Page({
       totalText: `总计 ${state.result.ranking.length} 玩家`,
       expProgress: buildExpProgress(playerStats.getSummary().totalExp),
       isKoiWinner: findSelfRank(state.result) === 1,
+      ...themePatch,
     });
 
     // 播放数字滚动动画

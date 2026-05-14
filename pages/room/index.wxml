@@ -1,4 +1,4 @@
-<view class="paper-bg room-page">
+<view class="paper-bg room-page scene-theme-{{stageThemeKey}}" style="{{stageThemeStyle}}">
   <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg2.png" mode="scaleToFill"></image>
   <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
     <view class="app-user" bindtap="onTapProfile" hover-class="clickable-hover">
@@ -16,56 +16,79 @@
   </view>
 
   <view class="page-content">
-    <view class="room-hero">
-      <view class="room-heading">
-        <view class="big-title">{{stageName}}</view>
-        <view class="room-hint">{{roomHintText}}</view>
-      </view>
-      <view class="tags">
-        <text class="tag">房间 #{{roomId}}</text>
-        <text class="tag">{{modeText}}</text>
-      </view>
+    <view class="scene-backdrop" wx:if="{{stageImage || stageVideo}}">
+      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <video
+        wx:if="{{stageVideo}}"
+        class="scene-backdrop-video"
+        src="{{stageVideo}}"
+        poster="{{stageImage}}"
+        autoplay
+        muted
+        loop
+        controls="{{false}}"
+        show-center-play-btn="{{false}}"
+        show-play-btn="{{false}}"
+        show-fullscreen-btn="{{false}}"
+        enable-progress-gesture="{{false}}"
+        object-fit="cover"
+      ></video>
+      <view class="scene-template"></view>
+      <view class="scene-backdrop-mask"></view>
     </view>
 
-    <view class="slot-grid">
-      <view class="slot {{item.filled?'filled':'empty'}}" wx:for="{{slots}}" wx:key="index">
-        <image class="avatar" wx:if="{{item.filled}}" src="{{item.avatar || defaultAvatar}}" mode="aspectFill"></image>
-        <view class="plus" wx:else>＋</view>
-        <view class="slot-name">{{item.name}}</view>
-        <view class="slot-state" wx:if="{{item.state}}">• {{item.state}}</view>
-        <view class="star" wx:if="{{item.star}}">★</view>
+    <view class="scene-layer">
+      <view class="room-hero">
+        <view class="room-heading">
+          <view class="big-title">{{stageName}}</view>
+          <view class="room-hint">{{roomHintText}}</view>
+        </view>
+        <view class="tags">
+          <text class="tag">房间 #{{roomId}}</text>
+          <text class="tag">{{modeText}}</text>
+        </view>
       </view>
-    </view>
 
-    <view class="voice-box">
-      <view class="voice-line">
-        <text class="voice-title">房间活跃度</text>
-        <text class="percent">{{activePercent}}%</text>
+      <view class="slot-grid">
+        <view class="slot {{item.filled?'filled':'empty'}}" wx:for="{{slots}}" wx:key="index">
+          <image class="avatar" wx:if="{{item.filled}}" src="{{item.avatar || defaultAvatar}}" mode="aspectFill"></image>
+          <view class="plus" wx:else>＋</view>
+          <view class="slot-name">{{item.name}}</view>
+          <view class="slot-state" wx:if="{{item.state}}">• {{item.state}}</view>
+          <view class="star" wx:if="{{item.star}}">★</view>
+        </view>
       </view>
-      <view class="track"><view class="bar" style="width: {{activePercent}}%;"></view></view>
-    </view>
 
-    <view class="bottom-actions">
-      <button class="start-btn" bindtap="start" disabled="{{starting}}" hover-class="btn-hover">
-        <text class="btn-icon">▶</text>
-        <text>{{startButtonText}}</text>
-      </button>
-      <view class="secondary-actions">
-        <button class="primary-btn invite-btn" open-type="share" bindtap="inviteFriend" disabled="{{starting}}" hover-class="btn-hover">
-          <text class="btn-icon">👤+</text>
-          <text>邀请好友</text>
+      <view class="voice-box">
+        <view class="voice-line">
+          <text class="voice-title">房间活跃度</text>
+          <text class="percent">{{activePercent}}%</text>
+        </view>
+        <view class="track"><view class="bar" style="width: {{activePercent}}%;"></view></view>
+      </view>
+
+      <view class="bottom-actions">
+        <button class="start-btn" bindtap="start" disabled="{{starting}}" hover-class="btn-hover">
+          <text class="btn-icon">▶</text>
+          <text>{{startButtonText}}</text>
         </button>
-        <button class="ready-btn" bindtap="toggleReady" disabled="{{starting}}" hover-class="btn-hover">
-          <text class="btn-icon">{{selfReady ? '✓' : '○'}}</text>
-          <text>{{selfReady ? '取消准备' : '准备'}}</text>
-        </button>
+        <view class="secondary-actions">
+          <button class="primary-btn invite-btn" open-type="share" bindtap="inviteFriend" disabled="{{starting}}" hover-class="btn-hover">
+            <text class="btn-icon">👤+</text>
+            <text>邀请好友</text>
+          </button>
+          <button class="ready-btn" bindtap="toggleReady" disabled="{{starting}}" hover-class="btn-hover">
+            <text class="btn-icon">{{selfReady ? '✓' : '○'}}</text>
+            <text>{{selfReady ? '取消准备' : '准备'}}</text>
+          </button>
+        </view>
       </view>
-    </view>
 
-    <view class="bottom-nav">
-      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
-        <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
-        <text>{{ item.label }}</text>
+      <view class="bottom-nav">
+        <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
+          <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
+          <text>{{ item.label }}</text>
+        </view>
       </view>
     </view>
   </view>

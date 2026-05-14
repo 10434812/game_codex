@@ -1,5 +1,12 @@
 const {getNavLayout} = require('../../utils/nav');
-const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
+const {
+  buildStageThemeStyle,
+  DEFAULT_AVATAR,
+  DEFAULT_STAGE,
+  MATCH_MODE_TEXT,
+  NAV_TABS,
+  resolveStage,
+} = require('../../utils/constants');
 const {buildVisibleScoreState} = require('../../utils/game-engine');
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
@@ -22,6 +29,7 @@ const {
 } = require('../../utils/team-link');
 const {buildOpportunity, getFortuneBagAsset, settlePosition} = require('../../utils/investment');
 const {QUICK_EMOTES, chooseRemoteEmote, randomInt} = require('../../utils/emote');
+const {saveStageTheme} = require('../../utils/stage-theme');
 
 function formatTimeLeft(timeLeft) {
   return `${Math.max(0, Number(timeLeft) || 0)}s`;
@@ -64,6 +72,10 @@ Page({
       capsuleSpace: 120,
     },
     modeText: MATCH_MODE_TEXT,
+    stageImage: DEFAULT_STAGE.image,
+    stageVideo: DEFAULT_STAGE.video || '',
+    stageThemeKey: DEFAULT_STAGE.theme.key,
+    stageThemeStyle: buildStageThemeStyle(DEFAULT_STAGE),
     players: [],
     teamLinks: [],
     inviteLink: null,
@@ -257,6 +269,8 @@ Page({
     return null;
   },
   syncArena(state) {
+    const stage = resolveStage(state.stage || gameStore.getState().stage || DEFAULT_STAGE);
+    const theme = saveStageTheme(stage);
     const selfTeamInfo = findSelfTeamInfo(state);
     this.selfId = selfTeamInfo.selfId;
     this.selfStateTeammateId = selfTeamInfo.teammateId;
@@ -294,6 +308,10 @@ Page({
 
     const nextPatch = {};
     assignIfChanged(nextPatch, this.data, 'timeText', formatTimeLeft(state.timeLeft));
+    assignIfChanged(nextPatch, this.data, 'stageImage', theme.stageImage);
+    assignIfChanged(nextPatch, this.data, 'stageVideo', theme.stageVideo);
+    assignIfChanged(nextPatch, this.data, 'stageThemeKey', theme.stageThemeKey);
+    assignIfChanged(nextPatch, this.data, 'stageThemeStyle', theme.stageThemeStyle);
     assignIfChanged(
       nextPatch,
       this.data,

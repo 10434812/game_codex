@@ -11,7 +11,7 @@
 }
 
 .summary-main {
-  color: #e57c1f;
+  color: var(--stage-primary, #e57c1f);
   font-size: 56rpx;
   font-weight: 900;
   line-height: 1.08;
@@ -19,7 +19,7 @@
 
 .summary-sub {
   margin-top: 8rpx;
-  color: #8d6b43;
+  color: var(--stage-deep, #8d6b43);
   font-size: 24rpx;
 }
 
@@ -28,7 +28,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #6d4a29;
+  color: var(--stage-ink, #6d4a29);
   font-size: 24rpx;
 }
 
@@ -37,7 +37,7 @@
   width: 100%;
   height: 16rpx;
   border-radius: 999rpx;
-  background: rgba(212, 181, 132, 0.38);
+  background: var(--stage-chip, rgba(212, 181, 132, 0.38));
   padding: 2rpx;
   box-sizing: border-box;
 }
@@ -45,18 +45,18 @@
 .exp-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #f4b24a, #e57c1f);
+  background: linear-gradient(90deg, var(--stage-bright, #f4b24a), var(--stage-primary, #e57c1f));
 }
 
 .exp-text {
   margin-top: 8rpx;
-  color: #8f6d45;
+  color: var(--stage-deep, #8f6d45);
   font-size: 24rpx;
 }
 
 .list-head {
   margin-top: 22rpx;
-  color: #6d4a29;
+  color: var(--stage-ink, #6d4a29);
   font-size: 30rpx;
   font-weight: 700;
 }
@@ -71,22 +71,22 @@
 .record-item {
   border-radius: 22rpx;
   padding: 20rpx;
-  background: rgba(255, 251, 241, 0.92);
-  border: 2rpx solid rgba(220, 194, 150, 0.66);
+  background: var(--stage-panel, rgba(255, 251, 241, 0.92));
+  border: 2rpx solid var(--stage-border, rgba(220, 194, 150, 0.66));
 }
 
 .record-row {
   display: flex;
   justify-content: space-between;
   gap: 14rpx;
-  color: #5d3b22;
+  color: var(--stage-ink, #5d3b22);
   font-size: 30rpx;
   line-height: 1.4;
 }
 
 .record-row.sub {
   margin-top: 6rpx;
-  color: #8a6b46;
+  color: var(--stage-deep, #8a6b46);
   font-size: 24rpx;
 }
 
@@ -95,13 +95,13 @@
 }
 
 .record-income {
-  color: #d97712;
+  color: var(--stage-primary, #d97712);
   font-weight: 800;
 }
 
 .empty-state {
   margin-top: 40rpx;
   text-align: center;
-  color: #92724b;
+  color: var(--stage-deep, #92724b);
   font-size: 24rpx;
 }

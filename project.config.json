@@ -8,6 +8,10 @@
       },
       {
         "type": "folder",
+        "value": "素材"
+      },
+      {
+        "type": "folder",
         "value": "back"
       },
       {
@@ -17,6 +21,14 @@
       {
         "type": "folder",
         "value": "tests"
+      },
+      {
+        "type": "file",
+        "value": "assets/stages/gulangyu.mov"
+      },
+      {
+        "type": "file",
+        "value": "assets/stages/xihhu.mov"
       },
       {
         "type": "folder",

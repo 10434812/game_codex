@@ -9,8 +9,10 @@ const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency} = require('../../utils/format');
 const runtimeConfig = require('../../utils/runtime-config');
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
+const {createStageThemeData, saveStageTheme} = require('../../utils/stage-theme');
 
 const MIN_VISIBLE_PROGRESS_PERCENT = 10;
+const DEFAULT_STAGE_THEME_DATA = createStageThemeData(DEFAULT_STAGE);
 
 function getProgressVisualPercent(percent) {
   const normalized = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -18,6 +20,11 @@ function getProgressVisualPercent(percent) {
     return normalized === 0 ? MIN_VISIBLE_PROGRESS_PERCENT : 100;
   }
   return Math.max(normalized, MIN_VISIBLE_PROGRESS_PERCENT);
+}
+
+function normalizeStageIndex(index, total) {
+  const count = Math.max(1, Number(total) || 1);
+  return ((Number(index) || 0) % count + count) % count;
 }
 
 Page({
@@ -32,6 +39,10 @@ Page({
     activeTab: 'explore',
     activeStage: 0,
     stages: STAGES,
+    stageImage: DEFAULT_STAGE_THEME_DATA.stageImage,
+    stageVideo: DEFAULT_STAGE_THEME_DATA.stageVideo,
+    stageThemeKey: DEFAULT_STAGE_THEME_DATA.stageThemeKey,
+    stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
     balanceText: '¥0',
     levelText: 'Lv.1',
     progressPercent: 0,
@@ -45,6 +56,7 @@ Page({
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}
+    this.syncStageTheme();
     runtimeConfig.fetchRemoteConfig().finally(() => {
       enableShareMenu();
     });
@@ -53,6 +65,10 @@ Page({
     this.syncUserProfile();
     this.syncOverview();
     this.syncStageMusic();
+    this.playActiveStageVideo();
+  },
+  onReady() {
+    this.playActiveStageVideo();
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
@@ -94,13 +110,75 @@ Page({
   },
   onStageChange(e) {
     playVibrate('light');
-    this.setData({
-      activeStage: e.detail.current,
-    });
-    this.syncStageMusic();
+    const activeStage = Number((e.detail && e.detail.current) || 0) || 0;
+    this.applyActiveStage(activeStage);
   },
-  syncStageMusic() {
-    const stage = this.data.stages[this.data.activeStage] || DEFAULT_STAGE;
+  onPrevStage() {
+    this.shiftStage(-1);
+  },
+  onNextStage() {
+    this.shiftStage(1);
+  },
+  shiftStage(offset) {
+    playCue('tap', {volume: 0.72});
+    playVibrate('light');
+    this.applyActiveStage((Number(this.data.activeStage) || 0) + offset);
+  },
+  applyActiveStage(nextStage) {
+    const activeStage = normalizeStageIndex(nextStage, this.data.stages.length);
+    const stage = this.data.stages[activeStage] || DEFAULT_STAGE;
+    const theme = saveStageTheme(stage);
+    this.setData({
+      activeStage,
+      stageImage: theme.stageImage,
+      stageVideo: theme.stageVideo,
+      stageThemeKey: theme.stageThemeKey,
+      stageThemeStyle: theme.stageThemeStyle,
+    });
+    this.syncStageMusic(stage);
+    this.playActiveStageVideo();
+  },
+  onStageVideoReady(e) {
+    const stageIndex = Number(e.currentTarget.dataset.stageIndex);
+    if (stageIndex === this.data.activeStage) {
+      this.playActiveStageVideo();
+    }
+  },
+  playActiveStageVideo() {
+    const stageIndex = Number(this.data.activeStage) || 0;
+    const stage = this.getActiveStage();
+    if (!stage.video || typeof wx === 'undefined' || typeof wx.createVideoContext !== 'function') {
+      return;
+    }
+
+    const play = () => {
+      try {
+        const video = wx.createVideoContext(`stage-video-${stageIndex}`, this);
+        if (video && typeof video.play === 'function') {
+          video.play();
+        }
+      } catch (error) {}
+    };
+
+    if (typeof wx.nextTick === 'function') {
+      wx.nextTick(play);
+      return;
+    }
+    play();
+  },
+  getActiveStage() {
+    return this.data.stages[Number(this.data.activeStage) || 0] || DEFAULT_STAGE;
+  },
+  syncStageTheme(stage = this.getActiveStage()) {
+    const theme = saveStageTheme(stage);
+    this.setData({
+      stageImage: theme.stageImage,
+      stageVideo: theme.stageVideo,
+      stageThemeKey: theme.stageThemeKey,
+      stageThemeStyle: theme.stageThemeStyle,
+    });
+  },
+  syncStageMusic(stage = this.getActiveStage()) {
     playStageBgm(stage, {volume: 0.38});
   },
   syncUserProfile() {

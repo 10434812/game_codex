@@ -1,4 +1,4 @@
-<view class="paper-bg profile-page">
+<view class="paper-bg profile-page scene-theme-{{stageThemeKey}}" style="{{stageThemeStyle}}">
   <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
 
   <view class="app-header profile-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
@@ -15,6 +15,13 @@
   </view>
 
   <view class="page-content profile-content">
+    <view class="scene-backdrop theme-page-backdrop profile-scene-backdrop" wx:if="{{stageImage}}">
+      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <view class="scene-template"></view>
+      <view class="scene-backdrop-mask"></view>
+    </view>
+
+    <view class="scene-layer profile-scene-layer">
     <view class="card profile-card">
       <view class="avatar-section">
         <button class="avatar-picker" bindtap="onRequestWechatProfile">
@@ -37,6 +44,7 @@
 
         <button class="primary-btn save-btn" bindtap="onSaveProfile" disabled="{{!canSave}}">保存并返回</button>
       </view>
+    </view>
     </view>
   </view>
 </view>

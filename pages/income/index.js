@@ -1,8 +1,10 @@
 const {getNavLayout} = require('../../utils/nav');
 const api = require('../../utils/api-client');
+const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
 const {formatCurrency, formatDateTime} = require('../../utils/format');
 const {playCue, playVibrate} = require('../../utils/audio');
+const {createStageThemeData, resolveAmbientStage, saveStageTheme} = require('../../utils/stage-theme');
 
 function buildTypeLabel(type) {
   const map = {
@@ -26,6 +28,8 @@ function buildListView(records = [], balance) {
   }));
 }
 
+const DEFAULT_STAGE_THEME_DATA = createStageThemeData();
+
 Page({
   data: {
     nav: {
@@ -33,6 +37,11 @@ Page({
       navHeight: 64,
       capsuleSpace: 120,
     },
+    stageName: DEFAULT_STAGE_THEME_DATA.stageName,
+    stageImage: DEFAULT_STAGE_THEME_DATA.stageImage,
+    stageVideo: DEFAULT_STAGE_THEME_DATA.stageVideo,
+    stageThemeKey: DEFAULT_STAGE_THEME_DATA.stageThemeKey,
+    stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
     balanceText: '¥0',
     records: [],
   },
@@ -45,6 +54,8 @@ Page({
     this.syncRecords();
   },
   async syncRecords() {
+    const gameState = gameStore.getState();
+    const theme = saveStageTheme(resolveAmbientStage(gameState));
     try {
       if (api.isLoggedIn()) {
         const data = await api.get('/stats/coin-records', { page: 1, limit: 50 });
@@ -53,6 +64,11 @@ Page({
           this.setData({
             balanceText: formatCurrency(userData.coins || 0),
             records: buildListView(data.records, userData.coins),
+            stageName: theme.stageName,
+            stageImage: theme.stageImage,
+            stageVideo: theme.stageVideo,
+            stageThemeKey: theme.stageThemeKey,
+            stageThemeStyle: theme.stageThemeStyle,
           });
           return;
         }
@@ -66,6 +82,11 @@ Page({
     this.setData({
       balanceText: formatCurrency(state.coins),
       records: buildListView(records, state.coins),
+      stageName: theme.stageName,
+      stageImage: theme.stageImage,
+      stageVideo: theme.stageVideo,
+      stageThemeKey: theme.stageThemeKey,
+      stageThemeStyle: theme.stageThemeStyle,
     });
   },
   onBack() {
