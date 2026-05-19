@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "cross-env NODE_ENV=development nodemon src/app.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "fortune:refresh": "node scripts/refresh-fortune-reality.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

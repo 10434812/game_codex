@@ -50,8 +50,18 @@
       </view>
 
       <view class="fortune-bag-wrap" wx:if="{{ fortuneBag }}" style="left: {{ fortuneBag.x }}rpx; top: {{ fortuneBag.y }}rpx;" bindtap="onTapFortuneBag">
-        <image class="fortune-bag-image" src="{{ fortuneBag.asset }}" mode="aspectFit"></image>
+        <view class="fortune-bag-spotlight"></view>
+        <view class="fortune-bag-trail"></view>
+        <view class="fortune-bag-ripple ripple-one"></view>
+        <view class="fortune-bag-ripple ripple-two"></view>
+        <view class="fortune-bag-stage">
+          <view class="fortune-bag-halo"></view>
+          <image class="fortune-bag-image" src="{{ fortuneBag.asset }}" mode="aspectFit"></image>
+        </view>
         <view class="fortune-bag-countdown">{{ fortuneBagCountdownText }}</view>
+        <view class="fortune-bag-spark spark-left"></view>
+        <view class="fortune-bag-spark spark-right"></view>
+        <view class="fortune-bag-spark spark-bottom"></view>
       </view>
 
       <view class="team-success-toast" wx:if="{{ successToast }}" style="left: {{ successToast.x }}rpx; top: {{ successToast.y }}rpx;">
@@ -84,37 +94,40 @@
 
       <view class="player-name-layer">
         <view class="player-label-anchor" wx:for="{{ players }}" wx:key="id" style="left: {{ item.x }}rpx; top: {{ item.y }}rpx;">
-          <view wx:if="{{ !item.showScore || item.isSelf }}" class="node-name name-{{ item.namePos || 'center' }} {{ item.isSelf ? 'self-node-name' : '' }}">{{ item.scoreLabel }}</view>
+          <view class="node-name name-{{ item.namePos || 'center' }} {{ item.isSelf ? 'self-node-name' : '' }}">{{ item.scoreLabel }}</view>
         </view>
       </view>
     </view>
 
-    <view class="invest-panel fortune-panel" wx:if="{{ fortunePanelVisible }}">
-      <view class="invest-head">
-        <view class="invest-head-left">
+    <view class="invest-panel fortune-panel phase-{{ fortunePanelPhase }}" wx:if="{{ fortunePanelVisible }}">
+      <view class="fortune-scroll-rod top"></view>
+      <view class="fortune-scroll-paper">
+        <view class="fortune-scroll-seal">机缘卷</view>
+        <view class="invest-head">
           <image wx:if="{{ fortunePanelAsset }}" class="invest-head-icon" src="{{ fortunePanelAsset }}" mode="aspectFit"></image>
           <view class="invest-head-copy">
             <text class="invest-type">{{ activePosition ? '卖出窗口' : activeOpportunity.category }}</text>
             <text class="invest-risk">{{ activePosition ? activePosition.riskText : activeOpportunity.riskText }}</text>
           </view>
         </view>
+        <view class="invest-title">{{ activePosition ? activePosition.name : activeOpportunity.name }}</view>
+        <view wx:if="{{ activePosition }}">
+          <view class="invest-line invest-highlight">持仓成本：{{ activePosition.cost }}</view>
+          <view class="invest-line invest-highlight">持有时间：{{ activePositionHoldText }}</view>
+          <view class="invest-line">再次弹出会提示卖出当前持仓</view>
+        </view>
+        <view wx:else>
+          <view class="invest-line invest-highlight">投入成本：{{ activeOpportunity.cost }}</view>
+          <view class="invest-line invest-highlight">预计波动：{{ activeOpportunity.floatRangeText }}</view>
+          <view class="invest-line invest-summary">{{ activeOpportunity.summary }}</view>
+        </view>
+        <view class="invest-actions">
+          <button class="invest-btn ghost" bindtap="onCloseOpportunity" hover-class="btn-hover">先放弃</button>
+          <button wx:if="{{ !activePosition }}" class="invest-btn primary-btn" bindtap="onConfirmOpportunity" hover-class="btn-hover">立即买入</button>
+          <button wx:else class="invest-btn primary-btn" bindtap="onSellPosition" hover-class="btn-hover">确认卖出</button>
+        </view>
       </view>
-      <view class="invest-title">{{ activePosition ? activePosition.name : activeOpportunity.name }}</view>
-      <view wx:if="{{ activePosition }}">
-        <view class="invest-line invest-highlight">持仓成本：{{ activePosition.cost }}</view>
-        <view class="invest-line invest-highlight">持有时间：{{ activePositionHoldText }}</view>
-        <view class="invest-line">再次弹出会提示卖出当前持仓</view>
-      </view>
-      <view wx:else>
-        <view class="invest-line invest-highlight">投入成本：{{ activeOpportunity.cost }}</view>
-        <view class="invest-line invest-highlight">预计波动：{{ activeOpportunity.floatRangeText }}</view>
-        <view class="invest-line invest-summary">{{ activeOpportunity.summary }}</view>
-      </view>
-      <view class="invest-actions">
-        <button class="invest-btn ghost" bindtap="onCloseOpportunity" hover-class="btn-hover">先放弃</button>
-        <button wx:if="{{ !activePosition }}" class="invest-btn primary-btn" bindtap="onConfirmOpportunity" hover-class="btn-hover">立即买入</button>
-        <button wx:else class="invest-btn primary-btn" bindtap="onSellPosition" hover-class="btn-hover">确认卖出</button>
-      </view>
+      <view class="fortune-scroll-rod bottom"></view>
     </view>
 
     <view class="quick-emote-panel" wx:if="{{ emotePanelVisible }}" style="bottom: {{ messageCardCollapsed ? 388 : 484 }}rpx;">
@@ -169,6 +182,28 @@
         <text>{{ item.label }}</text>
       </view>
     </view>
+    </view>
+
+    <view class="guide-overlay guide-arena-team" wx:if="{{guideTeamVisible}}">
+      <view class="guide-mask"></view>
+      <view class="guide-card guide-card-top">
+        <view class="guide-kicker">新手引导 3/5</view>
+        <view class="guide-title">点场上头像发起组队，连线成功会一起加分</view>
+      </view>
+      <view class="guide-action-panel">
+        <button class="guide-primary" bindtap="onGuideTeamPrimary" hover-class="btn-hover">下一步</button>
+      </view>
+    </view>
+
+    <view class="guide-overlay guide-arena-bag" wx:if="{{guideBagVisible}}">
+      <view class="guide-mask"></view>
+      <view class="guide-card guide-card-middle">
+        <view class="guide-kicker">新手引导 4/5</view>
+        <view class="guide-title">福袋出现时点它，买入或卖出机会会影响本局收益</view>
+      </view>
+      <view class="guide-action-panel">
+        <button class="guide-primary" bindtap="onGuideBagPrimary" hover-class="btn-hover">查看福袋</button>
+      </view>
     </view>
   </view>
 </view>

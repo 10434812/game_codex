@@ -385,6 +385,91 @@ page {
   transition: all 0.1s ease;
 }
 
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.guide-mask {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 218, 133, 0.16), transparent 34%),
+    rgba(22, 15, 9, 0.42);
+  backdrop-filter: blur(3rpx);
+}
+
+.guide-card {
+  position: absolute;
+  left: 42rpx;
+  right: 42rpx;
+  z-index: 1;
+  padding: 30rpx 32rpx;
+  border-radius: 26rpx;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 255, 255, 0.82), transparent 38%),
+    linear-gradient(180deg, rgba(255, 248, 229, 0.98), rgba(239, 216, 174, 0.98));
+  border: 2rpx solid rgba(199, 145, 66, 0.44);
+  box-shadow:
+    0 22rpx 48rpx rgba(43, 26, 10, 0.28),
+    inset 0 2rpx 0 rgba(255, 255, 255, 0.76);
+  pointer-events: auto;
+}
+
+.guide-card-top {
+  top: 214rpx;
+}
+
+.guide-card-middle {
+  top: 45%;
+  transform: translateY(-50%);
+}
+
+.guide-kicker {
+  color: var(--stage-primary, #d97818);
+  font-size: 22rpx;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: 3rpx;
+}
+
+.guide-title {
+  margin-top: 12rpx;
+  color: var(--stage-ink, #4d2c18);
+  font-size: 34rpx;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.guide-action-panel {
+  position: fixed;
+  left: 48rpx;
+  right: 48rpx;
+  bottom: 166rpx;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.guide-primary {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0;
+  border: 0;
+  border-radius: 999rpx;
+  color: #fff8e8;
+  background: linear-gradient(135deg, var(--stage-bright, #f5bc60), var(--stage-primary, #e57c1f));
+  box-shadow: 0 14rpx 28rpx var(--stage-glow, rgba(229, 124, 31, 0.38));
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.guide-primary::after {
+  border: 0;
+}
+
 @keyframes header-enter {
   from {
     opacity: 0;

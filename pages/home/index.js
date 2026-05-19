@@ -3,13 +3,14 @@ const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, STAGES} = requi
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
 const playerStats = require('../../utils/player-stats');
-const {playCue, playStageBgm, playVibrate} = require('../../utils/audio');
+const {playCue, playStageBgm, playVoice, playVibrate, getStageVoiceName} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency} = require('../../utils/format');
 const runtimeConfig = require('../../utils/runtime-config');
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
 const {createStageThemeData, saveStageTheme} = require('../../utils/stage-theme');
+const guideStore = require('../../utils/guide-store');
 
 const MIN_VISIBLE_PROGRESS_PERCENT = 10;
 const DEFAULT_STAGE_THEME_DATA = createStageThemeData(DEFAULT_STAGE);
@@ -51,6 +52,7 @@ Page({
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
     defaultAvatar: DEFAULT_AVATAR,
+    guideVisible: false,
   },
   onLoad() {
     try {
@@ -66,6 +68,21 @@ Page({
     this.syncOverview();
     this.syncStageMusic();
     this.playActiveStageVideo();
+    this.syncGuide();
+    if (!this.homeGuideVoicePlayed) {
+      playVoice('homeGuide', {debounceMs: 0});
+      this.homeGuideVoicePlayed = true;
+    }
+  },
+  syncGuide() {
+    this.setData({
+      guideVisible: guideStore.shouldShowStep(guideStore.GUIDE_STEPS.HOME),
+    });
+  },
+  onGuidePrimary() {
+    guideStore.advanceTo(guideStore.GUIDE_STEPS.ROOM);
+    this.setData({guideVisible: false});
+    this.startGame();
   },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
@@ -101,6 +118,10 @@ Page({
   startGame() {
     playCue('tap', {volume: 0.75});
     playVibrate('medium');
+    if (guideStore.shouldShowStep(guideStore.GUIDE_STEPS.HOME)) {
+      guideStore.advanceTo(guideStore.GUIDE_STEPS.ROOM);
+      this.setData({guideVisible: false});
+    }
     const stage = this.data.stages[this.data.activeStage] || DEFAULT_STAGE;
     gameStore.createRoomFromStage(stage);
     wx.navigateTo({url: '/pages/room/index'});
@@ -133,6 +154,10 @@ Page({
       stageThemeStyle: theme.stageThemeStyle,
     });
     this.syncStageMusic(stage);
+    const voiceName = getStageVoiceName(stage);
+    if (voiceName) {
+      playVoice(voiceName, {debounceMs: 1800});
+    }
     this.playActiveStageVideo();
   },
   onStageVideoReady(e) {

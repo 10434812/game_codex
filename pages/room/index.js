@@ -10,12 +10,13 @@ const {
   WAITING_SLOT_NAME,
 } = require('../../utils/constants')
 const gameStore = require('../../utils/game-store')
-const {playCue, playStageBgm, playVibrate} = require('../../utils/audio')
+const {playCue, playStageBgm, playVoice, playVibrate} = require('../../utils/audio')
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile')
 const api = require('../../utils/api-client')
 const runtimeConfig = require('../../utils/runtime-config')
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config')
 const {saveStageTheme} = require('../../utils/stage-theme')
+const guideStore = require('../../utils/guide-store')
 
 function buildEmptySlot() {
   return {
@@ -68,6 +69,7 @@ Page({
     userProfile: getCachedProfile(),
     userAuthorized: hasValidProfile(getCachedProfile()),
     defaultAvatar: DEFAULT_AVATAR,
+    guideVisible: false,
   },
   onLoad() {
     try {
@@ -81,10 +83,15 @@ Page({
   onShow() {
     this.syncUserProfile()
     this.syncStageMusic()
+    if (!this.roomCreatedVoicePlayed) {
+      playVoice('roomCreated', {debounceMs: 0})
+      this.roomCreatedVoicePlayed = true
+    }
     this.unsubscribeStore()
     this.unsubscribe = gameStore.subscribe((state) => this.observeState(state))
     this.observeState(gameStore.getState())
     this.initRoom()
+    this.syncGuide()
   },
   onHide() {
     this.clearStartCountdown()
@@ -144,9 +151,11 @@ Page({
     const state = gameStore.inviteHumanPlayer()
     if (state.players.length > before.players.length) {
       playCue('inviteSuccess', {volume: 0.8})
+      playVoice('roomInviteSent')
       wx.showToast({title: '邀请已发送', icon: 'none'})
     } else {
       playCue('actionFail', {volume: 0.7})
+      playVoice('roomFull')
       wx.showToast({title: '房间人数已满', icon: 'none'})
     }
     this.observeState(state)
@@ -166,8 +175,13 @@ Page({
     }
     if (!this.data.selfReady) {
       playCue('actionFail', {volume: 0.7})
+      playVoice('roomNeedReady')
       wx.showToast({title: '请先完成准备', icon: 'none'})
       return
+    }
+    if (guideStore.shouldShowStep(guideStore.GUIDE_STEPS.ROOM)) {
+      guideStore.advanceTo(guideStore.GUIDE_STEPS.ARENA_TEAM)
+      this.setData({guideVisible: false})
     }
     playCue('tap', {volume: 0.75})
     playVibrate('medium')
@@ -178,16 +192,20 @@ Page({
       startButtonText: `倒计时 ${left}s`,
     })
     playCue('countdown3', {volume: 0.55})
+    playVoice('countdown3', {force: true})
     this.startCountdownTimer = setInterval(() => {
       left -= 1
       if (left === 2) {
         playCue('countdown2', {volume: 0.55})
+        playVoice('countdown2', {force: true})
       } else if (left === 1) {
         playCue('countdown1', {volume: 0.55})
+        playVoice('countdown1', {force: true})
       }
       if (left <= 0) {
         this.clearStartCountdown()
         playCue('gameStart', {volume: 0.85})
+        playVoice('countdownGo', {force: true})
         this.onStartGame()
         return
       }
@@ -195,6 +213,14 @@ Page({
         startButtonText: `倒计时 ${left}s`,
       })
     }, 1000)
+  },
+  syncGuide() {
+    this.setData({
+      guideVisible: guideStore.shouldShowStep(guideStore.GUIDE_STEPS.ROOM),
+    })
+  },
+  onGuidePrimary() {
+    this.start()
   },
   syncUserProfile() {
     const cached = getCachedProfile()

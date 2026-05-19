@@ -122,7 +122,8 @@ import {
   Document,
   Tools,
   Operation,
-  Coin
+  Coin,
+  MagicStick
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -139,6 +140,7 @@ const menuItems = [
   { index: '/announcements', label: '公告管理', icon: Bell },
   { index: '/admins', label: '管理员管理', icon: Setting },
   { index: '/rooms', label: '房间管理', icon: Coin },
+  { index: '/fortune', label: '福袋现实数据', icon: MagicStick },
   { index: '/logs', label: '操作日志', icon: Document },
   { index: '/configs', label: '系统配置', icon: Tools }
 ]
@@ -153,6 +155,7 @@ const titleMap = {
   StatsOverview: '数据统计',
   AdminList: '管理员管理',
   RoomList: '房间管理',
+  FortuneReality: '福袋现实数据',
   OperationLogs: '操作日志',
   AnnouncementList: '公告管理',
   SystemConfig: '系统配置'
@@ -173,6 +176,7 @@ const activeMenu = computed(() => {
   if (path.startsWith('/stats')) return '/stats'
   if (path.startsWith('/admins')) return '/admins'
   if (path.startsWith('/rooms')) return '/rooms'
+  if (path.startsWith('/fortune')) return '/fortune'
   if (path.startsWith('/logs')) return '/logs'
   if (path.startsWith('/announcements')) return '/announcements'
   if (path.startsWith('/configs')) return '/configs'

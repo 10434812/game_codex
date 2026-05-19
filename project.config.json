@@ -79,6 +79,10 @@
       {
         "type": "file",
         "value": "assets/iocns/2657.png_300.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/iocns/result-koi.png"
       }
     ]
   },

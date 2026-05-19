@@ -40,7 +40,6 @@
   letter-spacing: 3rpx;
   -webkit-text-stroke: 1rpx rgba(143, 76, 15, 0.12);
   text-shadow:
-    0 3rpx 0 var(--stage-title, rgba(255, 239, 199, 0.86)),
     0 10rpx 18rpx var(--stage-shadow, rgba(166, 88, 15, 0.16));
   animation: title-ink-rise 0.68s cubic-bezier(0.16, 1, 0.3, 1) both, title-luck-glow 3.4s ease-in-out 0.8s infinite;
 }
@@ -701,12 +700,10 @@
 @keyframes title-luck-glow {
   0%, 100% {
     text-shadow:
-      0 3rpx 0 var(--stage-title, rgba(255, 239, 199, 0.86)),
       0 10rpx 18rpx var(--stage-shadow, rgba(166, 88, 15, 0.16));
   }
   50% {
     text-shadow:
-      0 3rpx 0 var(--stage-title, rgba(255, 239, 199, 0.96)),
       0 14rpx 26rpx var(--stage-glow, rgba(224, 124, 29, 0.32));
   }
 }

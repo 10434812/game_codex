@@ -129,6 +129,17 @@
 
     <view class="nav-placeholder"></view>
     </view>
+
+    <view class="guide-overlay guide-result" wx:if="{{guideVisible}}">
+      <view class="guide-mask"></view>
+      <view class="guide-card guide-card-middle">
+        <view class="guide-kicker">新手引导 5/5</view>
+        <view class="guide-title">本局金币、排行和经验都会进入你的账户</view>
+      </view>
+      <view class="guide-action-panel">
+        <button class="guide-primary" bindtap="finishGuide" hover-class="btn-hover">知道了</button>
+      </view>
+    </view>
   </view>
 
   <!-- 烟花特效容器 -->
@@ -146,19 +157,18 @@
     </view>
     <view class="koi-reveal-card">
       <view class="koi-aura"></view>
-      <view class="koi-fish koi-fish-left">
-        <view class="koi-fish-body"></view>
-        <view class="koi-fish-tail"></view>
-      </view>
-      <view class="koi-fish koi-fish-right">
-        <view class="koi-fish-body"></view>
-        <view class="koi-fish-tail"></view>
-      </view>
+      <image class="koi-fish koi-fish-left" src="/assets/iocns/result-koi.png" mode="aspectFit"></image>
+      <image class="koi-fish koi-fish-right" src="/assets/iocns/result-koi.png" mode="aspectFit"></image>
       <view class="koi-card-inner">
+        <view class="koi-card-shine"></view>
         <view class="koi-eyebrow">本局天选</view>
+        <view class="koi-medallion">
+          <view class="koi-medallion-ring"></view>
+          <view class="koi-medallion-core">锦</view>
+        </view>
         <view class="koi-title">你是锦鲤</view>
-        <view class="koi-seal">福</view>
         <view class="koi-copy">好运已到账</view>
+        <view class="koi-caption">第 1 名专属奖励</view>
         <button wx:if="{{koiCtaVisible}}" class="koi-accept-btn" bindtap="closeKoiEffect" hover-class="btn-hover">收下好运</button>
       </view>
     </view>

@@ -59,6 +59,61 @@ function buildOpportunity(selfScore, random = Math.random) {
   };
 }
 
+function mapRealityCategory(category, name = '') {
+  if (category === 'crypto') return '比特币';
+  if (category === 'real_estate') return '房产';
+  if (category === 'stock') return '股票';
+  if (/房|地产|REIT|VNQ|ITB/i.test(name)) return '房产';
+  if (/BTC|ETH|Bitcoin|Ethereum|币/i.test(name)) return '比特币';
+  return '股票';
+}
+
+function estimateRealityRiskLevel(reality, fallback = 'mid') {
+  if (reality && reality.riskLevel) {
+    return reality.riskLevel;
+  }
+  const change = Math.abs(Number(reality && reality.changePercent));
+  if (!Number.isFinite(change)) return fallback;
+  if (change >= 3) return 'high';
+  if (change >= 1) return 'mid';
+  return 'low';
+}
+
+function buildOpportunityFromReality(selfScore, reality, random = Math.random) {
+  if (!reality) {
+    return buildOpportunity(selfScore, random);
+  }
+
+  const base = buildOpportunity(selfScore, random);
+  const category = mapRealityCategory(reality.realityCategory || reality.category, reality.name);
+  const riskLevel = estimateRealityRiskLevel(reality, base.riskLevel);
+  const rangeMap = getRiskRangeMap();
+  const range = rangeMap[riskLevel] || rangeMap[base.riskLevel] || rangeMap.mid;
+  const change = Number(reality.changePercent);
+  const changeText = Number.isFinite(change)
+    ? `${change > 0 ? '+' : ''}${change.toFixed(2)}%`
+    : '暂无涨跌幅';
+
+  return {
+    ...base,
+    category,
+    name: reality.name || base.name,
+    riskLevel,
+    riskText: range.label,
+    floatRangeText: `${Math.round((range.min - 1) * 100)}% ~ +${Math.round((range.max - 1) * 100)}%`,
+    summary: reality.summary || `现实数据源 ${reality.sourceKey || 'unknown'} 当前变化 ${changeText}，可作为本轮福袋机会参考。`,
+    asset: getFortuneBagAsset(category),
+    realitySynced: true,
+    realitySource: {
+      sourceKey: reality.sourceKey || '',
+      metricLabel: reality.metricLabel || '',
+      metricValue: reality.metricValue,
+      changePercent: reality.changePercent,
+      observedAt: reality.observedAt || '',
+    },
+  };
+}
+
 function settlePosition(position, random = Math.random) {
   const risk = position && position.riskLevel ? position.riskLevel : 'mid';
   const cost = Math.max(1, Number(position && position.cost ? position.cost : 1));
@@ -89,6 +144,7 @@ module.exports = {
   FORTUNE_BAG_ASSETS,
   INVESTMENT_POOL,
   buildOpportunity,
+  buildOpportunityFromReality,
   getFortuneBagAsset,
   settlePosition,
 };

@@ -90,5 +90,16 @@
         </view>
       </view>
     </view>
+
+    <view class="guide-overlay guide-room" wx:if="{{guideVisible}}">
+      <view class="guide-mask"></view>
+      <view class="guide-card guide-card-middle">
+        <view class="guide-kicker">新手引导 2/5</view>
+        <view class="guide-title">准备好后开局，系统会补足体验玩家</view>
+      </view>
+      <view class="guide-action-panel">
+        <button class="guide-primary" bindtap="onGuidePrimary" hover-class="btn-hover">开始游戏</button>
+      </view>
+    </view>
   </view>
 </view>

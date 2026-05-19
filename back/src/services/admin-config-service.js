@@ -7,6 +7,8 @@ const CAPABILITY_FIELDS = {
   login: ['wechat.login_app_id', 'wechat.login_secret', 'wechat.login_agreement_url', 'wechat.login_privacy_url'],
   share: ['wechat.share_title', 'wechat.share_path', 'wechat.share_image_url', 'wechat.share_timeline_title'],
   payment: ['wechat.pay_mch_id', 'wechat.pay_api_v3_key', 'wechat.pay_notify_url', 'wechat.pay_goods_desc'],
+  fortune: ['fortune.reality_enabled', 'fortune.public_signal_limit', 'fortune.refresh_interval_seconds'],
+  aiDigest: ['ai.base_url', 'ai.api_key', 'ai.model'],
 };
 
 async function ensureSystemConfigTable() {
@@ -164,6 +166,10 @@ async function getPublicConfigs() {
         shareEnabled: normalizeBooleanString(configMap['wechat.share_enabled'], true),
         payEnabled: normalizeBooleanString(configMap['wechat.pay_enabled'], false),
       },
+      fortune: {
+        realityEnabled: normalizeBooleanString(configMap['fortune.reality_enabled'], true),
+        signalLimit: Number(configMap['fortune.public_signal_limit'] || 6),
+      },
     },
   };
 }
@@ -196,6 +202,8 @@ async function getAdminConfigSummary() {
       login: buildCapabilitySummary(configMap, 'login', 'wechat.login_enabled', CAPABILITY_FIELDS.login),
       share: buildCapabilitySummary(configMap, 'share', 'wechat.share_enabled', CAPABILITY_FIELDS.share),
       payment: buildCapabilitySummary(configMap, 'payment', 'wechat.pay_enabled', CAPABILITY_FIELDS.payment),
+      fortune: buildCapabilitySummary(configMap, 'fortune', 'fortune.reality_enabled', CAPABILITY_FIELDS.fortune),
+      aiDigest: buildCapabilitySummary(configMap, 'aiDigest', 'fortune.ai_digest_enabled', CAPABILITY_FIELDS.aiDigest),
     },
   };
 }

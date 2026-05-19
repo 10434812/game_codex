@@ -14,6 +14,7 @@ function createWxStub() {
     showShareMenu: [],
     videoPlay: [],
     videoStop: [],
+    vibrateShort: [],
   };
 
   global.getCurrentPages = () => [{ options: {} }];
@@ -54,6 +55,7 @@ function createWxStub() {
         destroy() { },
         seek() { },
         play() { },
+        onEnded() { },
         onError() { },
       };
     },
@@ -92,7 +94,9 @@ function createWxStub() {
     nextTick(cb) {
       if (typeof cb === 'function') cb();
     },
-    vibrateShort() {},
+    vibrateShort(payload) {
+      calls.vibrateShort.push(payload);
+    },
     getUserProfile() {
       return Promise.reject(new Error('not implemented'));
     },
@@ -315,6 +319,62 @@ test('arena 底部导航仍属于 page-content 主内容容器', () => {
 
   assert.ok(bottomNavIndex > arenaWxml.indexOf('class="page-content"'));
   assert.equal(pageContentCloseIndex, -1);
+});
+
+test('核心流程引导浮层保留在 page-content 内且不新增教程路由', () => {
+  const appJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../app.json'), 'utf8'));
+  const files = [
+    '../pages/home/index.wxml',
+    '../pages/room/index.wxml',
+    '../pages/arena/index.wxml',
+    '../pages/result/index.wxml',
+  ];
+
+  for (const file of files) {
+    const wxml = fs.readFileSync(path.join(__dirname, file), 'utf8');
+    const pageContentIndex = wxml.indexOf('class="page-content"');
+    const guideIndex = wxml.indexOf('class="guide-overlay');
+
+    assert.ok(pageContentIndex >= 0, `${file} should keep page-content`);
+    assert.ok(guideIndex > pageContentIndex, `${file} guide overlay should be inside page-content`);
+    assert.match(wxml, /class="app-header"/);
+  }
+
+  assert.equal(appJson.pages.includes('pages/guide/index'), false);
+});
+
+test('核心流程引导使用底部单主按钮并复用一次性状态模块', () => {
+  const appWxss = fs.readFileSync(path.join(__dirname, '../app.wxss'), 'utf8');
+  const homeJs = fs.readFileSync(path.join(__dirname, '../pages/home/index.js'), 'utf8');
+  const roomJs = fs.readFileSync(path.join(__dirname, '../pages/room/index.js'), 'utf8');
+  const arenaJs = fs.readFileSync(path.join(__dirname, '../pages/arena/index.js'), 'utf8');
+  const resultJs = fs.readFileSync(path.join(__dirname, '../pages/result/index.js'), 'utf8');
+
+  assert.match(appWxss, /\.guide-action-panel\s*\{[\s\S]*position:\s*fixed;[\s\S]*bottom:\s*166rpx;/);
+  assert.match(appWxss, /\.guide-primary\s*\{[\s\S]*height:\s*88rpx;/);
+  assert.match(homeJs, /guideStore\.GUIDE_STEPS\.ROOM/);
+  assert.match(roomJs, /guideStore\.GUIDE_STEPS\.ARENA_TEAM/);
+  assert.match(arenaJs, /guideStore\.GUIDE_STEPS\.ARENA_BAG/);
+  assert.match(arenaJs, /guideStore\.GUIDE_STEPS\.RESULT/);
+  assert.match(resultJs, /guideStore\.complete\(\)/);
+});
+
+test('生产页面不会调用测试重置方法', () => {
+  const productionFiles = [
+    '../app.js',
+    '../pages/home/index.js',
+    '../pages/room/index.js',
+    '../pages/arena/index.js',
+    '../pages/result/index.js',
+    '../pages/profile/index.js',
+    '../pages/shop/index.js',
+    '../pages/income/index.js',
+  ];
+  const source = productionFiles
+    .map((file) => fs.readFileSync(path.join(__dirname, file), 'utf8'))
+    .join('\n');
+
+  assert.doesNotMatch(source, /__resetForTests\s*\(/);
 });
 
 test('room 页面下方两个社交操作按钮使用景区主题色毛玻璃', () => {
@@ -746,6 +806,31 @@ test('商城页会显示后台支付配置状态', () => {
   }
 });
 
+test('商城页会同时展示微信支付金额和锦鲤币金额', () => {
+  createWxStub();
+  const shopStore = require('../utils/shop-store');
+  shopStore.__resetForTests();
+
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/shop/index.wxml'), 'utf8');
+  const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
+  shopPage.syncPage();
+
+  const pricedItem = shopPage.data.goods.find((item) => item.price > 0);
+  assert.equal(shopPage.data.balanceText, '8,820');
+  assert.equal('balanceCashText' in shopPage.data, false);
+  assert.equal('exchangeRateText' in shopPage.data, false);
+  assert.ok(pricedItem);
+  assert.doesNotMatch(pricedItem.coinPriceText, /¥/);
+  assert.match(pricedItem.cashPriceText, /^¥\d+\.\d{2}$/);
+  assert.match(wxml, /class="wechat-price-badge"/);
+  assert.match(wxml, /wx:if="\{\{ item\.status\.action == 'buy' && item\.price !== 0 \}\}" class="wechat-price-badge"/);
+  assert.match(wxml, /class="coin-icon buy-coin-icon koi-coin"/);
+  assert.match(wxml, /class="coin-icon asset-coin-icon koi-coin"/);
+  assert.doesNotMatch(wxml, /class="wechat-price-label"/);
+  assert.doesNotMatch(wxml, /asset-cash-badge/);
+  assert.doesNotMatch(wxml, /asset-rate/);
+});
+
 test('arena 页面把玩家名字渲染在头像之后的独立层，避免被头像遮挡', () => {
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
   const playerNodeIndex = wxml.indexOf('class="player-node');
@@ -797,6 +882,35 @@ test('arena 页面会把已装备头像光环叠加到自己的玩家节点', ()
   const selfPlayer = arenaPage.data.players.find((player) => player.isSelf);
   assert.equal(selfPlayer.ringName, '瑞冠天光');
   assert.equal(selfPlayer.ringImage, 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_07.png');
+});
+
+test('arena 福袋主体会放大到头像两倍，并使用卷轴开合弹卡', async () => {
+  createWxStub();
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
+  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
+  const arenaPage = createPageInstance(loadPage('../pages/arena/index.js'));
+
+  arenaPage.onLoad();
+  arenaPage.showFortunePanel({fortunePanelAsset: 'https://example.com/bag.png'});
+
+  assert.equal(arenaPage.data.fortunePanelVisible, true);
+  assert.equal(arenaPage.data.fortunePanelPhase, 'opening');
+  assert.match(wxml, /class="fortune-scroll-paper"/);
+  assert.match(wxml, /class="fortune-scroll-rod top"/);
+  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*top:\s*-36rpx;[\s\S]*left:\s*-36rpx;[\s\S]*width:\s*352rpx;[\s\S]*height:\s*352rpx;/);
+  assert.match(wxss, /\.avatar-shell\s*\{[\s\S]*width:\s*120rpx;[\s\S]*height:\s*120rpx;/);
+  assert.match(wxss, /@keyframes scrollPaperOpen/);
+  assert.match(wxss, /@keyframes scrollPaperClose/);
+
+  await new Promise((resolve) => setTimeout(resolve, 450));
+  assert.equal(arenaPage.data.fortunePanelPhase, 'open');
+
+  arenaPage.hideFortunePanel({}, {fortunePanelAsset: ''});
+  assert.equal(arenaPage.data.fortunePanelPhase, 'closing');
+
+  await new Promise((resolve) => setTimeout(resolve, 380));
+  assert.equal(arenaPage.data.fortunePanelVisible, false);
+  assert.equal(arenaPage.data.fortunePanelPhase, 'closed');
 });
 
 test('arena 页面收到 finished 状态时只跳结算，不会再次触发 finishGame', () => {
@@ -890,10 +1004,12 @@ test('arena 页的聊天气泡会保持单行横排，不会把中间玩家的�
   assert.match(wxss, /\.emote-bubble\s*\{[\s\S]*white-space:\s*nowrap;[\s\S]*word-break:\s*keep-all;/);
 });
 
-test('arena 页底部浮层使用主题自适应毛玻璃', () => {
+test('arena 页底部浮层会把机会面板做成卷轴，消息卡保持主题毛玻璃', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-glow,[\s\S]*var\(--stage-panel,[\s\S]*border:\s*1rpx solid var\(--stage-border,[\s\S]*backdrop-filter:\s*blur\(48rpx\) saturate\(1\.22\) brightness\(1\.03\);[\s\S]*z-index:\s*30;/);
+  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*left:\s*16rpx;[\s\S]*right:\s*16rpx;[\s\S]*min-height:\s*400rpx;[\s\S]*z-index:\s*30;/);
+  assert.match(wxss, /\.fortune-scroll-paper\s*\{[\s\S]*linear-gradient\(180deg,[\s\S]*rgba\(244,\s*229,\s*194,\s*0\.98\)[\s\S]*border:\s*2rpx solid rgba\(181,\s*135,\s*75,\s*0\.3\);/);
+  assert.match(wxss, /\.fortune-scroll-rod\s*\{[\s\S]*linear-gradient\(180deg,[\s\S]*rgba\(187,\s*129,\s*54,\s*0\.96\)/);
   assert.match(wxss, /\.message-reply-card\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-glow,[\s\S]*var\(--stage-panel,[\s\S]*border:\s*1rpx solid var\(--stage-border,[\s\S]*backdrop-filter:\s*blur\(48rpx\) saturate\(1\.22\) brightness\(1\.03\);[\s\S]*z-index:\s*26;/);
   assert.match(wxss, /\.invest-btn\.ghost\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-chip,[\s\S]*border:\s*1rpx solid rgba\(255,\s*255,\s*255,\s*0\.34\);/);
   assert.match(wxss, /\.quick-reply-chip\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-chip,/);
@@ -915,22 +1031,29 @@ test('arena 页背景视频会做景深模糊以突出前景', () => {
   assert.match(wxss, /\.arena-scene-mask\s*\{[\s\S]*backdrop-filter:\s*blur\(3rpx\) saturate\(1\);[\s\S]*linear-gradient\(90deg/);
 });
 
-test('arena 页的福袋会保持居中并保留足够的视觉权重', () => {
+test('arena 页的福袋主体会放大到头像两倍，并保留掉落特效', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
 
-  assert.match(wxss, /\.fortune-bag-wrap\s*\{[\s\S]*width:\s*220rpx;[\s\S]*height:\s*250rpx;/);
-  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*position:\s*absolute;[\s\S]*top:\s*0;[\s\S]*left:\s*0;[\s\S]*width:\s*220rpx;[\s\S]*height:\s*220rpx;/);
-  assert.match(wxss, /\.fortune-bag-countdown\s*\{[\s\S]*top:\s*184rpx;/);
+  assert.match(wxss, /\.fortune-bag-wrap\s*\{[\s\S]*width:\s*352rpx;[\s\S]*height:\s*404rpx;/);
+  assert.match(wxss, /\.fortune-bag-stage\s*\{[\s\S]*width:\s*280rpx;[\s\S]*height:\s*280rpx;/);
+  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*top:\s*-36rpx;[\s\S]*left:\s*-36rpx;[\s\S]*width:\s*352rpx;[\s\S]*height:\s*352rpx;/);
+  assert.match(wxss, /\.fortune-bag-halo\s*\{[\s\S]*width:\s*208rpx;[\s\S]*height:\s*208rpx;/);
+  assert.match(wxss, /\.fortune-bag-spotlight\s*\{[\s\S]*width:\s*244rpx;[\s\S]*height:\s*236rpx;/);
+  assert.match(wxss, /\.fortune-bag-countdown\s*\{[\s\S]*top:\s*344rpx;/);
+  assert.match(wxss, /\.fortune-bag-ripple\.ripple-one\s*\{[\s\S]*bagRipple/);
+  assert.match(wxss, /\.fortune-bag-spark\.spark-left\s*\{[\s\S]*bagSparkFloatLeft/);
   assert.doesNotMatch(wxss, /\.fortune-bag-shell\s*\{/);
   assert.doesNotMatch(wxss, /\.fortune-bag-label\s*\{/);
   assert.match(wxml, /fortune-bag-countdown/);
+  assert.match(wxml, /fortune-bag-ripple ripple-one/);
+  assert.match(wxml, /fortune-bag-spark spark-left/);
   assert.match(wxml, /fortune-panel/);
   assert.match(wxml, /invest-head-icon/);
   assert.match(wxml, /确认卖出/);
-  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*left:\s*16rpx;[\s\S]*right:\s*16rpx;[\s\S]*min-height:\s*340rpx;/);
-  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*display:\s*flex;[\s\S]*flex-direction:\s*column;/);
-  assert.match(wxss, /\.invest-actions\s*\{[\s\S]*margin-top:\s*auto;/);
+  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*left:\s*16rpx;[\s\S]*right:\s*16rpx;[\s\S]*min-height:\s*400rpx;/);
+  assert.match(wxss, /\.fortune-scroll-paper\s*\{[\s\S]*transform-origin:\s*center;/);
+  assert.match(wxss, /\.invest-actions\s*\{[\s\S]*margin-top:\s*26rpx;/);
 });
 
 test('arena 页面不会再为自己头像额外渲染 我 标签', () => {
@@ -941,10 +1064,12 @@ test('arena 页面不会再为自己头像额外渲染 我 标签', () => {
   assert.doesNotMatch(wxss, /\.self-tag\s*\{/);
 });
 
-test('arena 页面在血条模式下不会继续渲染玩家名字文字', () => {
+test('arena 页面在血条模式下仍显示玩家姓名和资金', () => {
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
 
-  assert.match(wxml, /wx:if="\{\{ !item\.showScore \|\| item\.isSelf \}\}"/);
+  assert.match(wxml, /class="score-visible-tag" wx:if="\{\{ item\.showScore && !item\.isSelf \}\}"/);
+  assert.match(wxml, /class="node-name name-\{\{ item\.namePos \|\| 'center' \}\} \{\{ item\.isSelf \? 'self-node-name' : '' \}\}">\{\{ item\.scoreLabel \}\}/);
+  assert.doesNotMatch(wxml, /wx:if="\{\{ !item\.showScore \|\| item\.isSelf \}\}"/);
 });
 
 test('arena 页面在持仓存在时再次点红包会直接切到卖出面板', () => {
@@ -1054,8 +1179,12 @@ test('结算页会提供你是锦鲤揭晓特效', () => {
   assert.match(wxml, /class="koi-effect-layer"/);
   assert.match(wxml, /你是锦鲤/);
   assert.match(wxml, /收下好运/);
+  assert.match(wxml, /src="\/assets\/iocns\/result-koi\.png"/);
+  assert.doesNotMatch(wxml, /koi-seal/);
   assert.match(wxss, /\.koi-reveal-card\s*\{/);
+  assert.doesNotMatch(wxss, /\.koi-seal\s*\{/);
   assert.match(wxss, /@keyframes koi-card-pop/);
+  assert.match(wxss, /@keyframes koi-swim-left/);
 });
 
 test('结算页只在 onShow 刷新结果，避免进入页面时重复刷新', async () => {
@@ -1135,10 +1264,202 @@ test('各场景主题会切换到对应的本地背景音乐', () => {
 
     assert.ok(audioEvents.includes(`src:${expectedSrc}`));
     assert.ok(audioEvents.includes('loop:true'));
-    assert.ok(audioEvents.includes('volume:0.44'));
+    assert.ok(audioEvents.includes('volume:0.2552'));
     assert.ok(!audioEvents.includes('stop'));
     assert.ok(!audioEvents.includes('seek'));
   });
+});
+
+test('语音播报会使用独立 voice 资源并在播放时压低背景音乐', () => {
+  createWxStub();
+  const audioContexts = [];
+  global.wx.createInnerAudioContext = () => {
+    const context = {
+      stop() {
+        this.stopped = true;
+      },
+      destroy() {},
+      seek() {
+        this.seeked = true;
+      },
+      play() {
+        this.played = true;
+      },
+      onEnded(handler) {
+        this.endedHandler = handler;
+      },
+      onError() {},
+      set src(value) {
+        this._src = value;
+      },
+      set loop(value) {
+        this._loop = value;
+      },
+      set volume(value) {
+        this._volume = value;
+        this.volumeEvents = [...(this.volumeEvents || []), value];
+      },
+    };
+    audioContexts.push(context);
+    return context;
+  };
+
+  const audio = loadAudioModule();
+  audio.playStageBgm({name: '万里长城'}, {volume: 0.44});
+  audio.playVoice('homeGuide', {debounceMs: 0, duckVolume: 0.12});
+
+  assert.equal(audioContexts.length, 2);
+  assert.equal(audioContexts[1]._src, 'https://xcx.ukb88.com/assets/audio/voice/home-guide.mp3');
+  assert.equal(audioContexts[1]._loop, false);
+  assert.ok(audioContexts[1].played);
+  assert.ok(audioContexts[0].volumeEvents.includes(0.0696));
+
+  audioContexts[1].endedHandler();
+  assert.equal(audioContexts[0]._volume, 0.2552);
+  assert.equal(audio.playVoice('missingVoiceKey'), null);
+});
+
+test('震动反馈只在真机平台触发，开发者工具不触发', () => {
+  const calls = createWxStub();
+  const originalGetSystemInfoSync = global.wx.getSystemInfoSync;
+  const audio = loadAudioModule();
+
+  global.wx.getSystemInfoSync = () => ({
+    statusBarHeight: 20,
+    windowWidth: 375,
+    platform: 'devtools',
+  });
+  audio.playVibrate('light');
+  assert.equal(calls.vibrateShort.length, 0);
+
+  global.wx.getSystemInfoSync = () => ({
+    statusBarHeight: 20,
+    windowWidth: 375,
+    platform: 'android',
+  });
+  audio.playVibrate('medium');
+  assert.deepEqual(calls.vibrateShort, [{type: 'medium'}]);
+
+  global.wx.getSystemInfoSync = originalGetSystemInfoSync;
+});
+
+test('房间倒计时会触发语音播报', () => {
+  createWxStub();
+  const voiceCalls = [];
+  const audioPath = require.resolve('../utils/audio.js');
+  const originalAudioModule = require.cache[audioPath];
+  require.cache[audioPath] = {
+    id: audioPath,
+    filename: audioPath,
+    loaded: true,
+    exports: {
+      playCue() {},
+      playStageBgm() {},
+      playVibrate() {},
+      playVoice(name) {
+        voiceCalls.push(name);
+      },
+    },
+  };
+
+  try {
+    const roomPage = createPageInstance(loadPage('../pages/room/index.js'));
+
+    roomPage.setData({selfReady: false});
+    roomPage.start();
+    assert.ok(voiceCalls.includes('roomNeedReady'));
+
+    roomPage.setData({selfReady: true});
+    roomPage.start();
+    assert.ok(voiceCalls.includes('countdown3'));
+    roomPage.clearStartCountdown();
+  } finally {
+    if (originalAudioModule) {
+      require.cache[audioPath] = originalAudioModule;
+    } else {
+      delete require.cache[audioPath];
+    }
+  }
+});
+
+test('对局关键事件会触发语音播报', () => {
+  createWxStub();
+  const gameStore = require('../utils/game-store');
+  const voiceCalls = [];
+  const arenaPage = loadPageWithStubbedAudio('../pages/arena/index.js', {
+    playCue() {},
+    playStageBgm() {},
+    playVibrate() {},
+    playVoice(name) {
+      voiceCalls.push(name);
+    },
+  });
+
+  gameStore.__resetForTests();
+  arenaPage.playRoundAudio({
+    status: 'playing',
+    round: 1,
+    lastEvents: [],
+  });
+  assert.ok(voiceCalls.includes('arenaStart'));
+
+  arenaPage.playInviteAnimation({
+    pairKey: 'self::p2',
+    style: 'left:375rpx; top:400rpx;',
+  });
+  assert.ok(voiceCalls.includes('teamInvite'));
+  arenaPage.clearInviteTimers();
+
+  voiceCalls.length = 0;
+  arenaPage.playRemoteTeamAnimation({
+    pairKey: 'p2::p3',
+    fromName: '风起青萍',
+    toName: '星河旅者',
+    style: 'left:375rpx; top:400rpx;',
+  });
+  assert.equal(voiceCalls.includes('teamInvite'), false);
+  assert.equal(voiceCalls.includes('teamSuccess'), false);
+  arenaPage.clearInviteTimers();
+
+  gameStore.startGame({autoStartTimer: false});
+  arenaPage.setData({players: [{id: 'self', isSelf: true, score: '100'}, {id: 'p2', score: '100'}], timeText: '120s'});
+  const originalSetTimeout = global.setTimeout;
+  let timeoutCallCount = 0;
+  global.setTimeout = (handler) => {
+    timeoutCallCount += 1;
+    if (timeoutCallCount === 1 && typeof handler === 'function') handler();
+    return {mockTimer: true};
+  };
+  try {
+    arenaPage.scheduleNextBagDrop();
+  } finally {
+    global.setTimeout = originalSetTimeout;
+    arenaPage.clearBagTimers();
+    arenaPage.onUnload();
+  }
+  assert.ok(voiceCalls.includes('fortuneBag'));
+});
+
+test('结算页会按排名触发语音播报', () => {
+  createWxStub();
+  const voiceCalls = [];
+  const resultPage = loadPageWithStubbedAudio('../pages/result/index.js', {
+    stopBgm() {},
+    playCue() {},
+    playVibrate() {},
+    playVoice(name) {
+      voiceCalls.push(name);
+    },
+  });
+
+  resultPage.setData({isKoiWinner: false});
+  resultPage.playResultVoice();
+  assert.ok(voiceCalls.includes('resultComplete'));
+  resultPage.clearResultVoiceTimer();
+
+  resultPage.setData({resultId: 'result-koi', isKoiWinner: true});
+  resultPage.playKoiEffect();
+  assert.ok(voiceCalls.includes('resultKoi'));
 });
 
 test('结算页炮声会等当前音频播完再接下一次', () => {

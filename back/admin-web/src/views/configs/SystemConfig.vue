@@ -254,6 +254,15 @@ const fallbackConfigRecords = [
   { key: 'game.initial_coins', value: '8820', defaultValue: '8820', description: '新用户初始金币', valueType: 'number', isPublic: false },
   { key: 'game.daily_signin_coins', value: '200', defaultValue: '200', description: '每日签到金币奖励', valueType: 'number', isPublic: false },
   { key: 'shop.refresh_interval', value: '86400', defaultValue: '86400', description: '商城刷新间隔(秒)', valueType: 'number', isPublic: true },
+  { key: 'fortune.reality_enabled', value: 'true', defaultValue: 'true', description: '是否启用福袋现实数据联动', valueType: 'boolean', isPublic: true },
+  { key: 'fortune.refresh_interval_seconds', value: '900', defaultValue: '900', description: '福袋现实数据默认刷新间隔(秒)', valueType: 'number', isPublic: false },
+  { key: 'fortune.public_signal_limit', value: '6', defaultValue: '6', description: '小程序可读取的福袋现实机会数量', valueType: 'number', isPublic: true },
+  { key: 'fortune.ai_digest_enabled', value: 'false', defaultValue: 'false', description: '是否启用大模型生成福袋行情摘要', valueType: 'boolean', isPublic: false },
+  { key: 'ai.provider', value: 'opencodego', defaultValue: 'opencodego', description: '大模型服务商标识', valueType: 'text', isPublic: false },
+  { key: 'ai.base_url', value: '', defaultValue: '', description: 'OpenAI 兼容接口 Base URL（例如 https://example.com/v1）', valueType: 'url', isPublic: false },
+  { key: 'ai.api_key', value: '', defaultValue: '', description: '大模型 API Key（仅服务端保存，不对前端公开）', valueType: 'password', isPublic: false, isSensitive: true },
+  { key: 'ai.model', value: '', defaultValue: '', description: '福袋摘要默认模型名称', valueType: 'text', isPublic: false },
+  { key: 'ai.timeout_ms', value: '15000', defaultValue: '15000', description: '大模型请求超时时间(毫秒)', valueType: 'number', isPublic: false },
   { key: 'system.maintenance_mode', value: '0', defaultValue: '0', description: '维护模式(0=关闭,1=开启)', valueType: 'boolean', isPublic: false },
   { key: 'system.maintenance_message', value: '', defaultValue: '', description: '维护提示消息', valueType: 'textarea', isPublic: false }
 ]
@@ -276,6 +285,18 @@ const groupedPrefixes = [
     label: '商城配置',
     description: '控制商城刷新节奏、支付后落地和商品体验。',
     tip: ''
+  },
+  {
+    prefix: 'fortune',
+    label: '福袋现实数据',
+    description: '控制福袋现实行情联动、刷新节奏和小程序可见机会数量。',
+    tip: '数据源本身在“福袋现实数据”页面维护，这里只管理全局开关和摘要策略。'
+  },
+  {
+    prefix: 'ai',
+    label: '大模型接口',
+    description: '配置 opencodego / OpenAI 兼容模型接口，供福袋摘要等后端能力调用。',
+    tip: 'API Key 是敏感字段，只保存在服务端配置中心，也可用环境变量覆盖。'
   },
   {
     prefix: 'system',
@@ -423,6 +444,60 @@ const fieldMetaMap = {
     section: 'payment',
     sectionLabel: '支付配置',
     sectionDescription: '联调阶段建议开启，上线前记得关闭。'
+  },
+  'fortune.reality_enabled': {
+    label: '现实联动开关',
+    section: 'reality',
+    sectionLabel: '福袋现实数据',
+    sectionDescription: '控制小程序福袋是否优先使用后端现实数据机会。'
+  },
+  'fortune.refresh_interval_seconds': {
+    label: '默认刷新间隔（秒）',
+    section: 'reality',
+    sectionLabel: '福袋现实数据',
+    sectionDescription: '后台定时任务和默认数据源使用的基础刷新节奏。'
+  },
+  'fortune.public_signal_limit': {
+    label: '前端机会数量',
+    section: 'reality',
+    sectionLabel: '福袋现实数据',
+    sectionDescription: '限制小程序每次读取的现实福袋机会数量。'
+  },
+  'fortune.ai_digest_enabled': {
+    label: '启用大模型摘要',
+    section: 'digest',
+    sectionLabel: '福袋摘要',
+    sectionDescription: '开启后刷新现实数据时会优先调用大模型生成运营摘要。'
+  },
+  'ai.provider': {
+    label: '模型服务商',
+    section: 'llm',
+    sectionLabel: '大模型接口',
+    sectionDescription: '例如 opencodego、openai-compatible、internal-gateway。'
+  },
+  'ai.base_url': {
+    label: 'Base URL',
+    section: 'llm',
+    sectionLabel: '大模型接口',
+    sectionDescription: 'OpenAI 兼容接口地址，通常以 `/v1` 结尾。'
+  },
+  'ai.api_key': {
+    label: 'API Key',
+    section: 'llm',
+    sectionLabel: '大模型接口',
+    sectionDescription: 'opencodego 套餐或其他兼容模型的调用密钥。'
+  },
+  'ai.model': {
+    label: '默认模型',
+    section: 'llm',
+    sectionLabel: '大模型接口',
+    sectionDescription: '用于生成福袋行情摘要的模型名称。'
+  },
+  'ai.timeout_ms': {
+    label: '请求超时（毫秒）',
+    section: 'llm',
+    sectionLabel: '大模型接口',
+    sectionDescription: '后端调用模型接口的单次请求超时时间。'
   }
 }
 
@@ -438,7 +513,10 @@ const requiredFields = new Set([
   'wechat.pay_mch_id',
   'wechat.pay_api_v3_key',
   'wechat.pay_notify_url',
-  'wechat.pay_goods_desc'
+  'wechat.pay_goods_desc',
+  'ai.base_url',
+  'ai.api_key',
+  'ai.model'
 ])
 
 function humanizeLabel(key) {

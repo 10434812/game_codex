@@ -13,6 +13,7 @@ import SystemConfig from '@/views/configs/SystemConfig.vue'
 import AdminList from '@/views/admins/AdminList.vue'
 import RoomList from '@/views/rooms/RoomList.vue'
 import OperationLogs from '@/views/logs/OperationLogs.vue'
+import FortuneReality from '@/views/fortune/FortuneReality.vue'
 
 const routes = [
   {
@@ -91,6 +92,12 @@ const routes = [
     path: '/logs',
     name: 'OperationLogs',
     component: OperationLogs,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/fortune',
+    name: 'FortuneReality',
+    component: FortuneReality,
     meta: { requiresAuth: true }
   },
   {

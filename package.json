@@ -2,6 +2,10 @@
   "name": "jinli-qiancheng",
   "private": true,
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "voice:generate": "node scripts/generate-edge-voice-assets.js",
+    "voice:generate:minimax": "node scripts/generate-minimax-voice-assets.js",
+    "voice:generate:openai": "node scripts/generate-openai-voice-assets.js",
+    "voice:generate:say": "node scripts/generate-voice-assets.js"
   }
 }

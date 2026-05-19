@@ -10,7 +10,7 @@ const {
 const {buildVisibleScoreState} = require('../../utils/game-engine');
 const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
-const {playCue, playStageBgm, playVibrate} = require('../../utils/audio');
+const {playCue, playStageBgm, playVoice, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const api = require('../../utils/api-client');
 const {
@@ -27,9 +27,11 @@ const {
   getMateIdFromPairKey,
   mergeTeamLinks,
 } = require('../../utils/team-link');
-const {buildOpportunity, getFortuneBagAsset, settlePosition} = require('../../utils/investment');
+const {buildOpportunity, buildOpportunityFromReality, getFortuneBagAsset, settlePosition} = require('../../utils/investment');
 const {QUICK_EMOTES, chooseRemoteEmote, randomInt} = require('../../utils/emote');
 const {saveStageTheme} = require('../../utils/stage-theme');
+const guideStore = require('../../utils/guide-store');
+const fortuneReality = require('../../utils/fortune-reality');
 
 function formatTimeLeft(timeLeft) {
   return `${Math.max(0, Number(timeLeft) || 0)}s`;
@@ -94,6 +96,7 @@ Page({
     hintText: '等待开始',
     actionHintText: '',
     fortunePanelVisible: false,
+    fortunePanelPhase: 'closed',
     fortuneBagCountdownText: '10s',
     fortunePanelAsset: '',
     tabs: NAV_TABS,
@@ -102,6 +105,8 @@ Page({
     userAuthorized: hasValidProfile(getCachedProfile()),
     defaultAvatar: DEFAULT_AVATAR,
     shopDisplay: shopStore.getEquippedDisplay(),
+    guideTeamVisible: false,
+    guideBagVisible: false,
   },
   onLoad() {
     this.prevStateTeamKeySet = new Set();
@@ -127,6 +132,7 @@ Page({
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}
+    fortuneReality.fetchFortuneReality(true).catch(() => {});
   },
   onShow() {
     this.syncUserProfile();
@@ -147,6 +153,7 @@ Page({
         if (state.status === 'playing') {
           this.syncArena(state);
         } else if (state.status === 'finished') {
+          guideStore.advanceTo(guideStore.GUIDE_STEPS.RESULT);
           this.clearBagTimers();
           this.clearEmoteTimers();
           wx.redirectTo({url: '/pages/result/index'});
@@ -160,16 +167,20 @@ Page({
 
     this.scheduleNextBagDrop();
     this.scheduleRemoteEmote();
+    this.syncGuide();
+    fortuneReality.fetchFortuneReality(false).catch(() => {});
   },
   onHide() {
     this.clearArenaPolling();
     this.clearInviteTimers();
     this.clearBagTimers();
+    this.clearFortunePanelTimers();
     this.clearEmoteTimers();
     this.setData({
       fortuneBag: null,
       activeOpportunity: null,
       fortunePanelVisible: false,
+      fortunePanelPhase: 'closed',
       fortunePanelAsset: '',
       emotePanelVisible: false,
       fortuneBagCountdownText: '10s',
@@ -180,6 +191,7 @@ Page({
     this.clearArenaPolling();
     this.clearInviteTimers();
     this.clearBagTimers();
+    this.clearFortunePanelTimers();
     this.clearEmoteTimers();
     this.clearRemoteEmoteTimer();
     this.unsubscribeStore();
@@ -200,6 +212,22 @@ Page({
     const snapshot = gameStore.getState();
     playStageBgm(snapshot.stage || DEFAULT_STAGE, {volume: 0.38});
   },
+  syncGuide() {
+    this.setData({
+      guideTeamVisible: guideStore.shouldShowStep(guideStore.GUIDE_STEPS.ARENA_TEAM),
+      guideBagVisible: guideStore.shouldShowStep(guideStore.GUIDE_STEPS.ARENA_BAG) && !!this.data.fortuneBag,
+    });
+  },
+  onGuideTeamPrimary() {
+    guideStore.advanceTo(guideStore.GUIDE_STEPS.ARENA_BAG);
+    this.setData({
+      guideTeamVisible: false,
+      guideBagVisible: !!this.data.fortuneBag,
+    });
+  },
+  onGuideBagPrimary() {
+    this.onTapFortuneBag();
+  },
   startArenaPolling(sessionId) {
     this.clearArenaPolling();
     this.fetchArenaState(sessionId);
@@ -217,6 +245,7 @@ Page({
         return;
       }
       if (state && state.status === 'finished') {
+        guideStore.advanceTo(guideStore.GUIDE_STEPS.RESULT);
         this.clearBagTimers();
         this.clearEmoteTimers();
         this.clearArenaPolling();
@@ -355,6 +384,7 @@ Page({
     if (this.lastRound === -1) {
       this.lastRound = state.round;
       playCue('gameStart', {volume: 0.78});
+      playVoice('arenaStart', {debounceMs: 0});
       return;
     }
     if (state.round === this.lastRound) {
@@ -488,6 +518,10 @@ Page({
     playCue('tap', {volume: 0.75});
     playVibrate('light');
     const targetId = e.currentTarget.dataset.playerId;
+    if (guideStore.shouldShowStep(guideStore.GUIDE_STEPS.ARENA_TEAM)) {
+      guideStore.advanceTo(guideStore.GUIDE_STEPS.ARENA_BAG);
+      this.setData({guideTeamVisible: false});
+    }
     const players = this.data.players || [];
     if (!players.length || !targetId) {
       return;
@@ -500,6 +534,7 @@ Page({
     }
     if (targetPlayer.showScore) {
       playCue('actionFail', {volume: 0.72});
+      playVoice('actionUnavailable');
       this.setData({actionHintText: '该玩家已公开分数，暂不可发起组队'});
       return;
     }
@@ -571,6 +606,7 @@ Page({
       this.hiddenStatePairKeys.add(this.selfStatePairKey);
     }
     playCue('remoteDissolve', {volume: 0.68});
+    playVoice('teamDissolved');
     this.setData({
       actionHintText: `已解除与${mateName || '队友'}的组队关系`,
       teamLinks: mergeTeamLinks(this.latestStateTeamLinks, this.manualTeamLinkMap, this.hiddenStatePairKeys),
@@ -585,6 +621,7 @@ Page({
     }
     if (targetPlayer.showScore) {
       playCue('actionFail', {volume: 0.72});
+      playVoice('actionUnavailable');
       this.setData({actionHintText: '该玩家已公开分数，暂不可发起组队'});
       return;
     }
@@ -592,6 +629,7 @@ Page({
     if (this.manualTeamLinkMap && this.manualTeamLinkMap[pairKey]) {
       delete this.manualTeamLinkMap[pairKey];
       playCue('remoteDissolve', {volume: 0.68});
+      playVoice('teamDissolved');
       this.setData({
         actionHintText: `已取消向${targetPlayer.name}发起的组队`,
         teamLinks: mergeTeamLinks(this.latestStateTeamLinks, this.manualTeamLinkMap, this.hiddenStatePairKeys),
@@ -626,13 +664,12 @@ Page({
     const selfScore = parseScoreText(selfPlayer ? selfPlayer.score : 0);
     const opportunity = this.data.activePosition
       ? null
-      : (bag.opportunity || this.data.activeOpportunity || buildOpportunity(selfScore));
+      : (bag.opportunity || this.data.activeOpportunity || this.buildNextOpportunity(selfScore));
     const panelAsset = this.data.activePosition
       ? (this.data.activePosition.asset || getFortuneBagAsset(this.data.activePosition.category))
       : (opportunity && opportunity.asset) || bag.asset || getFortuneBagAsset(opportunity && opportunity.category);
-    this.setData({
+    this.showFortunePanel({
       activeOpportunity: opportunity,
-      fortunePanelVisible: true,
       fortunePanelAsset: panelAsset,
       activePositionHoldText: formatHoldTime(this.data.activePosition),
       emotePanelVisible: false,
@@ -642,9 +679,7 @@ Page({
     });
   },
   onCloseOpportunity() {
-    this.setData({
-      fortunePanelVisible: false,
-      fortunePanelAsset: '',
+    this.hideFortunePanel({
       actionHintText: '',
     });
   },
@@ -671,6 +706,7 @@ Page({
     });
     if (!debitResult.ok) {
       playCue('actionFail', {volume: 0.74});
+      playVoice('actionUnavailable');
       wx.showToast({title: debitResult.message || '账户余额不足', icon: 'none'});
       return;
     }
@@ -679,6 +715,7 @@ Page({
       scoreType: 'investment',
     });
     playCue('pairOther', {volume: 0.68});
+    playVoice('buySuccess');
     const position = {
       id: `pos-${Date.now()}`,
       ownerId: selfPlayer.id,
@@ -690,10 +727,9 @@ Page({
       buyAt: Date.now(),
       asset: opportunity.asset,
     };
-    this.setData({
+    this.showFortunePanel({
       activeOpportunity: null,
       activePosition: position,
-      fortunePanelVisible: true,
       fortunePanelAsset: position.asset,
       activePositionHoldText: formatHoldTime(position),
       actionHintText: `已买入${opportunity.name}，当前可直接卖出`,
@@ -724,13 +760,21 @@ Page({
     });
     if (result.pnl >= 0) {
       playCue('pairSelf', {volume: 0.78});
+      playVoice('sellProfit');
     } else {
       playCue('actionFail', {volume: 0.74});
+      playVoice('sellLoss');
     }
-    this.setData({
+    this.hideFortunePanel({
+      actionHintText: `卖出完成，净收益 ${result.pnlText}`,
+      successToast: {
+        text: `卖出${result.pnlText}`,
+        x: BOARD_LAYOUT.centerX,
+        y: BOARD_LAYOUT.centerY,
+      },
+    }, {
       activePosition: null,
       activeOpportunity: null,
-      fortunePanelVisible: false,
       fortunePanelAsset: '',
       actionHintText: `卖出完成，净收益 ${result.pnlText}`,
       successToast: {
@@ -747,6 +791,12 @@ Page({
     this.setData({fortuneBag: null, fortuneBagCountdownText: '10s'});
     this.scheduleNextBagDrop();
   },
+  buildNextOpportunity(selfScore) {
+    const realityOpportunity = fortuneReality.pickOpportunity();
+    return realityOpportunity
+      ? buildOpportunityFromReality(selfScore, realityOpportunity)
+      : buildOpportunity(selfScore);
+  },
   scheduleNextBagDrop() {
     this.clearBagTimers();
     const state = gameStore.getState();
@@ -761,26 +811,38 @@ Page({
       }
       const selfPlayer = (this.data.players || []).find((player) => player.isSelf) || (this.data.players || [])[0];
       const selfScore = parseScoreText(selfPlayer ? selfPlayer.score : 0);
-      const opportunity = buildOpportunity(selfScore);
+      const opportunity = this.buildNextOpportunity(selfScore);
       const bag = buildFortuneBagByPlayers(this.data.timeText || 't', this.data.players || [], opportunity);
       this.fortuneBagExpiresAt = Date.now() + 10000;
       this.setData({
         fortuneBag: bag,
         fortuneBagCountdownText: formatTimeLeft(10),
       });
+      this.syncGuide();
       playCue('invite', {volume: 0.58});
+      playVoice('fortuneBag', {debounceMs: 3000});
       this.startFortuneBagCountdown();
       this.bagExpireTimer = setTimeout(() => {
         const hasActivePosition = !!this.data.activePosition;
         this.clearBagTimers();
-        this.setData({
+        const expirePatch = {
           fortuneBag: null,
-          activeOpportunity: null,
-          fortunePanelVisible: false,
           fortunePanelAsset: '',
           fortuneBagCountdownText: '10s',
           actionHintText: hasActivePosition ? '当前持仓已保留，等待下一次红包' : '本次红包已结束',
-        });
+        };
+        if (this.data.fortunePanelVisible) {
+          this.hideFortunePanel(expirePatch, {
+            ...expirePatch,
+            activeOpportunity: null,
+          });
+        } else {
+          this.setData({
+            ...expirePatch,
+            activeOpportunity: null,
+          });
+        }
+        this.syncGuide();
         this.scheduleNextBagDrop();
       }, 10000);
       this.bagSpawnTimer = null;
@@ -823,6 +885,56 @@ Page({
     this.clearFortuneBagCountdown();
     this.fortuneBagExpiresAt = 0;
   },
+  showFortunePanel(patch = {}) {
+    if (guideStore.shouldShowStep(guideStore.GUIDE_STEPS.ARENA_BAG)) {
+      guideStore.advanceTo(guideStore.GUIDE_STEPS.RESULT);
+      patch.guideBagVisible = false;
+    }
+    this.clearFortunePanelTimers();
+    this.setData({
+      ...patch,
+      fortunePanelVisible: true,
+      fortunePanelPhase: 'opening',
+    });
+    this.fortunePanelPhaseTimer = setTimeout(() => {
+      this.fortunePanelPhaseTimer = null;
+      if (!this.data.fortunePanelVisible) {
+        return;
+      }
+      this.setData({fortunePanelPhase: 'open'});
+    }, 420);
+  },
+  hideFortunePanel(patch = {}, afterClosePatch) {
+    const closePatch = {
+      ...(afterClosePatch || patch),
+      fortunePanelVisible: false,
+      fortunePanelPhase: 'closed',
+    };
+    if (!this.data.fortunePanelVisible) {
+      this.clearFortunePanelTimers();
+      this.setData(closePatch);
+      return;
+    }
+    this.clearFortunePanelTimers();
+    this.setData({
+      ...patch,
+      fortunePanelPhase: 'closing',
+    });
+    this.fortunePanelCloseTimer = setTimeout(() => {
+      this.fortunePanelCloseTimer = null;
+      this.setData(closePatch);
+    }, 340);
+  },
+  clearFortunePanelTimers() {
+    if (this.fortunePanelPhaseTimer) {
+      clearTimeout(this.fortunePanelPhaseTimer);
+      this.fortunePanelPhaseTimer = null;
+    }
+    if (this.fortunePanelCloseTimer) {
+      clearTimeout(this.fortunePanelCloseTimer);
+      this.fortunePanelCloseTimer = null;
+    }
+  },
   playRemoteTeamAnimation(link) {
     if (!link) {
       return;
@@ -831,6 +943,7 @@ Page({
       inviteText: `${link.fromName} 向 ${link.toName} 发起组队邀请...`,
       successText: `${link.fromName} 与 ${link.toName} 组队成功`,
       persistOnSuccess: false,
+      voice: false,
     });
   },
   playInviteAnimation(link, options = {}) {
@@ -842,6 +955,7 @@ Page({
     const inviteText = options.inviteText || '发起组队邀请...';
     const successText = options.successText || '组队成功';
     const persistOnSuccess = options.persistOnSuccess === true;
+    const shouldPlayVoice = options.voice !== false;
 
     this.setData({
       actionHintText: inviteText,
@@ -850,6 +964,9 @@ Page({
       successToast: null,
     });
     playCue('invite', {volume: 0.65});
+    if (shouldPlayVoice) {
+      playVoice('teamInvite');
+    }
 
     const handshakeDelay = randomInt(480, 980);
     this.inviteTimer = setTimeout(() => {
@@ -858,6 +975,9 @@ Page({
         playCue('pairSelf', {volume: 0.78});
       } else {
         playCue('pairOther', {volume: 0.74});
+      }
+      if (shouldPlayVoice) {
+        playVoice('teamSuccess');
       }
 
       this.setData({

@@ -3,7 +3,7 @@ const api = require('../../utils/api-client');
 const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const playerStats = require('../../utils/player-stats');
-const {playCue, stopBgm, playVibrate} = require('../../utils/audio');
+const {playCue, playVoice, stopBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatCurrency, formatNumber} = require('../../utils/format');
@@ -11,6 +11,7 @@ const {buildAchievementMedal} = require('../../utils/achievement-medals');
 const runtimeConfig = require('../../utils/runtime-config');
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
 const {createStageThemeData, loadStageTheme, saveStageTheme} = require('../../utils/stage-theme');
+const guideStore = require('../../utils/guide-store');
 
 // 烟花颜色配置
 const FIREWORK_COLORS = [
@@ -217,6 +218,7 @@ Page({
     koiCtaVisible: false,
     isKoiWinner: false,
     koiBlessings: generateKoiBlessings(),
+    guideVisible: false,
   },
   onLoad() {
     try {
@@ -230,7 +232,9 @@ Page({
     this.syncUserProfile();
     stopBgm();
     await this.refreshResult();
+    this.syncGuide();
     if (this.data.resultId && this.data.resultId !== this.lastPlayedResultId) {
+      this.playResultVoice();
       this.playResultFirework();
       this.playKoiEffect();
       this.lastPlayedResultId = this.data.resultId;
@@ -239,10 +243,12 @@ Page({
   onHide() {
     this.stopResultFirework();
     this.closeKoiEffect({silent: true});
+    this.clearResultVoiceTimer();
   },
   onUnload() {
     this.stopResultFirework();
     this.closeKoiEffect({silent: true});
+    this.clearResultVoiceTimer();
     this.stopNumberAnimations();
   },
   onShareAppMessage() {
@@ -254,6 +260,15 @@ Page({
     return buildShareTimeline('result', {
       extraQuery: `resultId=${encodeURIComponent(this.data.resultId || '')}`,
     });
+  },
+  syncGuide() {
+    this.setData({
+      guideVisible: guideStore.shouldShowStep(guideStore.GUIDE_STEPS.RESULT),
+    });
+  },
+  finishGuide() {
+    guideStore.complete();
+    this.setData({guideVisible: false});
   },
   stopNumberAnimations() {
     if (this.gainAnimTimer) {
@@ -353,6 +368,20 @@ Page({
     playVibrate('heavy');
     this.playResultWinAudio();
   },
+  playResultVoice() {
+    this.clearResultVoiceTimer();
+    playVoice('resultComplete', {debounceMs: 0});
+    this.resultVoiceTimer = setTimeout(() => {
+      this.resultVoiceTimer = null;
+      playVoice(this.data.isKoiWinner ? 'resultFirst' : 'resultNormal', {debounceMs: 0});
+    }, 700);
+  },
+  clearResultVoiceTimer() {
+    if (this.resultVoiceTimer) {
+      clearTimeout(this.resultVoiceTimer);
+      this.resultVoiceTimer = null;
+    }
+  },
   stopResultFirework() {
     this.resultFireworkActive = false;
     this.fireworkAudioPlayCount = 0;
@@ -386,6 +415,7 @@ Page({
     });
 
     playCue('resultWin', {volume: 0.86});
+    playVoice('resultKoi', {debounceMs: 0});
     playVibrate('heavy');
     this.koiCtaTimer = setTimeout(() => {
       this.setData({koiCtaVisible: true});
@@ -481,6 +511,10 @@ Page({
   goHome() {
     playCue('tap', {volume: 0.75});
     playVibrate('light');
+    if (guideStore.shouldShowStep(guideStore.GUIDE_STEPS.RESULT)) {
+      guideStore.complete();
+      this.setData({guideVisible: false});
+    }
     gameStore.resetToHome();
     wx.reLaunch({url: '/pages/home/index'});
   },

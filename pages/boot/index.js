@@ -2,6 +2,7 @@ const {createBootLoader, createImagePreloadTask, getBootAssetQueue} = require('.
 const api = require('../../utils/api-client');
 const userProfile = require('../../utils/user-profile');
 const runtimeConfig = require('../../utils/runtime-config');
+const {playVoice} = require('../../utils/audio');
 
 const DEFAULT_MIN_MS = 2000;
 const DEFAULT_MAX_MS = 2700;
@@ -27,6 +28,7 @@ Page({
     loadingText: '正在加载资源',
   },
   onLoad() {
+    playVoice('bootWelcome', {debounceMs: 0});
     this.startBoot();
   },
   onUnload() {
@@ -54,6 +56,7 @@ Page({
   finishBoot() {
     if (this.isDestroyed) return;
     this.setData({progress: 100, loadingText: '加载完成'});
+    playVoice('bootReady', {debounceMs: 0});
     const holdMs = this._bootHoldMs || DEFAULT_HOLD_MS;
     this.holdTimer = setTimeout(() => {
       if (this.isDestroyed) return;

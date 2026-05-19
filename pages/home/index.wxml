@@ -141,5 +141,16 @@
       </view>
     </view>
     </view>
+
+    <view class="guide-overlay guide-home" wx:if="{{guideVisible}}">
+      <view class="guide-mask"></view>
+      <view class="guide-card guide-card-top">
+        <view class="guide-kicker">新手引导 1/5</view>
+        <view class="guide-title">选一个目的地，开始一局 3 分钟好运局</view>
+      </view>
+      <view class="guide-action-panel">
+        <button class="guide-primary" bindtap="onGuidePrimary" hover-class="btn-hover">开始游戏</button>
+      </view>
+    </view>
   </view>
 </view>

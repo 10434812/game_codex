@@ -43,7 +43,21 @@
         <text class="asset-tip">购买后可在对局页展示效果</text>
       </view>
       <view class="asset-body">
-        <text class="asset-value">{{ balanceText }}</text>
+        <view class="asset-balance-main">
+          <view class="coin-chip asset-coin-chip">
+            <view class="coin-icon asset-coin-icon koi-coin">
+              <view class="koi-coin-core">
+                <view class="koi-fish-body"></view>
+                <view class="koi-fish-eye"></view>
+                <view class="koi-fish-fin"></view>
+                <view class="koi-fish-tail tail-top"></view>
+                <view class="koi-fish-tail tail-bottom"></view>
+              </view>
+            </view>
+            <text class="asset-value">{{ balanceText }}</text>
+          </view>
+          <text class="asset-unit">锦鲤币</text>
+        </view>
       </view>
       <view class="payment-banner {{ payEnabled ? 'enabled' : 'disabled' }}">
         <view class="payment-banner-title">{{ payStatusText }}</view>
@@ -69,8 +83,8 @@
       <view wx:for="{{ goods }}" wx:key="id" class="goods-card" hover-class="clickable-hover">
         <view class="goods-head">
           <view class="goods-badge">{{ item.category == 'skin' ? item.rarityLabel : item.category == 'ring' ? '头像光环' : '灵宠' }}</view>
-          <view class="goods-price">
-            <text class="price-num">{{ item.priceText }}</text>
+          <view wx:if="{{ item.status.action == 'buy' && item.price !== 0 }}" class="wechat-price-badge">
+            <text class="wechat-price-value">{{ item.cashPriceText }}</text>
           </view>
         </view>
         
@@ -102,14 +116,28 @@
         </view>
 
         <view
-          class="goods-action-btn {{ item.status.action == 'buy' ? 'buy' : 'equip' }} {{ item.status.disabled ? 'disabled' : '' }}"
+          class="goods-action-btn {{ item.status.action == 'buy' ? 'buy' : 'equip' }} {{ item.status.action == 'buy' && item.price !== 0 ? 'with-price' : '' }} {{ item.status.disabled ? 'disabled' : '' }}"
           data-category="{{ item.category }}"
           data-item-id="{{ item.id }}"
           data-action="{{ item.status.disabled ? '' : item.status.action }}"
           bindtap="onTapAction"
           hover-class="btn-hover"
         >
-          {{ item.status.text }}
+          <block wx:if="{{ item.status.action == 'buy' && item.price !== 0 }}">
+            <view class="coin-icon buy-coin-icon koi-coin">
+              <view class="koi-coin-core">
+                <view class="koi-fish-body"></view>
+                <view class="koi-fish-eye"></view>
+                <view class="koi-fish-fin"></view>
+                <view class="koi-fish-tail tail-top"></view>
+                <view class="koi-fish-tail tail-bottom"></view>
+              </view>
+            </view>
+            <text class="buy-price-text">{{ item.coinPriceText }}</text>
+          </block>
+          <block wx:else>
+            {{ item.status.text }}
+          </block>
         </view>
       </view>
     </view>

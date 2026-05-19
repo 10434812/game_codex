@@ -25,6 +25,7 @@ tryMount('/shop', './shop');
 tryMount('/stats', './stats');
 tryMount('/leaderboard', './leaderboard');
 tryMount('/configs', './configs');
+tryMount('/fortune-bags', './fortune-bags');
 tryMount('/admin', './admin');
 
 module.exports = router;

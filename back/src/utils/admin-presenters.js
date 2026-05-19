@@ -215,12 +215,70 @@ function mapRound(row) {
   };
 }
 
+function parseRawJson(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw;
+  try {
+    return JSON.parse(raw);
+  } catch (_error) {
+    return raw;
+  }
+}
+
+function mapFortuneSource(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    sourceKey: row.source_key || '',
+    parserConfig: parseRawJson(row.parser_config),
+    refreshIntervalSeconds: toNumber(row.refresh_interval_seconds),
+    isActive: toBoolean(row.is_active),
+    lastFetchedAt: formatDateTime(row.last_fetched_at),
+    lastStatus: row.last_status || 'idle',
+    lastError: row.last_error || '',
+    createdAt: formatDateTime(row.created_at),
+    updatedAt: formatDateTime(row.updated_at),
+  };
+}
+
+function mapFortuneSnapshot(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    sourceId: row.source_id,
+    sourceKey: row.source_key || '',
+    metricLabel: row.metric_label || '',
+    metricValue: row.metric_value === null || row.metric_value === undefined ? null : toNumber(row.metric_value),
+    changePercent: row.change_percent === null || row.change_percent === undefined ? null : toNumber(row.change_percent),
+    rawJson: parseRawJson(row.raw_json),
+    observedAt: formatDateTime(row.observed_at),
+    createdAt: formatDateTime(row.created_at),
+  };
+}
+
+function mapFortuneAiReport(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    reportType: row.report_type || 'market_digest',
+    modelProvider: row.model_provider || '',
+    modelName: row.model_name || '',
+    sourceCount: toNumber(row.source_count),
+    rawJson: parseRawJson(row.raw_json),
+    generatedAt: formatDateTime(row.generated_at),
+    createdAt: formatDateTime(row.created_at),
+  };
+}
+
 module.exports = {
   formatDateTime,
   getStageName,
   mapAdmin,
   mapAnnouncement,
   mapConfig,
+  mapFortuneAiReport,
+  mapFortuneSnapshot,
+  mapFortuneSource,
   mapGamePlayer,
   mapGameSession,
   mapItem,

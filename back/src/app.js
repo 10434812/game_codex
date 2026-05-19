@@ -10,6 +10,7 @@ const config = require('./config');
 const routes = require('./routes');
 const errorHandler = require('./middleware/error-handler');
 const initArenaSocket = require('./socket/arena-handler');
+const { startFortuneRealityJob, stopFortuneRealityJob } = require('./jobs/fortune-reality-job');
 
 const app = express();
 
@@ -52,6 +53,11 @@ app.set('io', io);
 
 // Initialize arena socket handlers
 initArenaSocket(io);
+startFortuneRealityJob();
+
+server.on('close', () => {
+  stopFortuneRealityJob();
+});
 
 // ─── Start ───────────────────────────────────────────────
 server.listen(config.port, () => {

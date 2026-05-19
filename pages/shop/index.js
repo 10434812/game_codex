@@ -4,10 +4,12 @@ const gameStore = require('../../utils/game-store');
 const shopStore = require('../../utils/shop-store');
 const userProfile = require('../../utils/user-profile');
 const {DEFAULT_AVATAR} = require('../../utils/constants');
-const {formatCurrency} = require('../../utils/format');
+const {formatNumber} = require('../../utils/format');
 const {playCue, playVibrate} = require('../../utils/audio');
 const runtimeConfig = require('../../utils/runtime-config');
 const {createStageThemeData, resolveAmbientStage, saveStageTheme} = require('../../utils/stage-theme');
+
+const COINS_PER_CNY = 100;
 
 const CATEGORY_OPTIONS = [
   {key: 'skin', label: '皮肤'},
@@ -39,16 +41,27 @@ function buildStatus(item) {
     };
   }
   return {
-    text: `${formatCurrency(item.price)} 购买`,
+    text: formatCoinAmount(item.price),
     action: 'buy',
     disabled: false,
   };
 }
 
+function formatCoinAmount(value) {
+  const amount = Math.max(0, Number(value) || 0);
+  return formatNumber(amount);
+}
+
+function formatWechatAmount(value) {
+  const amount = Math.max(0, Number(value) || 0);
+  return `¥${(amount / COINS_PER_CNY).toFixed(2)}`;
+}
+
 function buildGoods(category) {
   return shopStore.buildGoodsView(category).map((item) => ({
     ...item,
-    priceText: item.price === 0 ? '免费' : formatCurrency(item.price),
+    coinPriceText: item.price === 0 ? '免费' : formatCoinAmount(item.price),
+    cashPriceText: item.price === 0 ? '免费' : formatWechatAmount(item.price),
     status: buildStatus(item),
   }));
 }
@@ -63,7 +76,7 @@ Page({
     categories: CATEGORY_OPTIONS,
     activeCategory: 'skin',
     coins: 0,
-    balanceText: '¥0',
+    balanceText: '0',
     goods: [],
     avatarUrl: '',
     defaultAvatar: DEFAULT_AVATAR,
@@ -98,7 +111,7 @@ Page({
     const payCurrency = runtimeConfig.getValue('wechat.pay_currency', 'CNY');
     this.setData({
       coins: state.coins,
-      balanceText: formatCurrency(state.coins),
+      balanceText: formatCoinAmount(state.coins),
       goods: buildGoods(activeCategory),
       avatarUrl: profile.avatarUrl,
       stageName: theme.stageName,
@@ -110,7 +123,7 @@ Page({
       payStatusText: payEnabled ? '微信支付配置已开启' : '微信支付未开启',
       payHintText: payEnabled
         ? `后台已开启支付配置，默认商品为“${payGoodsDesc}”，结算币种 ${payCurrency}。`
-        : '当前使用幸运金币完成购买，后续可在后台开启微信支付联调。',
+        : '当前使用锦鲤币完成购买，商品右上角同步展示微信支付等价金额。',
     });
   },
   onSwitchCategory(e) {
