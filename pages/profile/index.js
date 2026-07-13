@@ -1,7 +1,7 @@
 const {getNavLayout} = require('../../utils/nav');
 const {DEFAULT_AVATAR} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
-const {getCachedProfile, hasValidProfile, updateProfile, requestUpdate} = require('../../utils/user-profile');
+const {getCachedProfile, hasValidProfile, updateProfile, requestUpdate, uploadAvatar} = require('../../utils/user-profile');
 const {playCue, playVibrate} = require('../../utils/audio');
 const {createStageThemeData, resolveAmbientStage, saveStageTheme} = require('../../utils/stage-theme');
 
@@ -17,6 +17,7 @@ Page({
     draft: getCachedProfile(),
     canSave: false,
     defaultAvatar: DEFAULT_AVATAR,
+    profileUpdating: false,
     stageName: DEFAULT_STAGE_THEME_DATA.stageName,
     stageImage: DEFAULT_STAGE_THEME_DATA.stageImage,
     stageVideo: DEFAULT_STAGE_THEME_DATA.stageVideo,
@@ -46,30 +47,27 @@ Page({
       stageThemeStyle: theme.stageThemeStyle,
     });
   },
-  onRequestWechatProfile() {
+  async onChooseAvatar(e) {
+    if (this.data.profileUpdating) {
+      return;
+    }
     playCue('tap', {volume: 0.7});
     playVibrate('light');
 
-    if (!wx.getUserProfile) {
-      wx.showToast({title: '当前微信版本不支持授权资料', icon: 'none'});
+    const avatarUrl = e && e.detail ? e.detail.avatarUrl : '';
+    if (!avatarUrl) {
+      wx.showToast({title: '未选择头像', icon: 'none'});
       return;
     }
 
-    wx.getUserProfile({
-      desc: '用于完善游戏头像和昵称',
-      success: (res) => {
-        const info = res && res.userInfo ? res.userInfo : {};
-        const updated = updateProfile({
-          nickName: info.nickName,
-          avatarUrl: info.avatarUrl,
-        });
-        this.setData({draft: updated, canSave: hasValidProfile(updated)});
-        requestUpdate({nickName: updated.nickName, avatarUrl: updated.avatarUrl}).catch(() => {});
-      },
-      fail: () => {
-        wx.showToast({title: '未获取微信资料', icon: 'none'});
-      },
-    });
+    const updated = updateProfile({ avatarUrl });
+    this.setData({draft: updated, canSave: hasValidProfile(updated), profileUpdating: true});
+    try {
+      const profile = await uploadAvatar(avatarUrl);
+      this.setData({draft: profile, canSave: hasValidProfile(profile)});
+    } finally {
+      this.setData({profileUpdating: false});
+    }
   },
   onNicknameInput(e) {
     const value = String((e.detail && e.detail.value) || '').trim();

@@ -64,6 +64,28 @@ function assignIfChanged(patch, currentData, key, value) {
   }
 }
 
+function buildArenaRealtimeUrl(sessionId) {
+  const baseUrl = api.getBaseUrl();
+  const wsBase = baseUrl
+    .replace(/^https:\/\//, 'wss://')
+    .replace(/^http:\/\//, 'ws://')
+    .replace(/\/api$/, '');
+  const query = [
+    `sessionId=${encodeURIComponent(sessionId)}`,
+    `token=${encodeURIComponent(api.getToken())}`,
+  ].join('&');
+  return `${wsBase}/ws/arena?${query}`;
+}
+
+function parseRealtimePayload(raw) {
+  try {
+    const text = typeof raw === 'string' ? raw : String(raw || '');
+    return JSON.parse(text);
+  } catch (_err) {
+    return null;
+  }
+}
+
 let arenaSessionId = '';
 
 Page({
@@ -144,7 +166,8 @@ Page({
     arenaSessionId = (currentPage.options || {}).sessionId || '';
 
     if (arenaSessionId) {
-      this.startArenaPolling(arenaSessionId);
+      this.localMode = false;
+      this.connectArenaRealtime(arenaSessionId);
     } else {
       // Local mode: subscribe to gameStore for state updates
       this.localMode = true;
@@ -171,6 +194,7 @@ Page({
     fortuneReality.fetchFortuneReality(false).catch(() => {});
   },
   onHide() {
+    this.clearArenaRealtime();
     this.clearArenaPolling();
     this.clearInviteTimers();
     this.clearBagTimers();
@@ -188,6 +212,7 @@ Page({
     this.unsubscribeStore();
   },
   onUnload() {
+    this.clearArenaRealtime();
     this.clearArenaPolling();
     this.clearInviteTimers();
     this.clearBagTimers();
@@ -228,6 +253,83 @@ Page({
   onGuideBagPrimary() {
     this.onTapFortuneBag();
   },
+  connectArenaRealtime(sessionId) {
+    this.clearArenaRealtime();
+    if (!sessionId || !api.getToken() || typeof wx.connectSocket !== 'function') {
+      this.startArenaPolling(sessionId);
+      return;
+    }
+
+    this.arenaRealtimeClosedByPage = false;
+    const socketTask = wx.connectSocket({
+      url: buildArenaRealtimeUrl(sessionId),
+    });
+    this.arenaSocketTask = socketTask;
+
+    this.arenaRealtimeFallbackTimer = setTimeout(() => {
+      if (!this.arenaRealtimeConnected && String(sessionId) === String(arenaSessionId)) {
+        this.startArenaPolling(sessionId);
+      }
+    }, 1200);
+
+    socketTask.onOpen(() => {
+      if (String(sessionId) !== String(arenaSessionId)) {
+        return;
+      }
+      this.arenaRealtimeConnected = true;
+      if (this.arenaRealtimeFallbackTimer) {
+        clearTimeout(this.arenaRealtimeFallbackTimer);
+        this.arenaRealtimeFallbackTimer = null;
+      }
+      this.clearArenaPolling();
+    });
+
+    socketTask.onMessage((event) => {
+      this.handleArenaRealtimeMessage(event && event.data, sessionId);
+    });
+
+    const fallbackToPolling = () => {
+      this.arenaRealtimeConnected = false;
+      if (!this.arenaRealtimeClosedByPage && String(sessionId) === String(arenaSessionId)) {
+        this.startArenaPolling(sessionId);
+      }
+    };
+    socketTask.onError(fallbackToPolling);
+    socketTask.onClose(fallbackToPolling);
+  },
+  handleArenaRealtimeMessage(raw, sessionId) {
+    if (String(sessionId) !== String(arenaSessionId)) {
+      return;
+    }
+    const message = parseRealtimePayload(raw);
+    if (!message || !message.event) {
+      return;
+    }
+    if (message.event === 'game_state') {
+      const state = message.data || {};
+      if (state.status === 'finished') {
+        guideStore.advanceTo(guideStore.GUIDE_STEPS.RESULT);
+        this.clearBagTimers();
+        this.clearEmoteTimers();
+        this.clearArenaRealtime();
+        this.clearArenaPolling();
+        wx.redirectTo({url: `/pages/result/index?sessionId=${sessionId}`});
+        return;
+      }
+      if (Array.isArray(state.players) && Array.isArray(state.teams)) {
+        this.syncArena(state);
+      }
+      return;
+    }
+    if (message.event === 'game_finished') {
+      guideStore.advanceTo(guideStore.GUIDE_STEPS.RESULT);
+      this.clearBagTimers();
+      this.clearEmoteTimers();
+      this.clearArenaRealtime();
+      this.clearArenaPolling();
+      wx.redirectTo({url: `/pages/result/index?sessionId=${sessionId}`});
+    }
+  },
   startArenaPolling(sessionId) {
     this.clearArenaPolling();
     this.fetchArenaState(sessionId);
@@ -264,6 +366,20 @@ Page({
       clearInterval(this.arenaPollTimer);
       this.arenaPollTimer = null;
     }
+  },
+  clearArenaRealtime() {
+    if (this.arenaRealtimeFallbackTimer) {
+      clearTimeout(this.arenaRealtimeFallbackTimer);
+      this.arenaRealtimeFallbackTimer = null;
+    }
+    this.arenaRealtimeConnected = false;
+    this.arenaRealtimeClosedByPage = true;
+    if (this.arenaSocketTask && typeof this.arenaSocketTask.close === 'function') {
+      try {
+        this.arenaSocketTask.close();
+      } catch (_err) {}
+    }
+    this.arenaSocketTask = null;
   },
   sendEmoteToBackend(emoteId) {
     if (!arenaSessionId || !emoteId) {
@@ -481,6 +597,9 @@ Page({
   },
   scheduleRemoteEmote() {
     this.clearRemoteEmoteTimer();
+    if (!this.localMode) {
+      return;
+    }
     const state = gameStore.getState();
     if (!state || state.status !== 'playing') {
       return;

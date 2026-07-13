@@ -92,7 +92,7 @@ async function createRoom(userId, stageId) {
     await connection.commit();
 
     // Fetch the created room and player list
-    return getRoom(roomId);
+    return getRoom(roomId, userId);
   } catch (err) {
     await connection.rollback();
     throw err;
@@ -107,16 +107,37 @@ async function createRoom(userId, stageId) {
  * @param {number} roomId
  * @returns {Promise<Object>} { room, players[] }
  */
-async function getRoom(roomId) {
+async function getRoom(roomId, viewerUserId) {
   const room = await db.queryOne('SELECT * FROM rooms WHERE id = ?', [roomId]);
 
   if (!room) {
     return null;
   }
 
-  const players = await getPlayers(roomId);
+  const players = await getPlayers(roomId, viewerUserId);
+  let sessionId = null;
 
-  return { room, players };
+  if (room.status === 'playing' || room.status === 'finished') {
+    const session = await db.queryOne(
+      'SELECT id FROM game_sessions WHERE room_id = ? ORDER BY id DESC LIMIT 1',
+      [roomId]
+    );
+    sessionId = session ? session.id : null;
+  }
+
+  return { room, players, sessionId };
+}
+
+async function getRoomByCode(roomCode, viewerUserId) {
+  const normalizedCode = String(roomCode || '').trim();
+  if (!normalizedCode) {
+    return null;
+  }
+  const room = await db.queryOne('SELECT id FROM rooms WHERE room_code = ?', [normalizedCode]);
+  if (!room) {
+    return null;
+  }
+  return getRoom(room.id, viewerUserId);
 }
 
 /**
@@ -165,13 +186,12 @@ async function joinRoom(roomId, userId) {
     throw Object.assign(new Error('房间已满'), { statusCode: 400 });
   }
 
-  // Validate user not already in room
   const existing = await db.queryOne(
     'SELECT id FROM room_players WHERE room_id = ? AND user_id = ?',
     [roomId, userId]
   );
   if (existing) {
-    throw Object.assign(new Error('你已在房间中'), { statusCode: 400 });
+    return getRoom(roomId);
   }
 
   const connection = await db.pool.getConnection();
@@ -205,7 +225,15 @@ async function joinRoom(roomId, userId) {
     connection.release();
   }
 
-  return getRoom(roomId);
+  return getRoom(roomId, userId);
+}
+
+async function joinRoomByCode(roomCode, userId) {
+  const room = await db.queryOne('SELECT id FROM rooms WHERE room_code = ?', [String(roomCode || '').trim()]);
+  if (!room) {
+    throw Object.assign(new Error('房间不存在'), { statusCode: 404 });
+  }
+  return joinRoom(room.id, userId);
 }
 
 /**
@@ -285,7 +313,7 @@ async function leaveRoom(roomId, userId) {
     await connection.commit();
 
     // Return updated room state
-    const updated = await getRoom(roomId);
+    const updated = await getRoom(roomId, userId);
     return { roomId, removed: false, ...updated };
   } catch (err) {
     await connection.rollback();
@@ -328,7 +356,7 @@ async function toggleReady(roomId, userId) {
     [newReady, roomId, userId]
   );
 
-  return getRoom(roomId);
+  return getRoom(roomId, userId);
 }
 
 /**
@@ -353,8 +381,8 @@ async function startGame(roomId, userId) {
   }
 
   // Validate min players
-  if (room.current_players < MIN_PLAYERS) {
-    throw Object.assign(new Error(`至少需要${MIN_PLAYERS}名玩家才能开始`), {
+  if (room.current_players < 1) {
+    throw Object.assign(new Error('房间内至少需要1名玩家才能开始'), {
       statusCode: 400,
     });
   }
@@ -387,7 +415,7 @@ async function startGame(roomId, userId) {
         INITIAL_SCORE_RANGE.max
       );
       await connection.execute(
-        `INSERT INTO game_players (session_id, user_id, seat, team_id, initial_score, final_score, rank, coins_earned)
+        `INSERT INTO game_players (session_id, user_id, seat, team_id, initial_score, final_score, \`rank\`, coins_earned)
          VALUES (?, ?, ?, NULL, ?, 0, NULL, 0)`,
         [sessionId, rp.user_id, rp.seat, initialScore]
       );
@@ -416,22 +444,25 @@ async function startGame(roomId, userId) {
  * @param {number} roomId
  * @returns {Promise<Array>}
  */
-async function getPlayers(roomId) {
+async function getPlayers(roomId, viewerUserId) {
   const sql = `
-    SELECT rp.*, u.nick_name, u.avatar_url
+    SELECT rp.*, u.nick_name, u.avatar_url,
+           CASE WHEN rp.user_id = ? THEN 1 ELSE 0 END AS is_self
     FROM room_players rp
     JOIN users u ON u.id = rp.user_id
     WHERE rp.room_id = ?
     ORDER BY rp.seat ASC
   `;
-  return db.queryAll(sql, [roomId]);
+  return db.queryAll(sql, [Number(viewerUserId) || 0, roomId]);
 }
 
 module.exports = {
   createRoom,
   getRoom,
+  getRoomByCode,
   listAvailableRooms,
   joinRoom,
+  joinRoomByCode,
   leaveRoom,
   toggleReady,
   startGame,

@@ -25,28 +25,28 @@ test('formatNumber 对非数字值返回 "0"', () => {
   assert.equal(formatNumber(NaN), '0');
 });
 
-test('formatCurrency 默认格式化为 ¥ 前缀', () => {
-  assert.equal(formatCurrency(100), '¥100');
-  assert.equal(formatCurrency(1234), '¥1,234');
+test('formatCurrency 默认格式化为锦鲤币前缀', () => {
+  assert.equal(formatCurrency(100), '🐟锦鲤币 100');
+  assert.equal(formatCurrency(1234), '🐟锦鲤币 1,234');
 });
 
 test('formatCurrency 对负数显示减号前缀', () => {
-  assert.equal(formatCurrency(-50), '-¥50');
-  assert.equal(formatCurrency(-1234), '-¥1,234');
+  assert.equal(formatCurrency(-50), '-🐟锦鲤币 50');
+  assert.equal(formatCurrency(-1234), '-🐟锦鲤币 1,234');
 });
 
 test('formatCurrency showSign 对正数显示加号', () => {
-  assert.equal(formatCurrency(100, {showSign: true}), '+¥100');
+  assert.equal(formatCurrency(100, {showSign: true}), '+🐟锦鲤币 100');
 });
 
 test('formatCurrency showSign 对负数和零不显示加号', () => {
-  assert.equal(formatCurrency(-50, {showSign: true}), '-¥50');
-  assert.equal(formatCurrency(0, {showSign: true}), '¥0');
+  assert.equal(formatCurrency(-50, {showSign: true}), '-🐟锦鲤币 50');
+  assert.equal(formatCurrency(0, {showSign: true}), '🐟锦鲤币 0');
 });
 
-test('formatCurrency 对 null 和 undefined 返回 "¥0"', () => {
-  assert.equal(formatCurrency(null), '¥0');
-  assert.equal(formatCurrency(undefined), '¥0');
+test('formatCurrency 对 null 和 undefined 返回 "🐟锦鲤币 0"', () => {
+  assert.equal(formatCurrency(null), '🐟锦鲤币 0');
+  assert.equal(formatCurrency(undefined), '🐟锦鲤币 0');
 });
 
 test('formatDateTime 把 timestamp 格式化为 YYYY-MM-DD HH:mm', () => {

@@ -3,10 +3,18 @@ const { mapConfig } = require('../utils/admin-presenters');
 const config = require('../config');
 const { CONFIG_DEFINITIONS, CONFIG_DEFINITION_MAP } = require('../config/system-config-definitions');
 
+const CONFIG_EXPORT_SCHEMA_VERSION = 1;
 const CAPABILITY_FIELDS = {
   login: ['wechat.login_app_id', 'wechat.login_secret', 'wechat.login_agreement_url', 'wechat.login_privacy_url'],
   share: ['wechat.share_title', 'wechat.share_path', 'wechat.share_image_url', 'wechat.share_timeline_title'],
-  payment: ['wechat.pay_mch_id', 'wechat.pay_api_v3_key', 'wechat.pay_notify_url', 'wechat.pay_goods_desc'],
+  payment: [
+    'wechat.pay_mch_id',
+    'wechat.pay_api_v3_key',
+    'wechat.pay_private_key',
+    'wechat.pay_cert_serial_no',
+    'wechat.pay_notify_url',
+    'wechat.pay_goods_desc',
+  ],
   fortune: ['fortune.reality_enabled', 'fortune.public_signal_limit', 'fortune.refresh_interval_seconds'],
   aiDigest: ['ai.base_url', 'ai.api_key', 'ai.model'],
 };
@@ -148,6 +156,82 @@ async function updateConfigs(configs, adminId) {
   return results;
 }
 
+function normalizeImportPayload(payload) {
+  const source = payload && typeof payload === 'object' && payload.configs !== undefined
+    ? payload.configs
+    : payload;
+
+  if (Array.isArray(source)) {
+    return source.map((item) => ({
+      key: item && item.key,
+      value: item && item.value,
+    }));
+  }
+
+  if (source && typeof source === 'object') {
+    return Object.entries(source).map(([key, value]) => ({ key, value }));
+  }
+
+  throw new Error('CONFIG_IMPORT_PAYLOAD_INVALID');
+}
+
+function prepareImportConfigs(payload) {
+  const incoming = normalizeImportPayload(payload);
+  const skipped = [];
+  const deduped = new Map();
+
+  for (const item of incoming) {
+    const key = String(item.key || '').trim();
+    if (!key || !CONFIG_DEFINITION_MAP[key]) {
+      skipped.push({ key: key || '', reason: 'unknown_config_key' });
+      continue;
+    }
+    deduped.set(key, {
+      key,
+      value: normalizeConfigValue(item.value, CONFIG_DEFINITION_MAP[key]),
+    });
+  }
+
+  const configs = Array.from(deduped.values());
+  if (configs.length === 0) {
+    throw new Error('CONFIG_IMPORT_EMPTY');
+  }
+
+  return { configs, skipped };
+}
+
+async function exportConfigs() {
+  const configs = await getAllConfigs();
+  return {
+    schemaVersion: CONFIG_EXPORT_SCHEMA_VERSION,
+    app: 'game_codex',
+    exportedAt: new Date().toISOString(),
+    warning: 'This file may contain sensitive server-only secrets. Keep it private.',
+    totalConfigs: configs.length,
+    configs: configs.map((item) => ({
+      key: item.key,
+      value: item.value,
+      description: item.description,
+      valueType: item.valueType,
+      group: item.group,
+      isPublic: item.isPublic,
+      isSensitive: item.isSensitive,
+    })),
+  };
+}
+
+async function importConfigs(payload, adminId) {
+  const { configs, skipped } = prepareImportConfigs(payload);
+  const imported = await updateConfigs(configs, adminId);
+
+  return {
+    importedCount: imported.length,
+    skippedCount: skipped.length,
+    skipped,
+    configs: imported,
+  };
+}
+
 async function getPublicConfigs() {
   const publicKeys = CONFIG_DEFINITIONS
     .filter((item) => item.isPublic)
@@ -211,9 +295,16 @@ async function getAdminConfigSummary() {
 module.exports = {
   getAllConfigs,
   getConfig,
+  getConfigMap,
   updateConfig,
   updateConfigs,
   getPublicConfigs,
   getWechatLoginSettings,
   getAdminConfigSummary,
+  exportConfigs,
+  importConfigs,
+  __private: {
+    normalizeImportPayload,
+    prepareImportConfigs,
+  },
 };

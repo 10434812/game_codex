@@ -52,4 +52,36 @@ router.get('/:id/result', auth, async (req, res) => {
   }
 });
 
+router.post('/:id/emotes', auth, async (req, res) => {
+  try {
+    const sessionId = Number(req.params.id);
+    if (!sessionId) {
+      return res.status(400).json(fail('无效的对局ID', 400));
+    }
+
+    const { emoteId } = req.body || {};
+    if (!emoteId) {
+      return res.status(400).json(fail('缺少表情参数', 400));
+    }
+
+    const activeGame = gameService.getActiveGame(sessionId);
+    if (!activeGame || activeGame.status !== 'playing') {
+      return res.status(400).json(fail('对局未进行中', 400));
+    }
+
+    const arenaRealtime = req.app.get('arenaRealtime');
+    if (arenaRealtime && typeof arenaRealtime.emitToSession === 'function') {
+      arenaRealtime.emitToSession(sessionId, 'emote_broadcast', {
+        fromUserId: req.user.userId,
+        emoteId: String(emoteId),
+      });
+    }
+
+    return res.json(success({ accepted: true }));
+  } catch (err) {
+    console.error('[Game Emote]', err);
+    res.status(500).json(fail('发送表情失败', 500));
+  }
+});
+
 module.exports = router;

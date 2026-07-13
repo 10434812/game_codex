@@ -35,13 +35,22 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
+function getUploadBaseUrl(req) {
+  if (process.env.CDN_BASE_URL) {
+    return process.env.CDN_BASE_URL;
+  }
+  const host = req.get('x-forwarded-host') || req.get('host') || `localhost:${process.env.PORT || 3000}`;
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
+  return `${proto}://${host}`;
+}
+
 // POST /api/user/avatar - Upload avatar image
 router.post('/avatar', avatarUpload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json(fail('请选择头像文件', 400));
     }
-    const baseUrl = process.env.CDN_BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+    const baseUrl = getUploadBaseUrl(req);
     const avatarUrl = uploadService.buildAvatarUrl(req.file.filename, { baseUrl });
     const profile = await userService.updateProfile(req.user.userId, { avatarUrl });
     res.json(success(profile, '头像上传成功'));

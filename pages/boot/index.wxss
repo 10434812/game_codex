@@ -14,6 +14,17 @@
   padding: 0;
 }
 
+.app-header {
+  color: #fff4d6;
+  text-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.82);
+}
+
+.splash-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+}
+
 .boot-video {
   position: absolute;
   left: 0;

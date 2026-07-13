@@ -4,7 +4,9 @@ function getNavLayout() {
   let menu = { top: 26, height: 32, left: 281, width: 87 }; // 微信胶囊按钮的默认位置参数
 
   try {
-    const sys = wx.getSystemInfoSync();
+    const sys = typeof wx.getWindowInfo === 'function'
+      ? wx.getWindowInfo()
+      : wx.getSystemInfoSync();
     statusBarHeight = sys.statusBarHeight || statusBarHeight;
     windowWidth = sys.windowWidth || windowWidth;
   } catch (e) {}

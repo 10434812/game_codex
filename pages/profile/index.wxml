@@ -38,19 +38,21 @@
     <view class="scene-layer profile-scene-layer">
     <view class="card profile-card">
       <view class="avatar-section">
-        <button class="avatar-picker" bindtap="onRequestWechatProfile">
-          <image wx:if="{{draft.avatarUrl}}" class="picked-avatar" src="{{draft.avatarUrl}}" mode="aspectFill"></image>
-          <image wx:elif="{{defaultAvatar}}" class="picked-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
-          <view wx:else class="picked-avatar empty">+</view>
+        <button class="profile-auth-button" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" loading="{{profileUpdating}}" disabled="{{profileUpdating}}">
+          <view class="avatar-picker">
+            <image wx:if="{{draft.avatarUrl}}" class="picked-avatar" src="{{draft.avatarUrl}}" mode="aspectFill"></image>
+            <image wx:elif="{{defaultAvatar}}" class="picked-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
+            <view wx:else class="picked-avatar empty">+</view>
+          </view>
+          <view class="helper">{{profileUpdating ? '正在上传头像...' : '选择微信头像'}}</view>
         </button>
-        <view class="helper">点击授权微信头像昵称</view>
       </view>
 
       <view class="form-section">
         <input
           class="nickname-input"
-          type="text"
-          placeholder="授权后可微调昵称"
+          type="nickname"
+          placeholder="选择或填写微信昵称"
           value="{{draft.nickName}}"
           bindinput="onNicknameInput"
           bindblur="onNicknameInput"

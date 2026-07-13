@@ -11,10 +11,29 @@
 }
 
 .summary-main {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
   color: var(--stage-primary, #e57c1f);
-  font-size: 56rpx;
+  font-size: 42rpx;
   font-weight: 900;
   line-height: 1.08;
+}
+
+.summary-main .currency-unit {
+  font-size: inherit;
+  font-weight: 900;
+}
+
+.summary-main .currency-amount {
+  font-size: inherit;
+}
+
+.summary-main .currency-icon {
+  display: block;
+  width: 40rpx;
+  height: 40rpx;
+  flex-shrink: 0;
 }
 
 .summary-sub {
@@ -97,6 +116,8 @@
 .record-income {
   color: var(--stage-primary, #d97712);
   font-weight: 800;
+  text-align: right;
+  word-break: keep-all;
 }
 
 .empty-state {

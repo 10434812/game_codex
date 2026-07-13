@@ -45,12 +45,12 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const roomId = parseInt(req.params.id, 10);
-    if (isNaN(roomId)) {
+    const roomId = String(req.params.id || '').trim();
+    if (!roomId) {
       return res.status(400).json(fail('无效的房间ID'));
     }
 
-    const result = await roomService.getRoom(roomId);
+    const result = await roomService.getRoom(roomId, req.user.userId);
     if (!result) {
       return res.status(404).json(fail('房间不存在', 404));
     }
@@ -63,12 +63,28 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * GET /api/rooms/code/:code — Get room details by room code
+ */
+router.get('/code/:code', async (req, res) => {
+  try {
+    const result = await roomService.getRoomByCode(req.params.code, req.user.userId);
+    if (!result) {
+      return res.status(404).json(fail('房间不存在', 404));
+    }
+    return res.json(success(result));
+  } catch (err) {
+    console.error('[rooms] getRoomByCode error:', err);
+    return res.status(500).json(fail('获取房间信息失败'));
+  }
+});
+
+/**
  * POST /api/rooms/:id/join — Join a room
  */
 router.post('/:id/join', async (req, res) => {
   try {
-    const roomId = parseInt(req.params.id, 10);
-    if (isNaN(roomId)) {
+    const roomId = String(req.params.id || '').trim();
+    if (!roomId) {
       return res.status(400).json(fail('无效的房间ID'));
     }
 
@@ -81,12 +97,25 @@ router.post('/:id/join', async (req, res) => {
 });
 
 /**
+ * POST /api/rooms/code/:code/join — Join a room by room code
+ */
+router.post('/code/:code/join', async (req, res) => {
+  try {
+    const result = await roomService.joinRoomByCode(req.params.code, req.user.userId);
+    return res.json(success(result, '加入房间成功'));
+  } catch (err) {
+    console.error('[rooms] joinRoomByCode error:', err);
+    return res.status(err.statusCode || 500).json(fail(err.message));
+  }
+});
+
+/**
  * POST /api/rooms/:id/leave — Leave a room
  */
 router.post('/:id/leave', async (req, res) => {
   try {
-    const roomId = parseInt(req.params.id, 10);
-    if (isNaN(roomId)) {
+    const roomId = String(req.params.id || '').trim();
+    if (!roomId) {
       return res.status(400).json(fail('无效的房间ID'));
     }
 
@@ -103,8 +132,8 @@ router.post('/:id/leave', async (req, res) => {
  */
 router.post('/:id/ready', async (req, res) => {
   try {
-    const roomId = parseInt(req.params.id, 10);
-    if (isNaN(roomId)) {
+    const roomId = String(req.params.id || '').trim();
+    if (!roomId) {
       return res.status(400).json(fail('无效的房间ID'));
     }
 
@@ -121,17 +150,17 @@ router.post('/:id/ready', async (req, res) => {
  */
 router.post('/:id/start', async (req, res) => {
   try {
-    const roomId = parseInt(req.params.id, 10);
-    if (isNaN(roomId)) {
+    const roomId = String(req.params.id || '').trim();
+    if (!roomId) {
       return res.status(400).json(fail('无效的房间ID'));
     }
 
     const result = await roomService.startGame(roomId, req.user.userId);
 
-    const io = req.app.get('io');
-    if (io && result && result.sessionId) {
+    const arenaRealtime = req.app.get('arenaRealtime');
+    if (arenaRealtime && result && result.sessionId) {
       const gameService = require('../services/game-service');
-      gameService.startGameSession(result.roomId, req.user.userId, io).catch(err => {
+      gameService.startGameSession(result.roomId, req.user.userId, arenaRealtime).catch(err => {
         console.error('[rooms] startTickLoop error:', err);
       });
     }

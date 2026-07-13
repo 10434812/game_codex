@@ -151,6 +151,30 @@
   line-height: 1.05;
 }
 
+.value.gold {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 46rpx;
+  white-space: nowrap;
+}
+
+.currency-amount {
+  font-size: inherit;
+}
+
+.currency-unit {
+  font-size: inherit;
+  font-weight: 900;
+}
+
+.currency-icon {
+  display: block;
+  width: 44rpx;
+  height: 44rpx;
+  flex-shrink: 0;
+}
+
 .gold {
   color: var(--stage-primary, #d97712);
 }

@@ -66,6 +66,45 @@ function buildGoods(category) {
   }));
 }
 
+function requestWechatPayment(payment) {
+  return new Promise((resolve, reject) => {
+    if (!wx.requestPayment) {
+      reject(new Error('当前环境不支持微信支付'));
+      return;
+    }
+    wx.requestPayment({
+      ...payment,
+      success: resolve,
+      fail: (err) => {
+        reject(new Error((err && err.errMsg) || '微信支付取消或失败'));
+      },
+    });
+  });
+}
+
+function choosePurchaseMethod(item) {
+  return new Promise((resolve, reject) => {
+    if (!wx.showActionSheet) {
+      resolve('coin');
+      return;
+    }
+    wx.showActionSheet({
+      itemList: [`锦鲤币购买 ${formatCoinAmount(item.price)}`, `微信支付 ${formatWechatAmount(item.price)}`],
+      success(res) {
+        resolve(res.tapIndex === 1 ? 'wechat' : 'coin');
+      },
+      fail(err) {
+        const message = err && err.errMsg ? err.errMsg : '';
+        if (message.includes('cancel')) {
+          resolve('');
+          return;
+        }
+        reject(new Error(message || '请选择支付方式'));
+      },
+    });
+  });
+}
+
 Page({
   data: {
     nav: {
@@ -87,7 +126,7 @@ Page({
     stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
     payEnabled: false,
     payStatusText: '微信支付未开启',
-    payHintText: '当前使用幸运金币完成购买，后续可在后台开启微信支付联调。',
+    payHintText: '当前使用锦鲤币完成购买，后续可在后台开启微信支付联调。',
   },
   onLoad() {
     try {
@@ -107,7 +146,7 @@ Page({
     const profile = userProfile.getCachedProfile();
     const activeCategory = this.data.activeCategory || 'skin';
     const payEnabled = runtimeConfig.getBoolean('wechat.pay_enabled', false);
-    const payGoodsDesc = runtimeConfig.getValue('wechat.pay_goods_desc', '锦鲤前程幸运金币充值');
+    const payGoodsDesc = runtimeConfig.getValue('wechat.pay_goods_desc', '锦鲤前程锦鲤币充值');
     const payCurrency = runtimeConfig.getValue('wechat.pay_currency', 'CNY');
     this.setData({
       coins: state.coins,
@@ -145,10 +184,26 @@ Page({
     if (!category || !itemId || !action || action === 'equipped') {
       return;
     }
+    const item = this.data.goods.find((goodsItem) => goodsItem.id === itemId);
+    let hasApiSession = api.isLoggedIn();
+    if (!hasApiSession && action === 'buy' && this.data.payEnabled && item && item.price > 0) {
+      await userProfile.login();
+      hasApiSession = api.isLoggedIn();
+    }
 
     // Try API first
-    if (api.isLoggedIn()) {
+    if (hasApiSession) {
       if (action === 'buy') {
+        if (this.data.payEnabled && item && item.price > 0) {
+          const method = await choosePurchaseMethod(item);
+          if (!method) {
+            return;
+          }
+          if (method === 'wechat') {
+            await this.startWechatPayment(itemId);
+            return;
+          }
+        }
         const apiSuccess = await shopStore.buyViaApi(itemId);
         if (apiSuccess) {
           playCue('pairSelf', {volume: 0.8});
@@ -166,6 +221,9 @@ Page({
           return;
         }
       }
+    } else if (action === 'buy' && this.data.payEnabled && item && item.price > 0) {
+      wx.showToast({title: '请先完成微信登录', icon: 'none'});
+      return;
     }
 
     // Fall back to local
@@ -188,6 +246,38 @@ Page({
 
     wx.showToast({title: result.message || '操作已完成', icon: 'none'});
     this.syncPage();
+  },
+  async startWechatPayment(itemId) {
+    let loadingVisible = false;
+    const showPaymentLoading = (title) => {
+      wx.showLoading({title});
+      loadingVisible = true;
+    };
+    const hidePaymentLoading = () => {
+      if (loadingVisible) {
+        wx.hideLoading();
+        loadingVisible = false;
+      }
+    };
+
+    try {
+      showPaymentLoading('正在拉起支付');
+      const order = await api.post('/payments/wechat/jsapi', {itemId});
+      hidePaymentLoading();
+      await requestWechatPayment(order.payment);
+      showPaymentLoading('正在确认支付');
+      await api.post(`/payments/wechat/orders/${order.orderNo}/sync`);
+      await shopStore.refreshInventory();
+      hidePaymentLoading();
+      playCue('pairSelf', {volume: 0.8});
+      playVibrate('medium');
+      wx.showToast({title: '支付成功', icon: 'success'});
+      this.syncPage();
+    } catch (err) {
+      hidePaymentLoading();
+      playCue('actionFail', {volume: 0.7});
+      wx.showToast({title: (err && err.message) || '支付未完成', icon: 'none'});
+    }
   },
   onBack() {
     playCue('tap', {volume: 0.6});

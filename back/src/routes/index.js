@@ -7,25 +7,21 @@ router.get('/health', (_req, res) => {
   res.json({ code: 0, message: 'ok', data: { status: 'healthy', timestamp: Date.now() } });
 });
 
-// Mount route modules (lazy require to avoid startup failures on first pass)
-const tryMount = (path, name) => {
-  try {
-    router.use(path, require(name));
-    console.log(`[Routes] Mounted /api${path}`);
-  } catch (err) {
-    console.warn(`[Routes] Skipped /api${path} (${err.message})`);
-  }
+const mount = (path, name) => {
+  router.use(path, require(name));
+  console.log(`[Routes] Mounted /api${path}`);
 };
 
-tryMount('/auth', './auth');
-tryMount('/user', './user');
-tryMount('/rooms', './rooms');
-tryMount('/games', './games');
-tryMount('/shop', './shop');
-tryMount('/stats', './stats');
-tryMount('/leaderboard', './leaderboard');
-tryMount('/configs', './configs');
-tryMount('/fortune-bags', './fortune-bags');
-tryMount('/admin', './admin');
+mount('/auth', './auth');
+mount('/user', './user');
+mount('/rooms', './rooms');
+mount('/games', './games');
+mount('/shop', './shop');
+mount('/payments', './payments');
+mount('/stats', './stats');
+mount('/leaderboard', './leaderboard');
+mount('/configs', './configs');
+mount('/fortune-bags', './fortune-bags');
+mount('/admin', './admin');
 
 module.exports = router;

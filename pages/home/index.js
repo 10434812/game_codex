@@ -54,7 +54,16 @@ Page({
     defaultAvatar: DEFAULT_AVATAR,
     guideVisible: false,
   },
-  onLoad() {
+  onLoad(options = {}) {
+    if (options && options.scene === 'room' && (options.backendRoomId || options.roomId)) {
+      const query = [
+        options.backendRoomId ? `backendRoomId=${encodeURIComponent(options.backendRoomId)}` : '',
+        options.roomId ? `roomId=${encodeURIComponent(options.roomId)}` : '',
+        'scene=room',
+      ].filter(Boolean).join('&');
+      wx.redirectTo({url: `/pages/room/index?${query}`});
+      return;
+    }
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}

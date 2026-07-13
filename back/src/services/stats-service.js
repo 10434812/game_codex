@@ -60,7 +60,7 @@ async function getHistory(userId, page = 1, limit = 20) {
        gp.team_id AS teamId,
        gp.initial_score AS initialScore,
        gp.final_score AS finalScore,
-       gp.rank,
+       gp.\`rank\` AS \`rank\`,
        gp.coins_earned AS coinsEarned,
        gs.stage_id AS stageId,
        gs.duration,

@@ -26,6 +26,33 @@ function findStageById(stageId) {
   return STAGES.find((stage) => Number(stage.id) === id) || null;
 }
 
+function createInitialScore(random = Math.random) {
+  return Math.floor(INITIAL_SCORE_RANGE.min + random() * (INITIAL_SCORE_RANGE.max - INITIAL_SCORE_RANGE.min + 1));
+}
+
+function buildEnginePlayers(roomPlayers, userMap = {}, options = {}) {
+  const random = typeof options.random === 'function' ? options.random : Math.random;
+  return (roomPlayers || []).map((rp) => {
+    const user = userMap[rp.user_id] || {};
+    return {
+      id: String(rp.user_id),
+      name: user.nick_name || 'Player',
+      avatar: user.avatar_url || '',
+      isRobot: false,
+      isSelf: rp.is_host ? true : false,
+      seat: rp.seat,
+      score: createInitialScore(random),
+      teamId: null,
+      ready: true,
+      state: rp.is_host ? '房主·已准备' : '已就绪',
+    };
+  });
+}
+
+function fillArenaPlayers(players, options = {}) {
+  return engine.ensureMinimumPlayers(players, options);
+}
+
 function isViewerPlayer(player, viewerUserId) {
   if (viewerUserId === undefined || viewerUserId === null || viewerUserId === '') {
     return !!(player && player.isSelf);
@@ -49,6 +76,26 @@ function mapStatePlayer(player, viewerUserId) {
     isSelf: isViewerPlayer(player, viewerUserId),
     state: player.state || '',
   };
+}
+
+function buildOnlinePlayers(roomPlayers, userMap) {
+  const realPlayers = (roomPlayers || []).map((rp) => {
+    const user = userMap[rp.user_id] || {};
+    return {
+      id: String(rp.user_id),
+      name: user.nick_name || 'Player',
+      avatar: user.avatar_url || '',
+      isRobot: false,
+      isSelf: false,
+      seat: rp.seat,
+      score: Math.floor(INITIAL_SCORE_RANGE.min + Math.random() * (INITIAL_SCORE_RANGE.max - INITIAL_SCORE_RANGE.min + 1)),
+      teamId: null,
+      ready: true,
+      state: rp.is_host ? '房主·已准备' : '已就绪',
+    };
+  });
+
+  return engine.ensureMinimumPlayers(realPlayers);
 }
 
 function mapResultPlayer(player, viewerUserId) {
@@ -160,8 +207,6 @@ async function startGameSession(roomId, hostUserId, io) {
     'SELECT * FROM room_players WHERE room_id = ? ORDER BY seat ASC',
     [roomId]
   );
-  if (roomPlayers.length < MIN_PLAYERS) throw new Error('Not enough players');
-
   // 3. Get user details (nick_name, avatar_url)
   const userIds = roomPlayers.map((p) => p.user_id);
   const userDetails = await db.queryAll(
@@ -187,21 +232,7 @@ async function startGameSession(roomId, hostUserId, io) {
   }
 
   // 5. Build engine players from room players
-  const enginePlayers = roomPlayers.map((rp) => {
-    const user = userMap[rp.user_id] || {};
-    return {
-      id: String(rp.user_id),
-      name: user.nick_name || 'Player',
-      avatar: user.avatar_url || '',
-      isRobot: false,
-      isSelf: rp.is_host ? true : false,
-      seat: rp.seat,
-      score: Math.floor(INITIAL_SCORE_RANGE.min + Math.random() * (INITIAL_SCORE_RANGE.max - INITIAL_SCORE_RANGE.min + 1)),
-      teamId: null,
-      ready: true,
-      state: rp.is_host ? '房主·已准备' : '已就绪',
-    };
-  });
+  const enginePlayers = buildOnlinePlayers(roomPlayers, userMap);
 
   // 6. Pair into teams using the engine
   const paired = engine.pairPlayers(enginePlayers);
@@ -260,7 +291,7 @@ async function startGameSession(roomId, hostUserId, io) {
  * @param {number} sessionId
  * @param {import('socket.io').Server} io
  */
-function startTickLoop(sessionId, io) {
+function startTickLoop(sessionId, realtime) {
   const game = activeGames.get(sessionId);
   if (!game) return;
 
@@ -268,7 +299,7 @@ function startTickLoop(sessionId, io) {
 
   game.timer = setInterval(async () => {
     try {
-      await tick(game, io);
+      await tick(game, realtime);
     } catch (err) {
       console.error(`[GameService] Tick error for session ${sessionId}:`, err);
     }
@@ -279,9 +310,9 @@ function startTickLoop(sessionId, io) {
  * Single tick: decrement timer, process rounds, broadcast state.
  * Runs every 1 second. Rounds are processed every 3 seconds.
  * @param {object} game - In-memory game state
- * @param {import('socket.io').Server} io
+ * @param {object} realtime
  */
-async function tick(game, io) {
+async function tick(game, realtime) {
   game.timeLeft--;
 
   // Every 3 seconds, process a round
@@ -323,37 +354,41 @@ async function tick(game, io) {
     }
 
     // Broadcast round update
-    io.to(`arena:${game.sessionId}`).emit('game_tick', {
-      timeLeft: game.timeLeft,
-      round: game.round,
-      events: roundResult.events,
-      players: game.players.map((p) => ({
-        id: p.id,
-        name: p.name,
-        score: p.score,
-        teamId: p.teamId,
-      })),
-      teams: game.teams,
-    });
+    if (realtime && typeof realtime.emitToSession === 'function') {
+      realtime.emitToSession(game.sessionId, 'game_tick', {
+        timeLeft: game.timeLeft,
+        round: game.round,
+        events: roundResult.events,
+        players: game.players.map((p) => ({
+          id: p.id,
+          name: p.name,
+          score: p.score,
+          teamId: p.teamId,
+        })),
+        teams: game.teams,
+      });
+    }
   }
 
   // Broadcast time update every second
-  io.to(`arena:${game.sessionId}`).emit('time_update', {
-    timeLeft: game.timeLeft,
-  });
+  if (realtime && typeof realtime.emitToSession === 'function') {
+    realtime.emitToSession(game.sessionId, 'time_update', {
+      timeLeft: game.timeLeft,
+    });
+  }
 
   // Check game over
   if (game.timeLeft <= 0) {
-    await finishGame(game, io);
+    await finishGame(game, realtime);
   }
 }
 
 /**
  * Finish the game: stop timer, calculate results, save to DB, broadcast.
  * @param {object} game - In-memory game state
- * @param {import('socket.io').Server} io
+ * @param {object} realtime
  */
-async function finishGame(game, io) {
+async function finishGame(game, realtime) {
   if (game.timer) {
     clearInterval(game.timer);
     game.timer = null;
@@ -368,12 +403,15 @@ async function finishGame(game, io) {
   );
 
   for (const player of result.ranking) {
+    if (player.isRobot) {
+      continue;
+    }
     const userId = Number(player.id);
     const coinsEarned = Math.floor(
       Math.max(0, player.score - (game.initialScores[player.id] || 0)) * 3
     );
     await db.execute(
-      'UPDATE game_players SET final_score = ?, rank = ?, coins_earned = ? WHERE session_id = ? AND user_id = ?',
+      'UPDATE game_players SET final_score = ?, `rank` = ?, coins_earned = ? WHERE session_id = ? AND user_id = ?',
       [player.score, player.rank, coinsEarned, game.sessionId, userId]
     );
 
@@ -398,15 +436,20 @@ async function finishGame(game, io) {
   game.status = 'finished';
 
   // Broadcast finish
-  io.to(`arena:${game.sessionId}`).emit('game_finished', {
-    sessionId: game.sessionId,
-    result,
-  });
+  if (realtime && typeof realtime.emitToSession === 'function') {
+    realtime.emitToSession(game.sessionId, 'game_finished', {
+      sessionId: game.sessionId,
+      result,
+    });
+  }
 
   // Clean up after 5 minutes
-  setTimeout(() => {
+  const cleanupTimer = setTimeout(() => {
     activeGames.delete(game.sessionId);
   }, 5 * 60 * 1000);
+  if (cleanupTimer && typeof cleanupTimer.unref === 'function') {
+    cleanupTimer.unref();
+  }
 }
 
 /**
@@ -435,6 +478,9 @@ function getGameState(sessionId, viewerUserId) {
 }
 
 module.exports = {
+  buildOnlinePlayers,
+  buildEnginePlayers,
+  fillArenaPlayers,
   startGameSession,
   startTickLoop,
   getGameState,

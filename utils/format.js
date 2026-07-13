@@ -9,7 +9,7 @@ function formatCurrency(value, options = {}) {
   const normalized = Number.isFinite(amount) ? amount : 0;
   const showSign = options.showSign === true;
   const sign = showSign && normalized > 0 ? '+' : normalized < 0 ? '-' : '';
-  return `${sign}¥${formatNumber(Math.abs(normalized))}`;
+  return `${sign}🐟锦鲤币 ${formatNumber(Math.abs(normalized))}`;
 }
 
 function formatDateTime(timestamp) {

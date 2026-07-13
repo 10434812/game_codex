@@ -21,3 +21,14 @@ test('production CORS is environment controlled instead of unconditional wildcar
   assert.match(app, /cors\(\{ origin: config\.cors\.origin/);
   assert.match(config, /CORS_ORIGIN/);
 });
+
+test('avatar upload URL uses CDN or forwarded public origin instead of localhost default', () => {
+  const routeSource = fs.readFileSync(path.join(__dirname, '../src/routes/user.js'), 'utf8');
+  const envExample = fs.readFileSync(path.join(__dirname, '../.env.example'), 'utf8');
+
+  assert.match(routeSource, /CDN_BASE_URL/);
+  assert.match(routeSource, /x-forwarded-host/);
+  assert.match(routeSource, /x-forwarded-proto/);
+  assert.doesNotMatch(routeSource, /http:\/\/localhost:\$\{process\.env\.PORT/);
+  assert.match(envExample, /CDN_BASE_URL=/);
+});

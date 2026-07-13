@@ -55,7 +55,7 @@ module.exports = {
   },
 
   wx: {
-    appId: process.env.WX_APPID || 'wx72a4b552a87b44cf',
+    appId: process.env.WX_APPID || 'wx742cfddc2b05ccd4',
     secret: process.env.WX_SECRET || '',
   },
 

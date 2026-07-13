@@ -6,7 +6,7 @@ const playerStats = require('../../utils/player-stats');
 const {playCue, playVoice, stopBgm, playVibrate} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
-const {formatCurrency, formatNumber} = require('../../utils/format');
+const {formatNumber} = require('../../utils/format');
 const {buildAchievementMedal} = require('../../utils/achievement-medals');
 const runtimeConfig = require('../../utils/runtime-config');
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
@@ -190,7 +190,8 @@ Page({
     stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
     resultId: '',
     gainText: '0',
-    incomeText: '¥0',
+    incomeText: '🐟锦鲤币 0',
+    incomeAmountText: '0',
     achievementText: '--',
     achievementMedal: createDefaultMedal(),
     totalText: '总计 0 玩家',
@@ -453,7 +454,8 @@ Page({
             top3: result.top3 || this.data.top3,
             rankList: result.ranking || [],
             gainText: '0',
-            incomeText: '¥0',
+            incomeText: '🐟锦鲤币 0',
+            incomeAmountText: '0',
             achievementText: result.achievement || achievementMedal.achievement,
             achievementMedal,
             modeText: result.modeText || this.data.modeText,
@@ -464,7 +466,7 @@ Page({
             ...themePatch,
           });
           this.gainAnimTimer = this.animateNumber(result.gain || 0, formatNumber, 'gainText', 1200);
-          this.incomeAnimTimer = this.animateNumber(result.coins || 0, formatCurrency, 'incomeText', 1500);
+          this.incomeAnimTimer = this.animateNumber(result.coins || 0, formatNumber, 'incomeAmountText', 1500);
           return;
         }
       }
@@ -487,7 +489,8 @@ Page({
       top3: state.result.top3,
       rankList: state.result.rest,
       gainText: '0',
-      incomeText: '¥0',
+      incomeText: '🐟锦鲤币 0',
+      incomeAmountText: '0',
       achievementText: state.result.achievement || achievementMedal.achievement,
       achievementMedal,
       modeText: state.modeText || MATCH_MODE_TEXT,
@@ -500,7 +503,7 @@ Page({
 
     // 播放数字滚动动画
     this.gainAnimTimer = this.animateNumber(state.result.gain, formatNumber, 'gainText', 1200);
-    this.incomeAnimTimer = this.animateNumber(state.result.coins, formatCurrency, 'incomeText', 1500);
+    this.incomeAnimTimer = this.animateNumber(state.result.coins, formatNumber, 'incomeAmountText', 1500);
   },
   replay() {
     playCue('tap', {volume: 0.75});

@@ -37,6 +37,16 @@ function saveProfile(profile) {
   return normalized;
 }
 
+function mergeProfile(partial = {}) {
+  const current = getCachedProfile();
+  const incoming = normalizeProfile(partial);
+  const merged = {
+    nickName: incoming.nickName || current.nickName,
+    avatarUrl: incoming.avatarUrl || current.avatarUrl,
+  };
+  return saveProfile(merged);
+}
+
 function updateProfile(partial = {}) {
   const merged = {
     ...getCachedProfile(),
@@ -70,7 +80,7 @@ async function login() {
       api.setToken(result.token);
     }
     if (result.user) {
-      const profile = saveProfile({
+      const profile = mergeProfile({
         nickName: result.user.nickName || result.user.nick_name,
         avatarUrl: result.user.avatarUrl || result.user.avatar_url,
       });
@@ -85,12 +95,15 @@ async function login() {
 
 async function requestUpdate(partial = {}) {
   try {
+    if (!api.isLoggedIn()) {
+      return updateProfile(partial);
+    }
     const result = await api.put('/user/profile', {
       nickName: partial.nickName,
       avatarUrl: partial.avatarUrl,
     });
     if (result) {
-      saveProfile(result);
+      mergeProfile(result);
     }
     return getCachedProfile();
   } catch (err) {
@@ -99,12 +112,34 @@ async function requestUpdate(partial = {}) {
   }
 }
 
+async function uploadAvatar(filePath) {
+  const avatarUrl = String(filePath || '').trim();
+  if (!avatarUrl) {
+    return getCachedProfile();
+  }
+
+  const localProfile = updateProfile({ avatarUrl });
+  if (!api.isLoggedIn()) {
+    return localProfile;
+  }
+
+  try {
+    const result = await api.uploadFile('/user/avatar', avatarUrl, 'file');
+    if (result) {
+      mergeProfile(result);
+    }
+  } catch (err) {
+    console.warn('[user-profile] uploadAvatar error:', err);
+  }
+  return getCachedProfile();
+}
+
 async function fetchProfile() {
   try {
     if (api.isLoggedIn()) {
       const result = await api.get('/user/profile');
       if (result) {
-        saveProfile(result);
+        mergeProfile(result);
         return normalizeProfile(result);
       }
     }
@@ -119,8 +154,10 @@ module.exports = {
   getCachedProfile,
   hasValidProfile,
   saveProfile,
+  mergeProfile,
   updateProfile,
   login,
   requestUpdate,
+  uploadAvatar,
   fetchProfile,
 };

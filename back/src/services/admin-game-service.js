@@ -21,7 +21,7 @@ async function getGameDetail(sessionId) {
     [sessionId]
   );
   if (!session) return null;
-  const players = await db.queryAll('SELECT gp.*, u.nick_name, u.avatar_url FROM game_players gp JOIN users u ON gp.user_id = u.id WHERE gp.session_id = ? ORDER BY gp.rank ASC', [sessionId]);
+  const players = await db.queryAll('SELECT gp.*, u.nick_name, u.avatar_url FROM game_players gp JOIN users u ON gp.user_id = u.id WHERE gp.session_id = ? ORDER BY gp.`rank` ASC', [sessionId]);
   const rounds = await db.queryAll('SELECT * FROM game_rounds WHERE session_id = ? ORDER BY round_num ASC', [sessionId]);
   const result = await db.queryOne('SELECT * FROM game_results WHERE session_id = ?', [sessionId]);
   return {

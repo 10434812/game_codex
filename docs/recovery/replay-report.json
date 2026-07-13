@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-07-13T03:04:59.402Z",
+  "source": "/Users/hh/.codex/backup-20260527-090628-session-visibility-repair/files",
+  "startTime": "2026-05-18T16:00:00.000Z",
+  "scannedPatchEvents": 1250,
+  "uniquePatchEvents": 1,
+  "historicalSeedCandidates": 65,
+  "uniqueFiles": 1,
+  "eventsBySourceRoot": {
+    "/Users/hh/Desktop/game_codex_小程序": 1
+  },
+  "firstEvent": "2026-05-26T03:33:53.924Z",
+  "lastEvent": "2026-05-26T03:33:53.924Z",
+  "applied": [
+    {
+      "timestamp": "2026-05-26T03:33:53.924Z",
+      "sourceRoot": "/Users/hh/Desktop/game_codex_小程序",
+      "relativePath": "pages/room/index.js",
+      "type": "update",
+      "diffHash": "4c356d924ab07f54415284101d52e30f52c327743b0d22109f5ba664d60170c7",
+      "sessionId": "019e5e66-2225-76e1-bdfb-5c393112f8d8"
+    }
+  ],
+  "skipped": [],
+  "failed": [],
+  "seeded": []
+}

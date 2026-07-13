@@ -184,7 +184,7 @@ const dashboardData = ref({
 const configs = ref([])
 const fallbackConfigs = [
   { key: 'wechat.login_enabled', value: 'true' },
-  { key: 'wechat.login_app_id', value: 'wx72a4b552a87b44cf' },
+  { key: 'wechat.login_app_id', value: 'wx742cfddc2b05ccd4' },
   { key: 'wechat.login_secret', value: '' },
   { key: 'wechat.login_agreement_url', value: '' },
   { key: 'wechat.login_privacy_url', value: '' },

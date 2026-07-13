@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 $brand-primary: #e57c1f;
 $brand-bg: #f6ebd1;
 $brand-gold: #d2a45a;
@@ -29,11 +31,11 @@ $primary-light-9: #fdf2db;
   --el-color-info: #{$brand-gold-mid};
 
   --el-bg-color: #{$brand-bg};
-  --el-bg-color-page: #{darken($brand-bg, 3%)};
+  --el-bg-color-page: #{color.adjust($brand-bg, $lightness: -3%)};
   --el-bg-color-overlay: #fffaf0;
   --el-text-color-primary: #{$brand-brown};
   --el-text-color-regular: #{$brand-brown-sub};
-  --el-text-color-placeholder: #{lighten($brand-brown-sub, 20%)};
+  --el-text-color-placeholder: #{color.adjust($brand-brown-sub, $lightness: 20%)};
   --el-border-color: #{$brand-border};
   --el-border-color-light: #{rgba(205, 171, 114, 0.2)};
   --el-border-color-lighter: #{rgba(205, 171, 114, 0.12)};

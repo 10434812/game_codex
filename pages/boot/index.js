@@ -3,6 +3,7 @@ const api = require('../../utils/api-client');
 const userProfile = require('../../utils/user-profile');
 const runtimeConfig = require('../../utils/runtime-config');
 const {playVoice} = require('../../utils/audio');
+const {getNavLayout} = require('../../utils/nav');
 
 const DEFAULT_MIN_MS = 2000;
 const DEFAULT_MAX_MS = 2700;
@@ -23,11 +24,17 @@ async function tryAutoLogin() {
 
 Page({
   data: {
+    nav: {
+      statusBarHeight: 20,
+      navHeight: 64,
+      capsuleSpace: 120,
+    },
     bootVideoSrc: BOOT_VIDEOS[Math.floor(Math.random() * BOOT_VIDEOS.length)],
     progress: 0,
     loadingText: '正在加载资源',
   },
   onLoad() {
+    this.setData({nav: getNavLayout()});
     playVoice('bootWelcome', {debounceMs: 0});
     this.startBoot();
   },

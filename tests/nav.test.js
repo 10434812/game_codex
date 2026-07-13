@@ -31,6 +31,29 @@ test('getNavLayout 返回状态栏、导航栏和胶囊留白', () => {
   restoreWx();
 });
 
+test('getNavLayout 优先使用 wx.getWindowInfo 避免旧系统信息 API 警告', () => {
+  let getSystemInfoCalled = false;
+  setupWx({
+    getWindowInfo() {
+      return {statusBarHeight: 44, windowWidth: 414};
+    },
+    getSystemInfoSync() {
+      getSystemInfoCalled = true;
+      return {statusBarHeight: 20, windowWidth: 375};
+    },
+    getMenuButtonBoundingClientRect() {
+      return {top: 50, height: 32, left: 320, width: 87};
+    },
+  });
+
+  const layout = getNavLayout();
+  assert.equal(layout.statusBarHeight, 44);
+  assert.equal(layout.capsuleSpace, 102);
+  assert.equal(getSystemInfoCalled, false);
+
+  restoreWx();
+});
+
 test('getNavLayout 在 wx 抛出异常时使用默认值', () => {
   setupWx({
     getSystemInfoSync() {

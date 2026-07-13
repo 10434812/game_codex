@@ -50,7 +50,7 @@ test('buildGoodsView 不展示重复头像旧款皮肤', () => {
   duplicateLegacyIds.forEach((id) => assert.equal(ids.includes(id), false));
 });
 
-test('purchaseItem 会扣除金币并加入已拥有皮肤', () => {
+test('purchaseItem 会扣除锦鲤币并加入已拥有皮肤', () => {
   const result = shopStore.purchaseItem('skin', 'skin-sakura');
   const state = shopStore.getStoreState();
 
@@ -59,7 +59,7 @@ test('purchaseItem 会扣除金币并加入已拥有皮肤', () => {
   assert.deepEqual(state.ownedSkins, ['skin-default', 'skin-sakura']);
 });
 
-test('purchaseItem 在金币不足时不会改写状态', () => {
+test('purchaseItem 在锦鲤币不足时不会改写状态', () => {
   wx.setStorageSync('game_codex_shop_store_v1', {
     coins: 100,
     ownedSkins: ['skin-default'],
@@ -90,7 +90,7 @@ test('purchaseItem 对已拥有商品不会重复扣费', () => {
 });
 
 test('equipItem 会更新当前装备状态', () => {
-  shopStore.addCoins(1200, {type: 'test_credit', title: '测试补充金币'});
+  shopStore.addCoins(1200, {type: 'test_credit', title: '测试补充锦鲤币'});
   shopStore.purchaseItem('skin', 'skin-storm');
   shopStore.purchaseItem('pet', 'pet-fox');
   shopStore.purchaseItem('ring', 'ring-crown-auspice');
@@ -122,7 +122,7 @@ test('buildGoodsView 支持头像光环类目', () => {
   assert.match(goods[0].ringImage, /assets\/avatar-rings\/avatar_ring_0[1-7]\.png/);
 });
 
-test('addCoins 会累加金币余额', () => {
+test('addCoins 会累加锦鲤币余额', () => {
   const before = shopStore.getStoreState();
   const next = shopStore.addCoins(560);
 

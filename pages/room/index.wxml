@@ -67,10 +67,14 @@
       </view>
 
       <view class="bottom-actions">
-        <button class="start-btn" bindtap="start" disabled="{{starting}}" hover-class="btn-hover">
+        <button class="start-btn {{backendRoomId && !isHost ? 'start-btn-disabled' : ''}}" bindtap="start" disabled="{{starting || (backendRoomId && !isHost)}}" hover-class="btn-hover">
           <text class="btn-icon">▶</text>
-          <text>{{startButtonText}}</text>
+          <text>{{backendRoomId && !isHost ? '等待房主开始' : startButtonText}}</text>
         </button>
+        <view class="invite-hint">
+          <text class="invite-hint-icon">群</text>
+          <text>去群里邀请好友，凑齐队伍更快开局</text>
+        </view>
         <view class="secondary-actions">
           <button class="primary-btn invite-btn" open-type="share" bindtap="inviteFriend" disabled="{{starting}}" hover-class="btn-hover">
             <text class="btn-icon">👤+</text>

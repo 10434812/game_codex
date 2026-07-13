@@ -1,5 +1,8 @@
 <view class="paper-bg boot-page">
   <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
+  <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
+    <text class="splash-title">锦鲤前程</text>
+  </view>
   <view class="page-content boot-content">
     <video class="boot-video" src="{{bootVideoSrc}}" autoplay muted="{{false}}" loop="{{false}}" controls="{{false}}" show-fullscreen-btn="{{false}}" show-play-btn="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindended="onVideoEnded"></video>
     <view class="boot-art-glow"></view>

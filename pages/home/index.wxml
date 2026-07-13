@@ -40,13 +40,15 @@
     <view class="hero-safe">
       <view class="hero-title">锦鲤前程</view>
       <view class="hero-copy">
-        <view class="subtitle">3分钟好运局，组队抢福袋，赢金币换国风装扮</view>
+        <view class="subtitle">3分钟好运局，组队抢福袋，赢锦鲤币换国风装扮</view>
       </view>
     </view>
 
     <view class="expand-toggle" bindtap="toggleProfileCard" hover-class="clickable-hover">
-      <text wx:if="{{!showProfileCard}}">▼ 查看我的资产</text>
-      <text wx:else>▲ 收起资产</text>
+      <text class="expand-toggle-icon" wx:if="{{!showProfileCard}}">▼</text>
+      <text class="expand-toggle-icon" wx:else>▲</text>
+      <text class="expand-toggle-text" wx:if="{{!showProfileCard}}">查看我的资产</text>
+      <text class="expand-toggle-text" wx:else>收起资产</text>
     </view>
 
     <view class="profile-card-wrap {{showProfileCard ? 'expanded' : ''}}">
@@ -68,7 +70,11 @@
         <view class="account-row clickable" bindtap="onTapIncome" hover-class="clickable-hover">
           <view class="account-copy">
             <text class="label">统一资金账户</text>
-            <text class="value gold">{{balanceText}}</text>
+            <view class="value gold currency-line">
+              <image class="currency-icon" src="/images/koi-coin.png" mode="aspectFit"></image>
+              <text class="currency-unit">锦鲤币</text>
+              <text class="currency-amount">{{balanceAmountText}}</text>
+            </view>
           </view>
           <view class="jump-hint">查看明细 ›</view>
         </view>

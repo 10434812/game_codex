@@ -17,124 +17,115 @@
   </view>
 
   <view class="page-content">
-    <view class="scene-backdrop theme-page-backdrop result-scene-backdrop" wx:if="{{stageImage || stageVideo}}">
-      <image wx:if="{{!stageVideo && stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
-      <video
-        wx:if="{{stageVideo}}"
-        class="scene-backdrop-video"
-        src="{{stageVideo}}"
-        autoplay
-        muted
-        loop
-        controls="{{false}}"
-        show-center-play-btn="{{false}}"
-        show-play-btn="{{false}}"
-        show-fullscreen-btn="{{false}}"
-        enable-progress-gesture="{{false}}"
-        object-fit="cover"
-      ></video>
+    <view class="scene-backdrop theme-page-backdrop result-scene-backdrop" wx:if="{{stageImage}}">
+      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
       <view class="scene-template"></view>
       <view class="scene-backdrop-mask"></view>
     </view>
 
     <view class="scene-layer result-scene-layer">
-    <view class="main-title">获得胜利</view>
-    <view class="sub-title">本局结算成绩</view>
-
-    <view class="crown-mark">♛</view>
-    <view class="podium-wrap">
-      <view class="podium side left" bindtap="onTapPlayer" data-player="{{top3.second}}" hover-class="clickable-hover">
-        <image class="podium-avatar" src="{{top3.second.avatar}}" mode="aspectFill"></image>
-        <text class="podium-rank silver">2</text>
-        <view class="podium-name">{{top3.second.name}}</view>
-        <view class="podium-score">{{top3.second.score}}</view>
+      <view class="result-hero">
+        <view class="main-title">获得胜利</view>
+        <view class="sub-title">本局结算成绩</view>
       </view>
 
-      <view class="podium winner" bindtap="onTapPlayer" data-player="{{top3.first}}" hover-class="clickable-hover">
-        <view class="winner-badge">♕</view>
-        <image class="podium-avatar champion" src="{{top3.first.avatar}}" mode="aspectFill"></image>
-        <text class="podium-rank gold">1</text>
-        <view class="podium-name self">{{top3.first.name}}</view>
-        <view class="podium-score self">{{top3.first.score}}</view>
-      </view>
-
-      <view class="podium side right" bindtap="onTapPlayer" data-player="{{top3.third}}" hover-class="clickable-hover">
-        <image class="podium-avatar third" src="{{top3.third.avatar}}" mode="aspectFill"></image>
-        <text class="podium-rank bronze">3</text>
-        <view class="podium-name">{{top3.third.name}}</view>
-        <view class="podium-score">{{top3.third.score}}</view>
-      </view>
-    </view>
-
-    <view class="settlement-panel">
-      <view class="income-block">
-        <view class="meta-title">收益</view>
-        <view class="income-main">{{incomeText}}</view>
-      </view>
-      <view class="exp-module">
-        <view class="exp-head">
-          <text>Lv.{{expProgress.level}}</text>
-          <text>+{{gainText}} EXP</text>
+      <view class="crown-mark">♛</view>
+      <view class="podium-wrap">
+        <view class="podium side left {{top3.second.isSelf ? 'self-side' : ''}}" bindtap="onTapPlayer" data-player="{{top3.second}}" hover-class="clickable-hover">
+          <image class="podium-avatar" src="{{top3.second.avatar}}" mode="aspectFill"></image>
+          <text class="podium-rank silver">2</text>
+          <view class="podium-name">{{top3.second.name}}</view>
+          <view class="podium-score">{{top3.second.score}}</view>
         </view>
-        <view class="exp-track">
-          <view class="exp-fill" style="width: {{expProgress.percent}}%;"></view>
+
+        <view class="podium winner {{top3.first.isSelf ? 'self-winner' : ''}}" bindtap="onTapPlayer" data-player="{{top3.first}}" hover-class="clickable-hover">
+          <view class="winner-badge">♕</view>
+          <image class="podium-avatar champion" src="{{top3.first.avatar}}" mode="aspectFill"></image>
+          <text class="podium-rank gold">1</text>
+          <view class="podium-name self">{{top3.first.name}}</view>
+          <view class="podium-score self">{{top3.first.score}}</view>
         </view>
-        <view class="exp-foot">{{expProgress.current}}/{{expProgress.required}}</view>
+
+        <view class="podium side right {{top3.third.isSelf ? 'self-side' : ''}}" bindtap="onTapPlayer" data-player="{{top3.third}}" hover-class="clickable-hover">
+          <image class="podium-avatar third" src="{{top3.third.avatar}}" mode="aspectFill"></image>
+          <text class="podium-rank bronze">3</text>
+          <view class="podium-name">{{top3.third.name}}</view>
+          <view class="podium-score">{{top3.third.score}}</view>
+        </view>
       </view>
-      <view class="achievement-pill" style="--medal-accent: {{achievementMedal.accent}}; --medal-glow: {{achievementMedal.glow}}; --medal-rim: {{achievementMedal.rim}}; --medal-plate: {{achievementMedal.plate}};">
-        <view class="achievement-medal">
-          <view class="medal-ribbon left"></view>
-          <view class="medal-ribbon right"></view>
-          <view class="medal-core">
-            <view class="medal-symbol">{{achievementMedal.symbol}}</view>
+
+      <view class="settlement-panel">
+        <view class="income-block">
+          <view class="meta-title">收益</view>
+          <view class="income-main">
+            <text class="currency-unit">锦鲤币</text>
+            <text class="currency-amount">{{incomeAmountText}}</text>
           </view>
         </view>
-        <view class="achievement-copy">
-          <view class="achievement-row">
-            <text class="achievement-label">新成就</text>
-            <text class="medal-tier">{{achievementMedal.tierLabel}} · {{achievementMedal.shortName}}</text>
+        <view class="exp-module">
+          <view class="exp-head">
+            <text>Lv.{{expProgress.level}}</text>
+            <text>+{{gainText}} EXP</text>
           </view>
-          <text class="achievement-name">{{achievementText}}</text>
+          <view class="exp-track">
+            <view class="exp-fill" style="width: {{expProgress.percent}}%;"></view>
+          </view>
+          <view class="exp-foot">{{expProgress.current}}/{{expProgress.required}}</view>
+        </view>
+        <view class="achievement-pill" style="--medal-accent: {{achievementMedal.accent}}; --medal-glow: {{achievementMedal.glow}}; --medal-rim: {{achievementMedal.rim}}; --medal-plate: {{achievementMedal.plate}};">
+          <view class="achievement-medal">
+            <view class="medal-ribbon left"></view>
+            <view class="medal-ribbon right"></view>
+            <view class="medal-core">
+              <view class="medal-symbol">{{achievementMedal.symbol}}</view>
+            </view>
+          </view>
+          <view class="achievement-copy">
+            <view class="achievement-row">
+              <text class="achievement-label">新成就</text>
+              <text class="medal-tier">{{achievementMedal.tierLabel}} · {{achievementMedal.shortName}}</text>
+            </view>
+            <text class="achievement-name">{{achievementText}}</text>
+          </view>
         </view>
       </view>
-    </view>
 
-    <view class="rank-head">
-      <view class="rank-title">排名</view>
-      <view class="rank-total">{{totalText}}</view>
-    </view>
-
-    <view class="rank-list">
-      <view class="rank-item" wx:for="{{rankList}}" wx:key="rank" bindtap="onTapPlayer" data-player="{{item}}" hover-class="clickable-hover">
-        <text class="rank">{{item.rank}}</text>
-        <image class="avatar sm" src="{{item.avatar}}" mode="aspectFill"></image>
-        <text class="player">{{item.name}}</text>
-        <text class="num">{{item.score}}</text>
+      <view class="rank-head">
+        <view class="rank-title">排名</view>
+        <view class="rank-total">{{totalText}}</view>
       </view>
-    </view>
 
-    <view class="action-row">
-      <button class="primary-btn action-btn" bindtap="replay" hover-class="btn-hover">↻ 再来一局</button>
-      <button class="action-btn ghost-btn" bindtap="goHome" hover-class="btn-hover">⌂ 返回首页</button>
-    </view>
-
-    <view class="bottom-nav result-nav">
-      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
-        <view class="nav-dot">
-          <image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image>
+      <view class="rank-list">
+        <view class="rank-item {{item.isSelf ? 'is-self' : ''}}" wx:for="{{rankList}}" wx:key="rank" bindtap="onTapPlayer" data-player="{{item}}" hover-class="clickable-hover">
+          <text class="rank">{{item.rank}}</text>
+          <image class="avatar sm" src="{{item.avatar}}" mode="aspectFill"></image>
+          <text class="player">{{item.name}}</text>
+          <text class="num">{{item.score}}</text>
         </view>
-        <text>{{ item.label }}</text>
       </view>
-    </view>
 
-    <view class="nav-placeholder"></view>
+      <view class="action-row">
+        <button class="primary-btn action-btn" bindtap="replay" hover-class="btn-hover">再来一局</button>
+        <button class="action-btn ghost-btn" bindtap="goHome" hover-class="btn-hover">返回首页</button>
+      </view>
+
+      <view class="bottom-nav result-nav">
+        <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
+          <view class="nav-dot">
+            <image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image>
+          </view>
+          <text>{{ item.label }}</text>
+        </view>
+      </view>
+
+      <view class="nav-placeholder"></view>
     </view>
 
     <view class="guide-overlay guide-result" wx:if="{{guideVisible}}">
       <view class="guide-mask"></view>
       <view class="guide-card guide-card-middle">
         <view class="guide-kicker">新手引导 5/5</view>
-        <view class="guide-title">本局金币、排行和经验都会进入你的账户</view>
+        <view class="guide-title">本局锦鲤币、排行和经验都会进入你的账户</view>
       </view>
       <view class="guide-action-panel">
         <button class="guide-primary" bindtap="finishGuide" hover-class="btn-hover">知道了</button>

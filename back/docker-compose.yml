@@ -15,6 +15,7 @@ services:
       - ./sql/003_admin_features.sql:/docker-entrypoint-initdb.d/003_admin_features.sql
       - ./sql/004_add_ring_category.sql:/docker-entrypoint-initdb.d/004_add_ring_category.sql
       - ./sql/005_fortune_reality.sql:/docker-entrypoint-initdb.d/005_fortune_reality.sql
+      - ./sql/006_wechat_payment_orders.sql:/docker-entrypoint-initdb.d/006_wechat_payment_orders.sql
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
 volumes:

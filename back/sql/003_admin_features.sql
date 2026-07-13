@@ -84,7 +84,7 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
 ('game.daily_signin_coins', '200', '每日签到金币奖励'),
 ('shop.refresh_interval', '86400', '商城刷新间隔(秒)'),
 ('wechat.login_enabled', 'true', '是否开启微信登录'),
-('wechat.login_app_id', 'wx72a4b552a87b44cf', '小程序 AppID（服务端登录校验使用）'),
+('wechat.login_app_id', 'wx742cfddc2b05ccd4', '小程序 AppID（服务端登录校验使用）'),
 ('wechat.login_secret', '', '小程序 AppSecret（仅后台保存，不对前端公开）'),
 ('wechat.login_token_ttl', '604800', '登录态默认有效期（秒）'),
 ('wechat.login_agreement_url', '', '用户协议链接'),

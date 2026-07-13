@@ -75,7 +75,7 @@ test('inviteHumanPlayer 会在房间阶段添加真人玩家', () => {
   assert.equal(joined.isSelf, false);
 });
 
-test('finishGame 会把金币收益写入商城余额', () => {
+test('finishGame 会把锦鲤币收益写入商城余额', () => {
   store.createRoomFromStage({id: 1, code: '01', name: '万里长城'}, {random: createRandom(0.2, 0.2, 0.2, 0.2)});
   store.startGame({
     random: createRandom(0.2, 0.2, 0.2, 0.2),

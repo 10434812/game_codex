@@ -1,6 +1,6 @@
 const api = require('./api-client');
 const SHOP_STORAGE_KEY = 'game_codex_shop_store_v1';
-const INITIAL_COINS = 8820; // 新用户初始金币
+const INITIAL_COINS = 8820; // 新用户初始锦鲤币
 
 const DEFAULT_STATE = {
   coins: INITIAL_COINS,

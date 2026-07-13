@@ -27,6 +27,22 @@
         "value": "scripts"
       },
       {
+        "type": "folder",
+        "value": "images"
+      },
+      {
+        "type": "folder",
+        "value": ".playwright-mcp"
+      },
+      {
+        "type": "folder",
+        "value": ".voice-venv"
+      },
+      {
+        "type": "folder",
+        "value": ".claude"
+      },
+      {
         "type": "file",
         "value": "assets/stages/gulangyu.mov"
       },
@@ -60,6 +76,14 @@
       },
       {
         "type": "file",
+        "value": "pages/.DS_Store"
+      },
+      {
+        "type": "file",
+        "value": "pages/home/.DS_Store"
+      },
+      {
+        "type": "file",
         "value": "AGENTS.md"
       },
       {
@@ -73,6 +97,22 @@
       {
         "type": "file",
         "value": "game_logic_analysis.md"
+      },
+      {
+        "type": "file",
+        "value": "package-lock.json"
+      },
+      {
+        "type": "file",
+        "value": "admin-dashboard.png"
+      },
+      {
+        "type": "file",
+        "value": "admin-login.png"
+      },
+      {
+        "type": "file",
+        "value": "优化建议报告.md"
       }
     ],
     "include": [
@@ -114,7 +154,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.4.0",
-  "appid": "wx72a4b552a87b44cf",
+  "appid": "wx742cfddc2b05ccd4",
   "projectname": "锦鲤前程",
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},

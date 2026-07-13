@@ -10,13 +10,15 @@ const {
   WAITING_SLOT_NAME,
 } = require('../../utils/constants')
 const gameStore = require('../../utils/game-store')
-const {playCue, playStageBgm, playVoice, playVibrate} = require('../../utils/audio')
-const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile')
+const {playCue, playVoice, playVibrate} = require('../../utils/audio')
+const {getCachedProfile} = require('../../utils/user-profile')
 const api = require('../../utils/api-client')
 const runtimeConfig = require('../../utils/runtime-config')
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config')
 const {saveStageTheme} = require('../../utils/stage-theme')
 const guideStore = require('../../utils/guide-store')
+
+const ONLINE_MODE_TEXT = '联网对战'
 
 function buildEmptySlot() {
   return {
@@ -43,6 +45,10 @@ function mapRoomSlots(players) {
   return filledSlots
 }
 
+function getRoomIdFromOptions(options = {}) {
+  return String(options.backendRoomId || options.roomId || '').trim()
+}
+
 Page({
   data: {
     nav: {
@@ -50,8 +56,6 @@ Page({
       navHeight: 64,
       capsuleSpace: 120,
     },
-    modeText: MATCH_MODE_TEXT,
-    tabs: NAV_TABS,
     activeTab: 'social',
     slots: Array.from({length: ROOM_UI_LIMIT}, buildEmptySlot),
     stageName: DEFAULT_STAGE.name,
@@ -63,17 +67,22 @@ Page({
     backendRoomId: '',
     activePercent: 0,
     selfReady: true,
+    isHost: true,
     starting: false,
     startButtonText: '开始游戏',
     roomHintText: '准备好后，游戏将在两分钟内开始',
     userProfile: getCachedProfile(),
-    userAuthorized: hasValidProfile(getCachedProfile()),
     defaultAvatar: DEFAULT_AVATAR,
     guideVisible: false,
   },
-  onLoad() {
+  onLoad(options = {}) {
+    this.inviteRoomId = getRoomIdFromOptions(options)
     try {
-      this.setData({nav: getNavLayout()})
+      this.setData({
+        nav: getNavLayout(),
+        tabs: NAV_TABS,
+        modeText: MATCH_MODE_TEXT,
+      })
     } catch (error) {}
     runtimeConfig.fetchRemoteConfig().finally(() => {
       enableShareMenu()
@@ -88,13 +97,16 @@ Page({
       this.roomCreatedVoicePlayed = true
     }
     this.unsubscribeStore()
-    this.unsubscribe = gameStore.subscribe((state) => this.observeState(state))
-    this.observeState(gameStore.getState())
+    if (!this.inviteRoomId && !this.data.backendRoomId) {
+      this.unsubscribe = gameStore.subscribe((state) => this.observeState(state))
+      this.observeState(gameStore.getState())
+    }
     this.initRoom()
     this.syncGuide()
   },
   onHide() {
     this.clearStartCountdown()
+    this.clearPollTimer()
     this.unsubscribeStore()
   },
   onUnload() {
@@ -147,6 +159,11 @@ Page({
     playCue('tap', {volume: 0.75})
     playVibrate('light')
     playCue('invite', {volume: 0.7})
+    if (this.data.backendRoomId) {
+      playVoice('roomInviteSent')
+      wx.showToast({title: '邀请已发送', icon: 'none'})
+      return
+    }
     const before = gameStore.getState()
     const state = gameStore.inviteHumanPlayer()
     if (state.players.length > before.players.length) {
@@ -171,6 +188,11 @@ Page({
   },
   start() {
     if (this.data.starting) {
+      return
+    }
+    if (this.data.backendRoomId && !this.data.isHost) {
+      playCue('actionFail', {volume: 0.7})
+      wx.showToast({title: '等待房主开始游戏', icon: 'none'})
       return
     }
     if (!this.data.selfReady) {
@@ -223,22 +245,36 @@ Page({
     this.start()
   },
   syncUserProfile() {
-    const cached = getCachedProfile()
-    this.setData({
-      userProfile: cached,
-      userAuthorized: hasValidProfile(cached),
-    })
+    const pageHelpers = require('../../utils/page-helpers')
+    pageHelpers.syncUserProfile(this)
   },
   syncStageMusic() {
-    const snapshot = gameStore.getState()
-    playStageBgm(snapshot.stage || DEFAULT_STAGE, {volume: 0.38})
+    const pageHelpers = require('../../utils/page-helpers')
+    pageHelpers.syncStageMusic(this)
   },
   refreshRoom() {
     const snapshot = gameStore.getState()
     this.observeState(snapshot)
   },
   async initRoom() {
+    if (this.roomInitialized) {
+      return
+    }
+    this.roomInitialized = true
     try {
+      if (this.inviteRoomId) {
+        const result = await api.post(`/rooms/${encodeURIComponent(this.inviteRoomId)}/join`)
+        const room = result && result.room ? result.room : {}
+        const roomId = room && room.id ? room.id : this.inviteRoomId
+        const roomCode = room && (room.roomCode || room.room_code) ? (room.roomCode || room.room_code) : ''
+        this.setData({
+          backendRoomId: String(roomId),
+          roomId: roomCode || String(roomId),
+        })
+        this.renderBackendRoom(result)
+        this.pollRoom(roomId)
+        return
+      }
       const snapshot = gameStore.getState()
       const stageId = snapshot.stage && snapshot.stage.id ? snapshot.stage.id : DEFAULT_STAGE.id
       const result = await api.post('/rooms', {stageId})
@@ -255,23 +291,64 @@ Page({
       this.pollRoom(roomId)
     } catch (err) {
       console.warn('[room] initRoom error:', err)
+      this.roomInitialized = false
     }
   },
+  renderBackendRoom(roomPayload) {
+    const room = roomPayload && roomPayload.room ? roomPayload.room : {}
+    const stage = resolveStage({id: room.stage_id || DEFAULT_STAGE.id})
+    const theme = saveStageTheme(stage)
+    const players = (roomPayload && roomPayload.players || []).map(p => ({
+      name: p.nick_name || p.name,
+      state: p.is_ready ? '已就绪' : '未准备',
+      filled: true,
+      star: !!p.is_host,
+      avatar: p.avatar_url || '',
+    }))
+    while (players.length < ROOM_UI_LIMIT) {
+      players.push(buildEmptySlot())
+    }
+    const roomPlayers = roomPayload && roomPayload.players || []
+    const selfPlayer = roomPlayers.find((p) => p.is_self)
+    const patch = {
+      slots: players,
+      activePercent: Math.round((roomPlayers.length / ROOM_UI_LIMIT) * 100),
+      isHost: selfPlayer ? !!selfPlayer.is_host : this.data.isHost,
+      selfReady: selfPlayer ? !!selfPlayer.is_ready : this.data.selfReady,
+      modeText: ONLINE_MODE_TEXT,
+    }
+    patch.stageName = stage.name
+    patch.stageImage = theme.stageImage
+    patch.stageVideo = theme.stageVideo
+    patch.stageThemeKey = theme.stageThemeKey
+    patch.stageThemeStyle = theme.stageThemeStyle
+    if (room.room_code) patch.roomId = room.room_code
+    if (room.id) patch.backendRoomId = String(room.id)
+    this.setData(patch)
+  },
   pollRoom(roomId) {
+    this.clearPollTimer()
+    this._pollSeq = (this._pollSeq || 0) + 1;
+    const currentSeq = this._pollSeq;
+
     this.pollTimer = setInterval(async () => {
       try {
         const room = await api.get(`/rooms/${roomId}`)
-        const players = (room.players || []).map(p => ({
-          name: p.nick_name || p.name,
-          state: p.is_ready ? '已就绪' : '未准备',
-          filled: true,
-          star: p.is_host,
-          avatar: p.avatar_url || '',
-        }))
-        while (players.length < ROOM_UI_LIMIT) {
-          players.push(buildEmptySlot())
+        // Ignore stale responses if poll was restarted
+        if (currentSeq !== this._pollSeq) return;
+
+        if (room.sessionId) {
+          this.clearPollTimer()
+          wx.redirectTo({url: `/pages/arena/index?sessionId=${room.sessionId}`})
+          return
         }
-        this.setData({ slots: players })
+
+        const currentSlots = this.data.slots || []
+        const beforeSlots = JSON.stringify(currentSlots)
+        this.renderBackendRoom(room)
+        if (JSON.stringify(this.data.slots || []) === beforeSlots) {
+          return
+        }
       } catch (err) { /* ignore polling errors */ }
     }, 2000)
   },
@@ -281,18 +358,28 @@ Page({
       const result = await api.post(`/rooms/${roomId}/start`)
       wx.redirectTo({ url: `/pages/arena/index?sessionId=${result.sessionId}` })
     } catch (err) {
+      if (this.data.backendRoomId) {
+        wx.showToast({title: err.message || '暂时无法开始对局', icon: 'none'})
+        return
+      }
       gameStore.startGame()
       wx.redirectTo({ url: '/pages/arena/index' })
     }
   },
   onShareAppMessage() {
     return buildShareAppMessage('room', {
-      extraQuery: `roomId=${encodeURIComponent(this.data.roomId || '')}`,
+      extraQuery: [
+        `roomId=${encodeURIComponent(this.data.roomId || '')}`,
+        this.data.backendRoomId ? `backendRoomId=${encodeURIComponent(this.data.backendRoomId)}` : '',
+      ].filter(Boolean).join('&'),
     })
   },
   onShareTimeline() {
     return buildShareTimeline('room', {
-      extraQuery: `roomId=${encodeURIComponent(this.data.roomId || '')}`,
+      extraQuery: [
+        `roomId=${encodeURIComponent(this.data.roomId || '')}`,
+        this.data.backendRoomId ? `backendRoomId=${encodeURIComponent(this.data.backendRoomId)}` : '',
+      ].filter(Boolean).join('&'),
     })
   },
   clearPollTimer() {

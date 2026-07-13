@@ -85,13 +85,14 @@ function request(method, path, data = null, options = {}) {
   return new Promise((resolve, reject) => {
     const token = getToken();
     const header = {};
+    const url = getBaseUrl() + path;
 
     if (token && !options.noAuth) {
       header['Authorization'] = 'Bearer ' + token;
     }
 
     wx.request({
-      url: getBaseUrl() + path,
+      url: url,
       method: method,
       data: data,
       header: header,
@@ -101,13 +102,24 @@ function request(method, path, data = null, options = {}) {
           resolve(body.data);
         } else if (res.statusCode === 401) {
           clearToken();
-          reject(new Error('登录已过期'));
+          const err = new Error('登录已过期');
+          err.statusCode = res.statusCode;
+          err.url = url;
+          err.responseBody = body;
+          reject(err);
         } else {
-          reject(new Error((body && body.message) || '请求失败'));
+          const message = (body && body.message) || `请求失败(${res.statusCode || 'unknown'})`;
+          const err = new Error(message);
+          err.statusCode = res.statusCode;
+          err.url = url;
+          err.responseBody = body;
+          reject(err);
         }
       },
       fail(err) {
-        reject(new Error('网络错误: ' + (err.errMsg || '未知错误')));
+        const requestError = new Error('网络错误: ' + (err.errMsg || '未知错误'));
+        requestError.url = url;
+        reject(requestError);
       }
     });
   });
@@ -139,6 +151,56 @@ function del(path) {
   return request('DELETE', path);
 }
 
+function uploadFile(path, filePath, name = 'file', formData = {}) {
+  return new Promise((resolve, reject) => {
+    const token = getToken();
+    const header = {};
+    const url = getBaseUrl() + path;
+
+    if (token) {
+      header['Authorization'] = 'Bearer ' + token;
+    }
+
+    wx.uploadFile({
+      url,
+      filePath,
+      name,
+      formData,
+      header,
+      success(res) {
+        let body = res.data;
+        if (typeof body === 'string') {
+          try {
+            body = JSON.parse(body);
+          } catch (_err) {
+            body = null;
+          }
+        }
+
+        if (res.statusCode >= 200 && res.statusCode < 300 && body && body.code === 0) {
+          resolve(body.data);
+          return;
+        }
+
+        if (res.statusCode === 401) {
+          clearToken();
+        }
+        const message = (body && body.message) || `上传失败(${res.statusCode || 'unknown'})`;
+        const err = new Error(message);
+        err.statusCode = res.statusCode;
+        err.url = url;
+        err.responseBody = body;
+        reject(err);
+      },
+      fail(err) {
+        const uploadError = new Error('上传网络错误: ' + (err.errMsg || '未知错误'));
+        uploadError.url = url;
+        reject(uploadError);
+      }
+    });
+  });
+}
+
 module.exports = {
   getToken,
   setToken,
@@ -151,4 +213,5 @@ module.exports = {
   post,
   put,
   del,
+  uploadFile,
 };

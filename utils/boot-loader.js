@@ -29,6 +29,11 @@ function createImagePreloadTask(src) {
       return;
     }
 
+    if (/\.svg(?:\?|#|$)/i.test(src)) {
+      resolve({src, ok: true, skipped: true});
+      return;
+    }
+
     if (typeof wx === 'undefined' || typeof wx.getImageInfo !== 'function') {
       resolve({src, ok: true, skipped: true});
       return;

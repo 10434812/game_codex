@@ -35,21 +35,33 @@
   row-gap: 16rpx;
 }
 
-.avatar-picker {
-  width: 180rpx;
-  height: 180rpx;
+.profile-auth-button {
+  width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
   margin: 0 !important;
+  display: grid;
+  justify-items: center;
+  row-gap: 16rpx;
+  line-height: normal;
+}
+
+.profile-auth-button::after {
+  border: 0;
+}
+
+.profile-auth-button[disabled] {
+  opacity: 0.72;
+}
+
+.avatar-picker {
+  width: 180rpx;
+  height: 180rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   justify-self: center;
-}
-
-.avatar-picker::after {
-  border: 0;
 }
 
 .picked-avatar {

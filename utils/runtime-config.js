@@ -15,7 +15,7 @@ const DEFAULT_CONFIG = {
   'wechat.pay_enabled': 'false',
   'wechat.pay_success_path': '/pages/shop/index',
   'wechat.pay_currency': 'CNY',
-  'wechat.pay_goods_desc': '锦鲤前程幸运金币充值',
+  'wechat.pay_goods_desc': '锦鲤前程锦鲤币充值',
   'fortune.reality_enabled': 'true',
   'fortune.public_signal_limit': '6',
   'system.maintenance_mode': 'false',

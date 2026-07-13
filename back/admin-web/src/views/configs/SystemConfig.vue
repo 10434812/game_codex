@@ -225,7 +225,7 @@ const capabilitySummary = ref(null)
 const originalValuesMap = new Map()
 const fallbackConfigRecords = [
   { key: 'wechat.login_enabled', value: 'true', defaultValue: 'true', description: '是否开启微信登录', valueType: 'boolean', isPublic: true },
-  { key: 'wechat.login_app_id', value: 'wx72a4b552a87b44cf', defaultValue: 'wx72a4b552a87b44cf', description: '小程序 AppID（服务端登录校验使用）', valueType: 'text', isPublic: false },
+  { key: 'wechat.login_app_id', value: 'wx742cfddc2b05ccd4', defaultValue: 'wx742cfddc2b05ccd4', description: '小程序 AppID（服务端登录校验使用）', valueType: 'text', isPublic: false },
   { key: 'wechat.login_secret', value: '', defaultValue: '', description: '小程序 AppSecret（仅后台保存，不对前端公开）', valueType: 'password', isPublic: false, isSensitive: true },
   { key: 'wechat.login_token_ttl', value: '604800', defaultValue: '604800', description: '登录态默认有效期（秒）', valueType: 'number', isPublic: false },
   { key: 'wechat.login_agreement_url', value: '', defaultValue: '', description: '用户协议链接', valueType: 'url', isPublic: true },

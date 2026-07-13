@@ -3,7 +3,7 @@
 
   <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
     <view class="app-user">
-      <view class="app-user-avatar">¥</view>
+      <view class="app-user-avatar">🐟</view>
       <text class="app-user-name">资金明细</text>
     </view>
     <view class="app-header-right">
@@ -37,7 +37,11 @@
 
     <view class="scene-layer income-scene-layer">
     <view class="card summary-card">
-      <view class="summary-main">{{balanceText}}</view>
+      <view class="summary-main">
+        <image class="currency-icon" src="/images/koi-coin.png" mode="aspectFit"></image>
+        <text class="currency-unit">锦鲤币</text>
+        <text class="currency-amount">{{balanceAmountText}}</text>
+      </view>
       <view class="summary-sub">统一资金账户</view>
     </view>
 

@@ -10,6 +10,7 @@ const config = require('./config');
 const routes = require('./routes');
 const errorHandler = require('./middleware/error-handler');
 const initArenaSocket = require('./socket/arena-handler');
+const { createArenaRealtimeHub } = require('./socket/arena-realtime');
 const { startFortuneRealityJob, stopFortuneRealityJob } = require('./jobs/fortune-reality-job');
 
 const app = express();
@@ -18,7 +19,11 @@ const app = express();
 app.use(cors({ origin: config.cors.origin }));
 app.use(helmet());
 app.use(morgan(config.nodeEnv === 'development' ? 'dev' : 'combined'));
-app.use(express.json());
+app.use(express.json({
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Routes ──────────────────────────────────────────────
@@ -50,12 +55,24 @@ const io = new SocketIOServer(server, {
 });
 
 app.set('io', io);
+const arenaRealtimeWs = createArenaRealtimeHub(server);
+const arenaRealtime = {
+  emitToSession(sessionId, event, data) {
+    io.to(`arena:${sessionId}`).emit(event, data);
+    arenaRealtimeWs.emitToSession(sessionId, event, data);
+  },
+  close() {
+    arenaRealtimeWs.close();
+  },
+};
+app.set('arenaRealtime', arenaRealtime);
 
 // Initialize arena socket handlers
 initArenaSocket(io);
 startFortuneRealityJob();
 
 server.on('close', () => {
+  arenaRealtime.close();
   stopFortuneRealityJob();
 });
 
