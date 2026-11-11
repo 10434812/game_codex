@@ -1,229 +1,93 @@
-# 页面布局硬规则
+# Repository Guidelines
 
-## 目标
+## Project Overview
 
-后续任何页面修改，主内容**不得进入头部安全区**，不得与系统胶囊/状态栏重叠。
-Boot 页面（启动页）除外。
+锦鲤前程 (Jinli Qiancheng) is a WeChat multiplayer running/catching game with a native mini-program, a Canvas2D mini-game, a Node.js backend and a Vue administration app. Local guest play and online account play have different persistence and asset authority.
 
-## 强制结构（所有页面）
+## Architecture & Data Flow
 
-每个页面根节点必须遵循以下顺序：
+- **Mini-program:** `app.js` owns lifecycle, privacy and audio; `pages/boot/` loads consent/config/auth before navigation. Pages call `utils/` stores and clients, then render snapshots with `setData`. `utils/game-store.js` owns local `idle → room → playing → finished` state and subscriptions.
+- **Online play:** clients use authenticated `/api` requests for rooms/account operations and realtime arena snapshots over Socket.IO or native `/ws/arena`. `back/src/routes/` handles authentication/input/responses; `services/` owns business logic; `models/db.js` wraps the MySQL pool. Active sessions live in memory; settlement writes durable account/game records in a transaction. Direction inputs go to the server; positions, collisions, scores and account rewards remain server-authoritative.
+- **Mini-game:** `minigame/game.js` loads compiled `dist/main.js`. `src/main.ts` owns canvas/lifecycle/frame dispatch; `GameApplication.ts` selects scenes and local/online modes. `core/` contains rules, stores and clients; `scenes/`, `render/` and `platform/` separate interaction, drawing and WeChat APIs.
+- **Admin:** Vue 3 + Element Plus + Pinia; Axios calls admin APIs. Vite builds an app served by Express at `/admin/`.
+- **Shared rules:** most `utils/` rules have backend copies in `back/src/game-engine/` and TypeScript ports in `minigame/src/core/`. Keep affected implementations and parity behavior aligned; see generated-source exceptions below.
 
-1. `global-bg-image`
-2. `app-header`（带 `padding-top: {{nav.statusBarHeight}}px` 与 `padding-right: {{nav.capsuleSpace}}px`）
-3. `page-content`（页面主内容容器）
+## Key Directories
 
-示例：
+| Path | Use |
+| --- | --- |
+| `pages/`, `utils/` | Native WeChat views and reusable client rules/state/networking |
+| `back/src/`, `back/sql/` | API/realtime server and ordered SQL schema/migrations |
+| `back/admin-web/` | Independently installed/built administration frontend |
+| `minigame/src/` | Canvas2D client source; no game engine/editor dependency |
+| `tests/`, `back/tests/`, `minigame/tests/` | Node-based unit, behavior and cross-implementation parity tests |
+| `scripts/`, `back/scripts/`, `minigame/scripts/` | Assets/release tooling, server integration checks and code generation |
+| `assets-pkg/`, `assets/` | Packaged game images and source media; other assets use the CDN |
 
-```xml
-<view class="paper-bg xxx-page">
-  <image class="global-bg-image" ... />
-  <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">...</view>
-  <view class="page-content">...</view>
-</view>
-```
+## Development Commands
 
-## 禁止事项
+Run from the repository root unless a working directory is specified.
 
-- 禁止删除 `app-header` 后直接放主内容。
-- 禁止给主标题使用负 `margin-top` 或绝对定位顶到页面最上方。
-- 禁止把页面第一块业务内容放在 `app-header` 之前。
+| Working directory | Command | Purpose |
+| --- | --- | --- |
+| Root | `npm test` | Mini-program tests (`node --test tests/*.test.js`) |
+| `back/` | `npm ci` | Install locked server dependencies |
+| `back/` | `npm run dev` / `npm start` | Nodemon development / server startup |
+| `back/` | `npm test` | Server unit/behavior tests |
+| `back/` | `npm run test:integration` | Isolated Docker MySQL 8.4 + real HTTP/WebSocket flows |
+| `back/admin-web/` | `npm ci` | Install locked admin dependencies |
+| `back/admin-web/` | `npm run dev` / `npm run build` / `npm run preview` | Vite development / production build / preview |
+| `minigame/` | `npm ci` | Install locked TypeScript/rendering dependencies |
+| `minigame/` | `npm test` | Codegen, then TypeScript behavior/parity tests |
+| `minigame/` | `npm run typecheck` / `npm run build` | Strict TS check / codegen and compile to `dist/` |
+| `minigame/` | `npm run smoke` | Build and run render/menu/rules smoke scenarios |
+| Root | `npm run assets:check` / `npm run assets:check:strict` | Check CDN inventory; strict mode fails inaccessible/mismatched assets |
+| Root | `npm run release:check` | Mini-program release inspection; consult release docs for options |
 
-## 自检清单（提交前）
+Open the repository root in WeChat DevTools for the mini-program; import `minigame/` separately for the mini-game after building. There is no root build/start command and no configured lint/format script. Admin has no test script.
 
-- iPhone 刘海屏下，主标题首行不与状态栏/胶囊重叠。
-- `app-header` 存在且可见。
-- 主内容都在 `page-content` 内。
+## Code Conventions & Common Patterns
 
----
+- Follow neighboring formatting: handwritten code generally uses two spaces, but semicolons vary. Mini-program/backend JavaScript uses CommonJS; mini-game TypeScript and admin use ESM. Functions/fields use `camelCase`, constants `UPPER_SNAKE_CASE`; JS modules commonly use kebab-case, TS core classes/files PascalCase.
+- Pages use `Page({...})` and `.js/.wxml/.wxss/.json` companions. Before changing any page, read [page layout rules](docs/agents/page-layout.md): preserve safe areas, `global-bg-image → app-header → page-content` (boot exception), and initialize `data.nav` from `getNavLayout()` in `onLoad`.
+- Stores own state; views consume snapshots/subscriptions. Dispose subscriptions, timers and sockets on hide/unload as appropriate. Preserve arena snapshot-version/page-generation guards and queued `setData` completion handling when changing asynchronous rendering.
+- Keep guest storage separate from account inventory. Authenticated buy/equip uses server operations and inventory refresh; local settlement cannot credit account coins. Preserve token/revision checks that reject stale async responses.
+- Backend SQL is parameterized; settlement uses one connection with commit/rollback and `finally` release. Services throw errors with `statusCode`; routes use `back/src/utils/response.js` helpers and centralized error handling. API envelopes are `{code, message, data}`: mini-program client unwraps `data`, while admin Axios callers inspect `res.data.code`/`res.data.data`.
+- Use existing small injection seams (`options.random`, `OnlineGame(transport)`, scene options); no DI container. Use `async/await` with existing error/finally cleanup patterns.
+- Audio goes through `utils/audio.js`; styles reuse `app.wxss` tokens. Profile capture uses `chooseAvatar` and nickname input, not deprecated `wx.getUserProfile`. Read [workflow conventions](docs/agents/workflows.md) for audio/profile/CSS changes and commits.
 
-# 技术栈与架构
+### Shared and Generated Code
 
-## 项目概览
+- Edit `minigame/src/core/RunArena.ts`, then run `npm --prefix minigame run codegen` to generate `utils/run-arena.js` and `back/src/game-engine/run-arena.js`. The same generator produces `utils/arena-effects.js` and `utils/run-arena-renderer.js` from mini-game render TypeScript. Do not hand-edit generated outputs.
+- `utils/shop-store.js` supplies generated `minigame/src/core/ShopCatalog.ts`; `utils/legal-config.js` supplies generated `LegalContent.ts`. Backend shop catalog changes still require separate synchronization.
+- Changes to `utils/game-engine.js`, `board-layout.js`, `team-link.js`, `constants.js`, `investment.js` or `emote.js` require updating the corresponding TS port and running mini-game parity tests. Synchronize affected backend rule copies and run both JS suites too.
+- Mini-game `codegen` rewrites generated shared files and copies packaged assets; `npm test` in `minigame/` only checks them (`generate-run-arena.mjs --check`) and does not overwrite them. `minigame/dist/` and admin `dist/` are generated artifacts. `assets-pkg/` is hand-maintained packaged media (no source in `assets/`), tracked in git; its effect/item images are not on the CDN, so they must stay at `/assets-pkg/`.
 
-- **锦鲤前程**：纯前端微信小程序对战 Demo（本地模拟模式，无实时多人后端）
-- **框架**：微信小程序原生（`wxml` / `wxss` / `js`），**无第三方框架/UI 库**
-- **导航**：全部页面使用 `"navigationStyle": "custom"`（自定义导航栏，需计算安全区）
-- **所有资源（图片/音频）托管于** `https://xcx.ukb88.com/`
+## Important Files
 
-## 页面路由
+| File | Why it matters |
+| --- | --- |
+| `app.js`, `app.json`, `app.wxss`, `project.config.json` | Mini-program lifecycle, registered routes, shared styles and DevTools/upload settings |
+| `utils/game-store.js`, `utils/shop-store.js`, `utils/api-client.js` | Local simulation, guest/account inventory boundary and authenticated requests |
+| `utils/runtime-config.js`, `minigame/src/core/RuntimeConfig.ts` | Feature flags and remote configuration |
+| `back/src/app.js`, `back/src/services/game-service.js` | Server composition, realtime session lifecycle and settlement |
+| `back/.env.example`, `back/src/config/index.js` | Environment setup and startup validation; copy the template to `back/.env` |
+| `minigame/game.js`, `minigame/src/main.ts`, `minigame/tsconfig.json` | Packaged entrypoint, canvas application and strict compile settings |
+| `back/admin-web/vite.config.js` | `/admin/` base and `/api` dev proxy (`VITE_API_TARGET`) |
+| `.github/workflows/ci.yml` | Automated verification commands |
 
-| 路由 | 功能 |
-|---|---|
-| `pages/boot/index` | 启动页（加载资源，唯一不设 app-header 的页面） |
-| `pages/home/index` | 首页 + 景区选择 |
-| `pages/room/index` | 房间组队（4-10 人） |
-| `pages/arena/index` | 对局战场（180 秒） |
-| `pages/result/index` | 结算排行 |
-| `pages/profile/index` | 头像昵称编辑 |
-| `pages/shop/index` | 幸运金币商城（皮肤/宠物） |
-| `pages/income/index` | 收益明细 |
+Read [architecture](docs/agents/architecture.md) for module/navigation details, [testing conventions](docs/agents/testing.md) before editing tests, and [release configuration](docs/release/运营材料填写说明.md) for operator/legal materials. `PRODUCT.md` describes current product intent. The root `README.md` contains outdated local-only gameplay information; verify behavior against current source.
 
-## 页面模式
+## Runtime/Tooling Preferences
 
-每个页面严格 4 文件：`.js`（逻辑）、`.wxml`（模板）、`.wxss`（样式）、`.json`（页面配置）。
-每个页面对应 `app.json` pages 数组中的一个条目。
+- Use **Node.js 24** (`.nvmrc`) and **npm**. Backend, admin and mini-game have separate lockfiles/installations; this is not an npm workspace. Root tests have no dependency-install prerequisite. Do not introduce another frontend test framework.
+- Backend requires MySQL configuration and application secrets; use `back/.env.example` and config validation rather than hardcoded credentials. Local Docker Compose provisions MySQL only; inspect `back/sql/` for migrations beyond its mounted initialization files.
+- CDN media uses `https://xcx.ukb88.com/`; some arena/stage images are bundled in `assets-pkg/`. Preserve this distinction when changing resource paths.
 
-## 导航安全区（必须遵守）
+## Testing & QA
 
-每个页面的 `onLoad` 中必须调用 `getNavLayout()` 并将结果写入 `data.nav`：
-
-```js
-onLoad() {
-  try {
-    this.setData({nav: getNavLayout()});
-  } catch (error) {}
-}
-```
-
-WXML 中使用 `{{nav.statusBarHeight}}` 和 `{{nav.capsuleSpace}}` 给 `app-header` 做内边距。
-
-`getNavLayout()` 返回：`{statusBarHeight, navHeight, capsuleSpace}`。
-
-## 状态管理
-
-- **game-store.js**：全局游戏状态（房间、对局），`clone()` 通过 `JSON.parse(JSON.stringify(value))` 做深拷贝
-- **shop-store.js**：商城状态，`__resetForTests()` 用于测试重置
-- **player-stats.js**：玩家战绩，`__resetForTests()` 用于测试重置
-- **持久化**：全部通过 `wx.setStorageSync` / `wx.getStorageSync`，key 格式 `game_codex_*_v1`
-- **核心注意**：`shop-store.js` 和 `player-stats.js` 导出 `__resetForTests()` 供测试用，**不要在生产代码中调用**
-
-## 游戏流程
-
-1. `boot`（资源预加载）→ `home`（选景区）→ `room`（人数 + 自动补机器人）→ `arena`（180s 对局，2人一队）→ `result`（结算排行）→ `home`
-
-## 核心模块
-
-| 模块 | 职责 | 特点 |
-|---|---|---|
-| `constants.js` | 游戏常量（人数、时长、积分、景区、头像池、机器人名字） | 纯数据 |
-| `game-engine.js` | 纯规则层（创建玩家、组队、回合结算、排行） | **无副作用，可测试** |
-| `game-store.js` | 全局状态层（房间/对局状态、tick、持久化） | 单例模块，有内部 timer |
-| `shop-store.js` | 商城状态与商品逻辑 | 单例模块 |
-| `nav.js` | 导航安全区计算 | 纯函数 |
-| `board-layout.js` | 对局棋盘坐标布局 | 圆形/椭圆站位 |
-| `team-link.js` | 队伍连线样式计算 | CSS 旋转拉伸 |
-| `investment.js` | 福袋投资逻辑 | 持有时间影响波动 |
-| `emote.js` | 快捷表情系统 | |
-| `audio.js` | 音频管理 | 共享和循环两种模式 |
-| `format.js` | 数字/货币/日期格式化 | |
-| `progression.js` | 等级/经验值计算 | 每级递增加 40 |
-| `user-profile.js` | 用户资料缓存 | 有 1500ms 节流 |
-| `boot-loader.js` | 启动资源预加载 | 图片预加载队列 |
-
----
-
-# 测试
-
-## 测试命令
-
-```bash
-npm test
-# 等价于: node --test tests/*.test.js
-```
-
-**不要使用其他测试框架**，当前仓库仅使用 Node.js 内置 `node:test` + `node:assert/strict`。
-
-## 测试文件
-
-- `tests/game-engine.test.js`
-- `tests/game-store.test.js`
-- `tests/shop-store.test.js`
-- `tests/board-layout.test.js`
-- `tests/emote.test.js`
-- `tests/format.test.js`
-- `tests/nav.test.js`
-- `tests/player-stats.test.js`
-- `tests/progression.test.js`
-- `tests/team-link.test.js`
-- `tests/page-ui.test.js`
-
-## 测试约定
-
-### 1. `node:test` + `assert.strict`
-
-```js
-const test = require('node:test');
-const assert = require('node:assert/strict');
-```
-
-### 2. 全局 `wx` Mock
-
-测试文件中使用 `new Map()` 模拟 `wx` 存储 API：
-
-```js
-const storage = new Map();
-global.wx = {
-  getStorageSync(key) { return storage.has(key) ? storage.get(key) : null; },
-  setStorageSync(key, value) { storage.set(key, value); },
-  removeStorageSync(key) { storage.delete(key); },
-};
-```
-
-`page-ui.test.js` 提供了最完整的 `wx` stub（涵盖导航、动画、音频等），其他测试只需 mock 必要的 API。
-
-### 3. 确定性随机（Seeded Random）
-
-使用 `createRandom(...values)` 替代 `Math.random`：
-
-```js
-function createRandom(...values) {
-  let index = 0;
-  return () => {
-    const value = values[index];
-    index = Math.min(index + 1, values.length - 1);
-    return value;
-  };
-}
-```
-
-传递给需要 `options.random` 参数的函数（如 `engine.createInitialPlayers({..., random: createRandom(0.2, 0.2)})`）。
-
-### 4. 测试隔离
-
-对有状态的模块，在 `test.beforeEach` 中同步 `__resetForTests()` 并清除 storage：
-
-```js
-test.beforeEach(() => {
-  storage.clear();
-  shopStore.__resetForTests();
-  playerStats.__resetForTests();
-  store.__resetForTests();
-});
-```
-
-### 5. `__resetForTests()` 协议
-
-- `shop-store.js`、`player-stats.js`、`game-store.js` 导出 `__resetForTests()` 方法
-- **设计意图**：测试重置模块内部状态到初始值
-- **⚠️ 仅用于测试**，不要在生产代码中调用
-
----
-
-# 工作流约定
-
-## 音频管理
-
-- 通过 `utils/audio.js` 管理，暴露 `playCue`, `playStageBgm`, `stopBgm`, `playVibrate`
-- 音频源全部为远程 URL（`https://xcx.ukb88.com/assets/audio/...`）
-- 全局 BGM 在 `app.js` 的 `onLaunch`/`onShow` 中自动播放
-
-## 用户资料
-
-- 通过 `wx.getUserProfile` 获取（仅 `wx.getUserProfile`，不是新版的头像昵称填写能力）
-- 缓存于 `wx_user_profile_v1` key
-
-## CSS 设计风格
-
-- 东方纸张主题：主色橘黄 `#e57c1f`，米纸黄背景 `#f6ebd1`
-- 使用 CSS 变量（`--bg-base`, `--red-primary` 等），定义在 `app.wxss`
-- 单位使用 `rpx` 做响应式布局
-- 头像外框通过 `--avatar-ring-*` 变量统一定义
-
-## Git 与工作区
-
-- 忽略 `node_modules/` 和 `.DS_Store`
-- AppID: `wx72a4b552a87b44cf`
-- libVersion: `3.4.0`
-- `project.config.json` 中 `compileType: "miniprogram"`
-- `project.config.json` 的 `packOptions.ignore` 排除了 `tests/`、`docs/`、大部分 `assets/` 子目录
+- All three suites use `node:test` and `node:assert/strict`. Narrow JS example: `node --test tests/game-store.test.js` or `node --test back/tests/game-service.test.js`. Narrow TS example from `minigame/`: `npm run codegen && node --import ./tests/register-hook.mjs --test tests/engine-parity.test.ts`.
+- Mock only needed `wx` APIs; use isolated `Map` storage and reset affected stores in `beforeEach`. **Never call `__resetForTests()` in production code.** Restore patched globals/dependencies and dispose timers/scenes/subscriptions after tests.
+- Inject deterministic random sources; parity comparisons use independent RNGs with the same seed. Disable autonomous timers where supported and advance ticks explicitly. Preserve engine, running-arena and store parity when changing shared behavior.
+- Run affected suites; for shared engine changes run root, backend and mini-game tests. For Canvas changes also run the mini-game smoke command and inspect DevTools/real-device behavior. Backend integration requires Docker and creates/tears down an isolated database.
+- CI runs root/server tests, backend production dependency audit, and mini-game tests/typecheck/build. It does not currently run admin build, integration or render smoke. No numeric coverage threshold is configured; validate affected behavior and boundaries.

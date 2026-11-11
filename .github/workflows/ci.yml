@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            back/package-lock.json
+            minigame/package-lock.json
+
+      - name: 小程序规则与页面测试
+        run: npm test
+
+      - name: 后端安装
+        working-directory: back
+        run: npm ci
+
+      - name: 后端测试
+        working-directory: back
+        run: npm test
+
+      - name: 后端生产依赖安全门禁
+        working-directory: back
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: 小游戏安装
+        working-directory: minigame
+        run: npm ci
+
+      - name: 小游戏测试与类型检查
+        working-directory: minigame
+        run: npm test && npm run typecheck
+
+      - name: 小游戏构建
+        working-directory: minigame
+        run: npm run build
