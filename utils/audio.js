@@ -46,9 +46,6 @@ const VOICE_SOURCES = {
   teamSuccess: `${VOICE_BASE_URL}/team-success.mp3`,
   teamDissolved: `${VOICE_BASE_URL}/team-dissolved.mp3`,
   fortuneBag: `${VOICE_BASE_URL}/fortune-bag.mp3`,
-  buySuccess: `${VOICE_BASE_URL}/buy-success.mp3`,
-  sellProfit: `${VOICE_BASE_URL}/sell-profit.mp3`,
-  sellLoss: `${VOICE_BASE_URL}/sell-loss.mp3`,
   actionUnavailable: `${VOICE_BASE_URL}/action-unavailable.mp3`,
   resultComplete: `${VOICE_BASE_URL}/result-complete.mp3`,
   resultFirst: `${VOICE_BASE_URL}/result-first.mp3`,
@@ -95,11 +92,13 @@ function normalizeBgmVolume(volume) {
 
 function isRealDevicePlatform() {
   try {
-    if (!wx || typeof wx.getSystemInfoSync !== 'function') {
+    if (typeof wx === 'undefined') {
       return false;
     }
-    const systemInfo = wx.getSystemInfoSync();
-    return systemInfo && (systemInfo.platform === 'ios' || systemInfo.platform === 'android');
+    const deviceInfo = typeof wx.getDeviceInfo === 'function'
+      ? wx.getDeviceInfo()
+      : (typeof wx.getSystemInfoSync === 'function' ? wx.getSystemInfoSync() : null);
+    return deviceInfo && (deviceInfo.platform === 'ios' || deviceInfo.platform === 'android');
   } catch (error) {
     return false;
   }
@@ -110,10 +109,15 @@ function initAudioOption() {
     return;
   }
   initialized = true;
+  // 开发者工具不支持此 API；背景音乐本身仍可正常播放。
+  if (!isRealDevicePlatform()) return;
   try {
     wx.setInnerAudioOption({
       obeyMuteSwitch: false,
       mixWithOther: true,
+      fail(error) {
+        console.warn('[audio] setInnerAudioOption error:', error);
+      },
     });
   } catch (error) { console.warn('[audio] setInnerAudioOption error:', error); }
 }
@@ -126,6 +130,15 @@ function createAudio() {
       audio.stop();
       audio.destroy();
     } catch (error) { console.warn('[audio] destroy audio error:', error); }
+    // 只重置出错的那个实例的引用：误置其它 context（如正在播放的 BGM）会导致 stopBgm 失效、重复播放
+    if (sharedAudio === audio) sharedAudio = null;
+    if (bgmAudio === audio) bgmAudio = null;
+    if (voiceAudio === audio) voiceAudio = null;
+    Object.keys(loopPool).forEach((name) => {
+      if (loopPool[name] === audio) {
+        delete loopPool[name];
+      }
+    });
   });
   return audio;
 }

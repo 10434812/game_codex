@@ -13,6 +13,55 @@ const DEFAULT_STATE = {
   records: [],
 };
 const MAX_RECORDS = 120;
+// 账号资产只保留当前登录会话内的服务器快照，绝不复用游客存档。
+let accountToken = '';
+let accountRevision = 0;
+let accountState = null;
+let inventoryRequest = null;
+
+function resetAccountState() {
+  accountToken = '';
+  accountRevision += 1;
+  accountState = null;
+  inventoryRequest = null;
+}
+
+function getAccountSession() {
+  const token = api.getToken();
+  if (token !== accountToken) {
+    resetAccountState();
+    accountToken = token;
+  }
+  if (!token) return null;
+  if (!accountState) {
+    accountState = normalizeState({
+      ...DEFAULT_STATE,
+      coins: 0,
+      assetSource: 'server',
+      syncStatus: 'pending',
+      syncError: '',
+    });
+  }
+  return {token, revision: accountRevision};
+}
+
+function assertAccountSession(session, allowRecovery = false) {
+  const current = getAccountSession();
+  if (!current || ((current.token !== session.token || current.revision !== session.revision) &&
+      !(allowRecovery && api.isRecoveredToken(session.token, current.token)))) {
+    throw new Error('登录账号已变更，请重新同步');
+  }
+}
+
+function rejectLocalAccountMutation() {
+  if (!getAccountSession()) return null;
+  return {
+    ok: false,
+    code: 'SERVER_AUTHORITY_REQUIRED',
+    message: '账号资产由服务器确认，本地体验不会计入账号',
+    state: getStoreState(),
+  };
+}
 
 const SKIN_RARITY_META = {
   base: {rank: 0, label: '基础'},
@@ -248,7 +297,7 @@ const GOODS = {
       name: '淘气龙',
       price: 5800,
       accent: '#9f5b2b',
-      description: '掌管云雨的小神龙，打架最凶却最爱撒娇。',
+      description: '掌管云雨的小神龙，性格张扬却最爱撒娇。',
       petIcon: '🐉',
       petLabel: '淘气龙',
       petImage: 'https://xcx.ukb88.com/assets/111/pets/taoqilong.png',
@@ -336,7 +385,7 @@ const GOODS = {
       name: '瑞犬',
       price: 1100,
       accent: '#9a5e3b',
-      description: '极其忠诚，能守护主人的每一次关键抉择。',
+      description: '忠心护主，能守护主人的每一次关键抉择。',
       petIcon: '🐶',
       petLabel: '瑞犬',
       petImage: 'https://xcx.ukb88.com/assets/111/pets/ruiquan.png',
@@ -426,7 +475,7 @@ const GOODS = {
       name: '瑞冠天光',
       price: 2880,
       accent: '#c88a2b',
-      description: '层次最完整的高级款，适合压轴登场。',
+      description: '层次丰富的高级款，适合压轴登场。',
       ringIcon: '👑',
       ringLabel: '光环',
       ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_07.png',
@@ -512,6 +561,7 @@ function normalizeState(raw) {
 }
 
 function loadState() {
+  if (getAccountSession()) return accountState;
   try {
     return normalizeState(wx.getStorageSync(SHOP_STORAGE_KEY));
   } catch (error) {
@@ -520,6 +570,9 @@ function loadState() {
 }
 
 function saveState(state) {
+  if (getAccountSession()) {
+    throw new Error('账号资产只能由服务器同步');
+  }
   const normalized = normalizeState(state);
   try {
     wx.setStorageSync(SHOP_STORAGE_KEY, normalized);
@@ -608,6 +661,8 @@ function buildGoodsView(category, state = loadState()) {
 }
 
 function purchaseItem(category, itemId) {
+  const accountError = rejectLocalAccountMutation();
+  if (accountError) return accountError;
   const list = category === 'pet' ? GOODS.pet : category === 'ring' ? GOODS.ring : GOODS.skin;
   const item = list.find((goods) => goods.id === itemId);
   if (!item) {
@@ -654,6 +709,8 @@ function purchaseItem(category, itemId) {
 }
 
 function equipItem(category, itemId) {
+  const accountError = rejectLocalAccountMutation();
+  if (accountError) return accountError;
   const state = loadState();
   if (category === 'pet') {
     if (!state.ownedPets.includes(itemId)) {
@@ -694,6 +751,8 @@ function getEquippedDisplay() {
   const ring = state.equippedRingId ? getRingById(state.equippedRingId) : null;
   return {
     coins: state.coins,
+    assetSource: state.assetSource || 'guest',
+    syncStatus: state.syncStatus || 'ready',
     equippedSkinId: state.equippedSkinId,
     equippedPetId: state.equippedPetId,
     equippedRingId: state.equippedRingId,
@@ -719,6 +778,8 @@ function addCoins(amount, meta = {}) {
 }
 
 function applyCoinsDelta(amount, meta = {}) {
+  const accountError = rejectLocalAccountMutation();
+  if (accountError) return accountError;
   const delta = Math.floor(Number(amount) || 0);
   const state = loadState();
   if (!delta) {
@@ -763,69 +824,110 @@ function getCoinRecords() {
   return clone(loadState().records);
 }
 
-function __resetForTests() {
+function clearLocalData() {
+  resetAccountState();
   try {
     wx.removeStorageSync(SHOP_STORAGE_KEY);
-  } catch (error) { console.warn('[shop-store] clearRecords error:', error); }
+  } catch (error) {
+    console.warn('[shop-store] clearLocalData error:', error);
+  }
   return getStoreState();
 }
 
-async function buyViaApi(itemId) {
+function __resetForTests() {
+  resetAccountState();
+  return clearLocalData();
+}
+
+async function runAccountAction(path, payload, actionLabel) {
+  const session = getAccountSession();
+  if (!session) {
+    return {ok: false, code: 'LOGIN_REQUIRED', committed: false, message: '请先登录后再操作账号资产'};
+  }
+  let committed = false;
   try {
-    const result = await api.post('/shop/buy', { itemId });
-    if (result) {
-      await refreshInventory();
-      const state = loadState();
-      state.coins = result.coins || state.coins;
-      saveState(state);
+    const result = await api.post(path, payload);
+    assertAccountSession(session, true);
+    if (!result || (path === '/shop/equip' && result.success !== true) ||
+        (path === '/shop/buy' && (result.coins === null || result.coins === undefined ||
+          !Number.isFinite(Number(result.coins)) || Number(result.coins) < 0))) {
+      throw new Error('服务器未确认操作结果，请同步后查看');
     }
-    return true;
-  } catch (err) {
-    console.warn('[shop-store] buyViaApi error:', err);
-    return false;
+    committed = true;
+    // 不推算库存或余额，写接口成功后也必须重新读取服务器快照。
+    // 写操作之前启动的读取可能仍是旧库存，不能复用它宣告成功。
+    if (inventoryRequest) await inventoryRequest.catch(() => {});
+    assertAccountSession(session, true);
+    await refreshInventory();
+    assertAccountSession(session, true);
+    return {ok: true, code: 'CONFIRMED', committed: true, message: `${actionLabel}成功`, state: getStoreState()};
+  } catch (error) {
+    const message = committed
+      ? `${actionLabel}已提交，资产同步失败，请刷新确认后勿重复操作`
+      : (error.message || `${actionLabel}失败，请稍后重试`);
+    return {ok: false, code: committed ? 'SYNC_FAILED' : 'API_FAILED', committed, message};
   }
 }
 
-async function equipViaApi(itemId, category) {
-  try {
-    await api.post('/shop/equip', { itemId, category });
-    const state = loadState();
-    if (category === 'skin') {
-      state.equippedSkinId = itemId;
-    } else if (category === 'pet') {
-      state.equippedPetId = itemId;
-    } else if (category === 'ring') {
-      state.equippedRingId = itemId;
-    }
-    saveState(state);
-    return true;
-  } catch (err) {
-    console.warn('[shop-store] equipViaApi error:', err);
-    return false;
-  }
+function buyViaApi(itemId) {
+  return runAccountAction('/shop/buy', {itemId}, '购买');
 }
 
-async function refreshInventory() {
-  try {
-    const items = await api.get('/shop/inventory');
-    const skins = items.filter(i => i.category === 'skin').map(i => i.item_id);
-    const pets = items.filter(i => i.category === 'pet').map(i => i.item_id);
-    const rings = items.filter(i => i.category === 'ring').map(i => i.item_id);
-    const equippedSkin = items.find(i => i.category === 'skin' && i.is_equipped);
-    const equippedPet = items.find(i => i.category === 'pet' && i.is_equipped);
-    const equippedRing = items.find(i => i.category === 'ring' && i.is_equipped);
+function equipViaApi(itemId, category) {
+  return runAccountAction('/shop/equip', {itemId, category}, '装备');
+}
 
-    const state = loadState();
-    state.ownedSkins = [...new Set([...state.ownedSkins, ...skins])];
-    state.ownedPets = [...new Set([...state.ownedPets, ...pets])];
-    state.ownedRings = [...new Set([...state.ownedRings, ...rings])];
-    if (equippedSkin) state.equippedSkinId = equippedSkin.item_id;
-    if (equippedPet) state.equippedPetId = equippedPet.item_id;
-    if (equippedRing) state.equippedRingId = equippedRing.item_id;
-    saveState(state);
-  } catch (err) {
-    console.warn('[shop-store] refreshInventory error:', err);
-  }
+function refreshInventory(profile) {
+  const session = getAccountSession();
+  if (!session) return Promise.reject(new Error('请先登录后再同步账号资产'));
+  if (inventoryRequest) return inventoryRequest;
+  accountState = {...accountState, syncStatus: 'loading', syncError: ''};
+  const request = Promise.all([
+    profile ? Promise.resolve(profile) : api.get('/user/profile'),
+    api.get('/shop/inventory'),
+  ]).then(([user, items]) => {
+    assertAccountSession(session);
+    if (!user || user.coins === null || user.coins === undefined ||
+        !Number.isFinite(Number(user.coins)) || Number(user.coins) < 0) {
+      throw new Error('服务器余额数据无效，请稍后重新同步');
+    }
+    if (!Array.isArray(items) || items.some((item) => !item || !item.item_id || !item.category)) {
+      throw new Error('服务器库存数据无效，请稍后重新同步');
+    }
+    const owned = (category) => items.filter((item) => item.category === category).map((item) => item.item_id);
+    const equipped = (category) => {
+      const item = items.find((entry) => entry.category === category &&
+        (entry.is_equipped === true || Number(entry.is_equipped) === 1));
+      return item ? item.item_id : '';
+    };
+    accountState = normalizeState({
+      coins: Number(user.coins),
+      ownedSkins: owned('skin'),
+      ownedPets: owned('pet'),
+      ownedRings: owned('ring'),
+      equippedSkinId: equipped('skin') || 'skin-default',
+      equippedPetId: equipped('pet'),
+      equippedRingId: equipped('ring'),
+      records: [],
+      assetSource: 'server',
+      syncStatus: 'ready',
+      syncError: '',
+    });
+    return getStoreState();
+  }).catch((error) => {
+    const current = getAccountSession();
+    if (current && api.isRecoveredToken(session.token, current.token) && accountState.syncStatus === 'ready') {
+      return getStoreState();
+    }
+    if (current && current.token === session.token && current.revision === session.revision) {
+      accountState = {...accountState, syncStatus: 'error', syncError: error.message || '资产同步失败'};
+    }
+    throw error;
+  }).finally(() => {
+    if (inventoryRequest === request) inventoryRequest = null;
+  });
+  inventoryRequest = request;
+  return request;
 }
 
 module.exports = {
@@ -839,6 +941,8 @@ module.exports = {
   purchaseItem,
   equipItem,
   getEquippedDisplay,
+  clearLocalData,
+  resetAccountState,
   __resetForTests,
   buyViaApi,
   equipViaApi,

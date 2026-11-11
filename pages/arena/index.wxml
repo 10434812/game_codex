@@ -11,17 +11,18 @@
         <text class="app-status-dot">●</text>
         <text class="app-status-text">{{modeText}}</text>
       </view>
-      <view class="app-gear" hover-class="clickable-hover">⚙</view>
     </view>
   </view>
 
   <view class="page-content">
     <view class="scene-backdrop" wx:if="{{stageImage || stageVideo}}">
-      <image wx:if="{{!stageVideo && stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <image wx:if="{{stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
       <video
-        wx:if="{{stageVideo}}"
+        wx:if="{{stageVideo && !rulesVisible}}"
+        id="scene-backdrop-video"
         class="scene-backdrop-video"
         src="{{stageVideo}}"
+        poster="{{stageImage}}"
         autoplay
         muted
         loop
@@ -37,50 +38,62 @@
     </view>
 
     <view class="scene-layer">
-    <view class="timer card">
+    <button class="rules-entry" size="mini" bindtap="onOpenRules" hover-class="btn-hover">玩法</button>
+    <view class="timer card {{sprint ? 'timer-sprint' : ''}}">
       <view class="time">{{timeText}}</view>
-      <view class="hint">{{actionHintText || hintText}}</view>
+      <view class="self-rank {{selfRankLead ? 'self-rank-lead' : ''}}" wx:if="{{selfRankText}}">{{selfRankText}}</view>
+      <view class="hint" wx:if="{{!sprint}}">{{hint}}</view>
+      <view class="hint sprint-hint" wx:else>最后 15 秒 · 冲刺！<text>{{sprintText}}</text></view>
     </view>
 
-    <view class="board">
+    <view class="run-team-bar">
+      <text class="run-team-copy">{{teamText}}</text><button wx:if="{{hasTeam}}" bindtap="onExitTeam" disabled="{{teamPending}}">退出组队</button>
+      <button wx:if="{{waiting && !rulesVisible}}" bindtap="cancelStart">取消本次开局</button>
+      <view class="run-invite-prompt" wx:if="{{incomingId && !waiting}}">
+        <text class="run-invite-copy">{{incomingName}} 邀请你组队</text>
+        <button class="run-invite-accept" bindtap="onAcceptInvite" disabled="{{teamPending}}">接受</button>
+        <button class="run-invite-ignore" bindtap="onIgnoreInvite" disabled="{{teamPending}}">忽略</button>
+      </view>
+    </view>
+    <view class="run-action-error" wx:if="{{error}}">{{error}}</view>
+    <view class="run-action-error" wx:if="{{connectionText}}">{{connectionText}}</view>
+    <view class="run-tutorial" wx:if="{{tutorialStep && !rulesVisible && !waiting}}">
+      <text>{{tutorialStep === 1 ? '1/3 在场地拖动手指，让角色跑起来' : tutorialStep === 2 ? '2/3 接住福袋或礼物，注意躲开雷' : '3/3 点击其他玩家头像，邀请对方组队'}}</text>
+      <button bindtap="dismissTutorial">知道了</button>
+    </view>
+    <view class="board" id="run-field" style="--arena-move-time:{{motionDuration}}ms;" catchtouchstart="onRunTouchStart" catchtouchmove="onRunTouchMove" catchtouchend="onRunTouchEnd" catchtouchcancel="onRunTouchCancel">
       <view class="link-layer">
         <view class="link team-link" wx:for="{{ teamLinks }}" wx:key="id" style="{{ item.style }}"></view>
         <view class="link invite-link" wx:if="{{ inviteLink }}" style="{{ inviteLink.style }}"></view>
         <view class="link success-link" wx:if="{{ successLink }}" style="{{ successLink.style }}"></view>
       </view>
 
-      <view class="fortune-bag-wrap" wx:if="{{ fortuneBag }}" style="left: {{ fortuneBag.x }}rpx; top: {{ fortuneBag.y }}rpx;" bindtap="onTapFortuneBag">
-        <view class="fortune-bag-spotlight"></view>
-        <view class="fortune-bag-trail"></view>
-        <view class="fortune-bag-ripple ripple-one"></view>
-        <view class="fortune-bag-ripple ripple-two"></view>
-        <view class="fortune-bag-stage">
-          <view class="fortune-bag-halo"></view>
-          <image class="fortune-bag-image" src="{{ fortuneBag.asset }}" mode="aspectFit"></image>
-        </view>
-        <view class="fortune-bag-countdown">{{ fortuneBagCountdownText }}</view>
-        <view class="fortune-bag-spark spark-left"></view>
-        <view class="fortune-bag-spark spark-right"></view>
-        <view class="fortune-bag-spark spark-bottom"></view>
+      <view class="run-drop {{item.warning ? 'run-drop-warning' : ''}} run-drop-{{item.kind}}" wx:for="{{drops}}" wx:key="id" style="transform:translate3d({{item.px}}px,{{item.py}}px,0) translate(-50%,-50%);">
+        <image class="run-drop-image" src="{{item.asset}}" mode="aspectFit" />
+        <text class="run-drop-label">{{item.label}}</text>
       </view>
-
+      <view class="run-impact run-impact-{{item.kind}}" wx:for="{{bursts}}" wx:key="id" wx:if="{{item.effect}}" style="left:{{item.x}}%;top:{{item.y}}%;width:{{item.effect.size}}rpx;height:{{item.effect.size}}rpx;opacity:{{item.effect.opacity}};">
+        <image class="run-impact-atlas" src="{{item.effect.asset}}" mode="scaleToFill" style="transform:translate3d({{item.effect.offsetX}}%,{{item.effect.offsetY}}%,0);" />
+      </view>
+      <view class="run-burst {{item.loss ? 'run-burst-loss' : ''}}" wx:for="{{bursts}}" wx:key="id" style="left:{{item.labelX}}%;top:{{item.labelY}}%;"><view wx:if="{{item.team}}" /><text>{{item.text}}</text></view>
       <view class="team-success-toast" wx:if="{{ successToast }}" style="left: {{ successToast.x }}rpx; top: {{ successToast.y }}rpx;">
         {{ successToast.text }}
       </view>
 
-      <view class="player-node {{ item.isSelf ? 'self-node' : '' }}" wx:for="{{ players }}" wx:key="id" style="left: {{ item.x }}rpx; top: {{ item.y }}rpx;" data-player-id="{{ item.id }}" bindtap="onPlayerTap">
-        <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }}" hover-class="clickable-hover">
+      <view class="runner-position {{item.isSelf ? 'self-runner-position' : ''}}" wx:for="{{ players }}" wx:key="id" style="transform:translate3d({{item.px}}px,{{item.py}}px,0);">
+      <view class="player-node {{ item.isSelf ? 'self-node' : '' }}" data-player-id="{{ item.id }}" catchtouchstart="onRunTouchStart">
+        <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }} {{item.invited ? 'run-invited' : ''}} {{item.boosted ? 'run-boosted' : ''}}" hover-class="clickable-hover">
           <view class="avatar-core">
-            <image class="avatar" src="{{ item.avatar || 'https://xcx.ukb88.com/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill"></image>
+            <image class="avatar" src="{{ item.skinImage || item.avatar || 'https://xcx.ukb88.com/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill" lazy-load="{{true}}"></image>
           </view>
-          <image wx:if="{{ item.isSelf && item.ringImage }}" class="avatar-ring-overlay" src="{{ item.ringImage }}" mode="aspectFit"></image>
+          <image wx:if="{{ item.isSelf && item.ringImage }}" class="avatar-ring-overlay" src="{{ item.ringImage }}" mode="aspectFit" lazy-load="{{true}}"></image>
         </view>
         <view
           class="pet-follower"
           wx:if="{{ item.isSelf && item.petLabel }}"
         >
           <view class="pet-avatar-shell" style="background: linear-gradient(145deg, #fff8ec 0%, {{ item.petAccent || '#d8a062' }} 100%);">
-            <image wx:if="{{ item.petImage }}" class="pet-avatar" src="{{ item.petImage }}" mode="aspectFill"></image>
+            <image wx:if="{{ item.petImage }}" class="pet-avatar" src="{{ item.petImage }}" mode="aspectFill" lazy-load="{{true}}"></image>
             <text wx:else class="pet-emoji">{{ item.petIcon }}</text>
           </view>
         </view>
@@ -91,46 +104,16 @@
         </view>
         <view class="emote-bubble emote-{{ item.chatPos || 'upper-center' }}" wx:if="{{ item.emoteText }}">{{ item.emoteText }}</view>
       </view>
+      </view>
 
       <view class="player-name-layer">
-        <view class="player-label-anchor" wx:for="{{ players }}" wx:key="id" style="left: {{ item.x }}rpx; top: {{ item.y }}rpx;">
-          <view class="node-name name-{{ item.namePos || 'center' }} {{ item.isSelf ? 'self-node-name' : '' }}">{{ item.scoreLabel }}</view>
+        <view class="run-label-anchor {{item.isSelf ? 'self-run-label' : ''}}" wx:for="{{ players }}" wx:key="id" style="transform:translate3d({{item.labelX}}px,{{item.labelY}}px,0);">
+          <view class="node-name run-name {{ item.isSelf ? 'self-node-name' : '' }}" style="width:{{item.labelWidth}}px;">{{ item.scoreLabel }}</view>
         </view>
       </view>
     </view>
 
-    <view class="invest-panel fortune-panel phase-{{ fortunePanelPhase }}" wx:if="{{ fortunePanelVisible }}">
-      <view class="fortune-scroll-rod top"></view>
-      <view class="fortune-scroll-paper">
-        <view class="fortune-scroll-seal">机缘卷</view>
-        <view class="invest-head">
-          <image wx:if="{{ fortunePanelAsset }}" class="invest-head-icon" src="{{ fortunePanelAsset }}" mode="aspectFit"></image>
-          <view class="invest-head-copy">
-            <text class="invest-type">{{ activePosition ? '卖出窗口' : activeOpportunity.category }}</text>
-            <text class="invest-risk">{{ activePosition ? activePosition.riskText : activeOpportunity.riskText }}</text>
-          </view>
-        </view>
-        <view class="invest-title">{{ activePosition ? activePosition.name : activeOpportunity.name }}</view>
-        <view wx:if="{{ activePosition }}">
-          <view class="invest-line invest-highlight">持仓成本：{{ activePosition.cost }}</view>
-          <view class="invest-line invest-highlight">持有时间：{{ activePositionHoldText }}</view>
-          <view class="invest-line">再次弹出会提示卖出当前持仓</view>
-        </view>
-        <view wx:else>
-          <view class="invest-line invest-highlight">投入成本：{{ activeOpportunity.cost }}</view>
-          <view class="invest-line invest-highlight">预计波动：{{ activeOpportunity.floatRangeText }}</view>
-          <view class="invest-line invest-summary">{{ activeOpportunity.summary }}</view>
-        </view>
-        <view class="invest-actions">
-          <button class="invest-btn ghost" bindtap="onCloseOpportunity" hover-class="btn-hover">先放弃</button>
-          <button wx:if="{{ !activePosition }}" class="invest-btn primary-btn" bindtap="onConfirmOpportunity" hover-class="btn-hover">立即买入</button>
-          <button wx:else class="invest-btn primary-btn" bindtap="onSellPosition" hover-class="btn-hover">确认卖出</button>
-        </view>
-      </view>
-      <view class="fortune-scroll-rod bottom"></view>
-    </view>
-
-    <view class="quick-emote-panel" wx:if="{{ emotePanelVisible }}" style="bottom: {{ messageCardCollapsed ? 388 : 484 }}rpx;">
+    <view class="quick-emote-panel" wx:if="{{ emotePanelVisible }}" style="bottom: calc({{ messageCardCollapsed ? 388 : 484 }}rpx + env(safe-area-inset-bottom));">
       <view
         class="quick-emote-item"
         wx:for="{{ quickEmotes }}"
@@ -169,12 +152,7 @@
       </view>
     </view>
 
-    <view class="shop-entry" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onTapShop" hover-class="clickable-hover">
-      <text class="shop-entry-icon">✦</text>
-      <text>装备商城</text>
-    </view>
-
-    <view class="quick-emote" style="bottom: {{ messageCardCollapsed ? 286 : 382 }}rpx;" bindtap="onToggleEmotePanel" hover-class="clickable-hover">☺</view>
+    <view class="quick-emote" style="bottom: calc({{ messageCardCollapsed ? 286 : 382 }}rpx + env(safe-area-inset-bottom));" bindtap="onToggleEmotePanel" hover-class="clickable-hover">☺</view>
 
     <view class="bottom-nav">
       <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
@@ -184,25 +162,15 @@
     </view>
     </view>
 
-    <view class="guide-overlay guide-arena-team" wx:if="{{guideTeamVisible}}">
-      <view class="guide-mask"></view>
-      <view class="guide-card guide-card-top">
-        <view class="guide-kicker">新手引导 3/5</view>
-        <view class="guide-title">点场上头像发起组队，连线成功会一起加分</view>
-      </view>
-      <view class="guide-action-panel">
-        <button class="guide-primary" bindtap="onGuideTeamPrimary" hover-class="btn-hover">下一步</button>
-      </view>
-    </view>
-
-    <view class="guide-overlay guide-arena-bag" wx:if="{{guideBagVisible}}">
-      <view class="guide-mask"></view>
-      <view class="guide-card guide-card-middle">
-        <view class="guide-kicker">新手引导 4/5</view>
-        <view class="guide-title">福袋出现时点它，买入或卖出机会会影响本局收益</view>
-      </view>
-      <view class="guide-action-panel">
-        <button class="guide-primary" bindtap="onGuideBagPrimary" hover-class="btn-hover">查看福袋</button>
+    <view class="rules-overlay" wx:if="{{rulesVisible}}" catchtouchmove="noop">
+      <view class="rules-panel">
+        <view class="rules-title">120 秒，争夺积分第一！</view>
+        <view class="rules-summary">拖动跑动，松手停住。接住掉落的福袋和礼物，躲开雷，按个人积分排名。</view>
+        <view class="rules-item"><text class="rules-label">组队联动</text><text>双方互相点选同意，追上碰面后成队并闪爆。靠近队友双方加速。</text></view>
+        <view class="rules-item"><text class="rules-label">保持独立</text><text>点击退出组队即可随时离队，恢复各自得分。</text></view>
+        <view class="rules-item"><text class="rules-label">争取高分</text><text>福袋 +10，礼物 +20，踩雷 −10。组队时队友同步一半，踩雷队友扣 5 分。</text></view>
+        <view class="rules-note">{{rulesFirstRun ? '点击开始后计时；联机对局等待所有玩家确认。' : '本局继续计时，可随时回到对局调整策略。'}}</view>
+        <button class="rules-primary" bindtap="onStartFromRules" loading="{{rulesStarting}}" disabled="{{rulesStarting}}" hover-class="btn-hover">{{rulesFirstRun ? '开始' : '返回对局'}}</button>
       </view>
     </view>
   </view>

@@ -11,17 +11,18 @@
         <text class="app-status-dot">●</text>
         <text class="app-status-text">{{modeText}}</text>
       </view>
-      <view class="app-gear" hover-class="clickable-hover">⚙</view>
     </view>
   </view>
 
   <view class="page-content">
     <view class="scene-backdrop" wx:if="{{stageImage || stageVideo}}">
-      <image wx:if="{{!stageVideo && stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <image wx:if="{{stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
       <video
         wx:if="{{stageVideo}}"
+        id="scene-backdrop-video"
         class="scene-backdrop-video"
         src="{{stageVideo}}"
+        poster="{{stageImage}}"
         autoplay
         muted
         loop
@@ -50,8 +51,8 @@
 
       <view class="slot-grid">
         <view class="slot {{item.filled?'filled':'empty'}}" wx:for="{{slots}}" wx:key="index">
-          <image class="avatar" wx:if="{{item.filled}}" src="{{item.avatar || defaultAvatar}}" mode="aspectFill"></image>
-          <view class="plus" wx:else>＋</view>
+          <image class="avatar" wx:if="{{item.filled}}" src="{{item.avatar || defaultAvatar}}" mode="aspectFill" lazy-load="{{true}}"></image>
+          <button wx:else class="empty-avatar slot-invite-btn" open-type="{{backendRoomId && shareEnabled ? 'share' : ''}}" bindtap="inviteFriend" loading="{{creatingOnlineRoom}}" disabled="{{starting || creatingOnlineRoom || !shareEnabled}}" aria-label="{{backendRoomId ? '选择微信群或好友发送房间邀请' : '创建联网房间邀请好友'}}" hover-class="btn-hover"><view class="invite-plus" aria-hidden="true"></view></button>
           <view class="slot-name">{{item.name}}</view>
           <view class="slot-state" wx:if="{{item.state}}">• {{item.state}}</view>
           <view class="star" wx:if="{{item.star}}">★</view>
@@ -60,27 +61,27 @@
 
       <view class="voice-box">
         <view class="voice-line">
-          <text class="voice-title">房间活跃度</text>
+          <text class="voice-title">房间人数</text>
           <text class="percent">{{activePercent}}%</text>
         </view>
         <view class="track"><view class="bar" style="width: {{activePercent}}%;"></view></view>
       </view>
 
       <view class="bottom-actions">
-        <button class="start-btn {{backendRoomId && !isHost ? 'start-btn-disabled' : ''}}" bindtap="start" disabled="{{starting || (backendRoomId && !isHost)}}" hover-class="btn-hover">
+        <button class="start-btn {{backendRoomId && !isHost ? 'start-btn-disabled' : ''}}" bindtap="start" disabled="{{starting || creatingOnlineRoom || (backendRoomId && !isHost)}}" hover-class="btn-hover">
           <text class="btn-icon">▶</text>
           <text>{{backendRoomId && !isHost ? '等待房主开始' : startButtonText}}</text>
         </button>
         <view class="invite-hint">
-          <text class="invite-hint-icon">群</text>
-          <text>去群里邀请好友，凑齐队伍更快开局</text>
+          <text class="invite-hint-icon">邀</text>
+          <text>{{!shareEnabled ? '邀请分享暂未开放' : backendRoomId ? '点击＋，选择微信群或好友发送邀请' : '点击＋创建好友房，建好后即可分享邀请'}}</text>
         </view>
         <view class="secondary-actions">
-          <button class="primary-btn invite-btn" open-type="share" bindtap="inviteFriend" disabled="{{starting}}" hover-class="btn-hover">
-            <text class="btn-icon">👤+</text>
-            <text>邀请好友</text>
+          <button class="primary-btn invite-btn" open-type="{{backendRoomId && shareEnabled ? 'share' : ''}}" bindtap="inviteFriend" loading="{{creatingOnlineRoom}}" disabled="{{starting || creatingOnlineRoom || !shareEnabled}}" aria-label="{{backendRoomId ? '选择微信群或好友发送房间邀请' : '创建联网房间邀请好友'}}" hover-class="btn-hover">
+            <view class="invite-plus" aria-hidden="true"></view>
+            <text>{{creatingOnlineRoom ? '创建中' : backendRoomId ? '选择微信群' : '创建好友房'}}</text>
           </button>
-          <button class="ready-btn" bindtap="toggleReady" disabled="{{starting}}" hover-class="btn-hover">
+          <button class="ready-btn" bindtap="toggleReady" disabled="{{starting || creatingOnlineRoom}}" hover-class="btn-hover">
             <text class="btn-icon">{{selfReady ? '✓' : '○'}}</text>
             <text>{{selfReady ? '取消准备' : '准备'}}</text>
           </button>

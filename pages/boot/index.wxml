@@ -1,16 +1,34 @@
 <view class="paper-bg boot-page">
-  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
+  <image wx:if="{{consentGranted || developmentPreview}}" class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
   <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
     <text class="splash-title">锦鲤前程</text>
   </view>
   <view class="page-content boot-content">
-    <video class="boot-video" src="{{bootVideoSrc}}" autoplay muted="{{false}}" loop="{{false}}" controls="{{false}}" show-fullscreen-btn="{{false}}" show-play-btn="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindended="onVideoEnded"></video>
+    <video wx:if="{{consentGranted || developmentPreview}}" class="boot-video" src="{{bootVideoSrc}}" poster="{{bootVideoPoster}}" autoplay muted="{{true}}" loop="{{false}}" controls="{{false}}" show-fullscreen-btn="{{false}}" show-play-btn="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindended="onVideoEnded"></video>
     <view class="boot-art-glow"></view>
     <view class="boot-progress-section">
       <text class="boot-progress-label">{{loadingText}}</text>
       <view class="boot-progress-shell">
         <view class="boot-progress-fill" style="width: {{progress}}%;"></view>
       </view>
+    </view>
+  </view>
+
+  <view wx:if="{{privacyRequired}}" class="privacy-consent-mask">
+    <view class="privacy-consent-card">
+      <text class="privacy-consent-title">{{legalReady ? '阅读协议并完成微信授权' : (previewAvailable ? '开发预览' : '暂未开放使用')}}</text>
+      <text wx:if="{{legalReady || !previewAvailable}}" class="privacy-consent-copy">阅读正式用户协议和隐私政策后，继续操作将调用微信隐私授权。仅点击此页面按钮不代表已取得微信授权；授权完成前不会自动登录或进入游戏。</text>
+      <text wx:if="{{privacyError}}" class="privacy-consent-copy" role="alert">{{privacyError}}</text>
+      <view class="privacy-consent-links">
+        <text bindtap="openUserAgreement">《用户协议》</text>
+        <text>和</text>
+        <text bindtap="openPrivacyPolicy">《隐私政策》</text>
+      </view>
+      <button wx:if="{{legalReady}}" class="privacy-agree-btn" bindtap="onAgreePrivacy" loading="{{privacyChecking}}" disabled="{{privacyChecking}}">同意协议并发起微信授权</button>
+      <text wx:if="{{previewAvailable && !legalReady}}" class="privacy-consent-copy">可先预览页面与本地玩法。账号登录、上传资料和联机功能在正式授权后开放。</text>
+      <button wx:if="{{previewAvailable && !legalReady}}" class="privacy-agree-btn" bindtap="onEnterDevelopmentPreview">进入开发预览（本地体验）</button>
+      <button wx:if="{{privacyError}}" class="privacy-reject-btn" bindtap="retryPrivacy" disabled="{{privacyChecking}}">重试检查</button>
+      <button class="privacy-reject-btn" bindtap="onRejectPrivacy">不同意并退出</button>
     </view>
   </view>
 </view>

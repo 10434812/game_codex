@@ -127,3 +127,36 @@
   opacity: 0.55;
   color: rgba(255, 245, 229, 0.88);
 }
+
+.link-btn {
+  border: 0;
+  background: transparent;
+  padding: 18rpx 12rpx 0;
+  line-height: 1.4;
+  font-size: 26rpx;
+}
+
+.link-btn::after {
+  border: 0;
+}
+
+.danger-link {
+  color: #b84d3b;
+}
+
+.privacy-hint {
+  margin-top: 12rpx;
+  color: var(--stage-deep, #94724a);
+  font-size: 22rpx;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.legal-links {
+  display: flex;
+  justify-content: center;
+  gap: 28rpx;
+  margin-top: 18rpx;
+  color: #c96a10;
+  font-size: 24rpx;
+}

@@ -1,9 +1,9 @@
 .home-page {
-  padding: 16rpx 22rpx 330rpx;
+  padding: 16rpx 22rpx 0;
 }
 
 .home-page .page-content {
-  padding-bottom: 260rpx;
+  padding-bottom: calc(290rpx + env(safe-area-inset-bottom));
 }
 
 .home-page .theme-page-backdrop {
@@ -30,11 +30,39 @@
   width: 100%;
 }
 
+.hero-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.home-share-btn {
+  flex: none;
+  margin: 0;
+  padding: 0 24rpx;
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid var(--stage-border, #d2ad67);
+  border-radius: 16rpx;
+  background: var(--stage-panel, #fff8e8);
+  color: var(--stage-deep, #80552d);
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.home-share-btn::after {
+  border: 0;
+}
+
 .hero-title {
   margin-top: 4rpx;
   color: var(--stage-primary, #dc7419);
   font-family: "Songti SC", "STSong", "Kaiti SC", "KaiTi", serif;
-  font-size: 76rpx;
+  font-size: 60rpx;
   font-weight: 900;
   line-height: 1.02;
   letter-spacing: 3rpx;
@@ -56,7 +84,7 @@
   font-weight: 800;
   line-height: 1.35;
   letter-spacing: 0;
-  white-space: nowrap;
+  white-space: normal;
   text-shadow: 0 4rpx 16rpx rgba(7, 9, 16, 0.48);
   animation: soft-slide-up 0.54s ease-out 0.12s both;
 }
@@ -312,7 +340,7 @@
 .stage-swiper {
   position: relative;
   z-index: 2;
-  height: 884rpx;
+  height: clamp(440rpx, calc(100vh - 740rpx - env(safe-area-inset-bottom)), 720rpx);
   overflow: visible;
 }
 
@@ -424,7 +452,7 @@
 
 .stage-arrow {
   position: absolute;
-  top: 404rpx;
+  top: calc(50% - 88rpx);
   z-index: 9;
   width: 78rpx;
   height: 78rpx;
@@ -556,7 +584,7 @@
   right: 0;
   bottom: 0;
   z-index: 5;
-  padding: 190rpx 42rpx 86rpx;
+  padding: 110rpx 28rpx 80rpx;
   text-align: center;
   background: linear-gradient(180deg, transparent 0%, rgba(5, 8, 15, 0.32) 32%, rgba(5, 8, 15, 0.84) 100%);
   animation: soft-slide-up 0.56s ease-out 0.48s both;
@@ -565,15 +593,15 @@
 .dest-meta {
   margin-top: 12rpx;
   font-size: 24rpx;
-  color: var(--stage-accent-color, #e08a18);
+  color: #f6dfb0;
   font-weight: 700;
-  letter-spacing: 5rpx;
+  letter-spacing: 2rpx;
   text-shadow: 0 2rpx 8rpx rgba(2, 6, 12, 0.56);
 }
 
 .dest-name {
   font-size: 48rpx;
-  color: var(--stage-title-color, #c76d11);
+  color: #fff0c9;
   font-weight: 900;
   line-height: 1.12;
   font-family: "Songti SC", "STSong", "Kaiti SC", "KaiTi", serif;
@@ -586,7 +614,7 @@
 }
 
 .stage-item-active .dest-name {
-  font-size: 60rpx;
+  font-size: 52rpx;
 }
 
 .dest-sub {
@@ -663,7 +691,7 @@
   position: fixed;
   left: 48rpx;
   right: 48rpx;
-  bottom: 166rpx;
+  bottom: calc(166rpx + env(safe-area-inset-bottom));
   z-index: 18;
   margin: 0;
   height: 88rpx;
@@ -673,7 +701,6 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  animation: btn-breathe 2s infinite ease-in-out;
   box-shadow: 0 8rpx 20rpx var(--stage-glow, rgba(229, 124, 31, 0.4));
 }
 
@@ -690,7 +717,6 @@
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
   transform: skewX(-18deg);
-  animation: btn-sheen 2.8s ease-in-out infinite;
 }
 
 @keyframes btn-breathe {
@@ -785,5 +811,212 @@
   100% {
     left: 108%;
     opacity: 0;
+  }
+}
+
+/* ─── 公告横幅 + 公告弹窗（运营公告消费端） ─── */
+.announcement-banner {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 18rpx 22rpx;
+  border-radius: 999rpx;
+  background: rgba(8, 14, 25, 0.46);
+  border: 2rpx solid rgba(255, 222, 157, 0.22);
+  backdrop-filter: blur(8rpx);
+  animation: soft-slide-up 0.48s ease-out 0.2s both;
+}
+
+.announcement-banner-tag {
+  flex-shrink: 0;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  color: #4a2d1a;
+  font-size: 22rpx;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffe7a7, #e5a934 70%, #9e5d12);
+  box-shadow: 0 0 12rpx rgba(255, 210, 84, 0.4);
+}
+
+.announcement-banner-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 241, 209, 0.94);
+  font-size: 26rpx;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-shadow: 0 3rpx 10rpx rgba(7, 10, 16, 0.4);
+}
+
+.announcement-banner-more {
+  flex-shrink: 0;
+  color: rgba(255, 226, 158, 0.86);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.announcement-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 8, 15, 0.66);
+  backdrop-filter: blur(6rpx);
+  animation: mask-fade-in 0.22s ease-out both;
+}
+
+.announcement-modal {
+  width: 640rpx;
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 32rpx;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fdf3dd 0%, #f6ebd1 100%);
+  border: 2rpx solid rgba(214, 186, 138, 0.5);
+  box-shadow: 0 30rpx 70rpx rgba(3, 6, 12, 0.5);
+  animation: modal-rise 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.announcement-modal-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 34rpx 22rpx;
+  border-bottom: 2rpx solid rgba(206, 177, 132, 0.4);
+}
+
+.announcement-modal-title {
+  color: #4a2d1a;
+  font-family: "Songti SC", "STSong", "Kaiti SC", "KaiTi", serif;
+  font-size: 34rpx;
+  font-weight: 900;
+  letter-spacing: 2rpx;
+}
+
+.announcement-modal-close {
+  width: 52rpx;
+  height: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #8a7051;
+  font-size: 30rpx;
+  background: rgba(214, 186, 138, 0.3);
+}
+
+.announcement-modal-body {
+  flex: 1;
+  min-height: 0;
+  padding: 24rpx 34rpx 36rpx;
+  box-sizing: border-box;
+}
+
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.announcement-list-item {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  border: 2rpx solid rgba(206, 177, 132, 0.28);
+  background: rgba(255, 252, 246, 0.72);
+}
+
+.announcement-list-item.active {
+  border-color: rgba(229, 124, 31, 0.55);
+  background: rgba(255, 244, 222, 0.9);
+  box-shadow: 0 0 0 2rpx rgba(229, 124, 31, 0.12);
+}
+
+.announcement-type-tag {
+  flex-shrink: 0;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  color: #fff;
+  font-size: 20rpx;
+  font-weight: 800;
+  background: #8a7051;
+}
+
+.announcement-type-tag.type-event {
+  background: #e57c1f;
+}
+
+.announcement-type-tag.type-maintenance {
+  background: #d9534f;
+}
+
+.announcement-type-tag.type-reward {
+  background: #2bbf9f;
+}
+
+.announcement-list-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #4a2d1a;
+  font-size: 26rpx;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.announcement-detail {
+  padding: 8rpx 4rpx 0;
+}
+
+.announcement-detail-title {
+  color: #3a281a;
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.announcement-detail-meta {
+  margin-top: 10rpx;
+  color: #9c7a4f;
+  font-size: 22rpx;
+}
+
+.announcement-detail-content {
+  margin-top: 20rpx;
+  color: #5d4630;
+  font-size: 27rpx;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+@keyframes mask-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(36rpx) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

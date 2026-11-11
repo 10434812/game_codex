@@ -78,3 +78,77 @@
   box-shadow: 0 0 12rpx rgba(255, 195, 70, 0.8), 0 0 32rpx rgba(255, 165, 50, 0.4);
   transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+.privacy-consent-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 32rpx;
+  box-sizing: border-box;
+  background: rgba(18, 15, 10, 0.58);
+}
+
+.privacy-consent-card {
+  width: 100%;
+  padding: 38rpx 32rpx 28rpx;
+  box-sizing: border-box;
+  border-radius: 30rpx;
+  background: #fffaf0;
+  color: #51331c;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.24);
+}
+
+.privacy-consent-title,
+.privacy-consent-copy,
+.privacy-consent-links {
+  display: block;
+}
+
+.privacy-consent-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+.privacy-consent-copy {
+  margin-top: 22rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+}
+
+.privacy-consent-links {
+  margin-top: 16rpx;
+  color: #c96a10;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.privacy-consent-links text + text {
+  margin-left: 8rpx;
+}
+
+.privacy-agree-btn,
+.privacy-reject-btn {
+  width: 100%;
+  margin-top: 26rpx;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+}
+
+.privacy-agree-btn {
+  color: #fffaf0;
+  background: #d87820;
+}
+
+.privacy-reject-btn {
+  color: #94724a;
+  background: transparent;
+  border: 0;
+}
+
+.privacy-reject-btn::after {
+  border: 0;
+}

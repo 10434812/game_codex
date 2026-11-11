@@ -4,6 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const storage = new Map();
+// These UI scenarios exercise already-consented sessions. Consent failures and
+// launch routing are covered with the real boundary in boot-privacy/privacy-consent.
+const privacyConsent = require('../utils/privacy-consent');
 
 function createWxStub() {
   const calls = {
@@ -13,9 +16,7 @@ function createWxStub() {
     showToast: [],
     showShareMenu: [],
     request: [],
-    requestPayment: [],
     uploadFile: [],
-    showActionSheet: [],
     login: [],
     videoPlay: [],
     videoStop: [],
@@ -85,12 +86,6 @@ function createWxStub() {
     showShareMenu(payload) {
       calls.showShareMenu.push(payload);
     },
-    showActionSheet(payload) {
-      calls.showActionSheet.push(payload);
-      if (payload && typeof payload.success === 'function') {
-        payload.success({ tapIndex: 1 });
-      }
-    },
     createAnimation() {
       return {
         opacity: () => this,
@@ -117,40 +112,9 @@ function createWxStub() {
         payload.fail(new Error('not implemented'));
       }
     },
-    hideLoading() {},
-    showLoading() {},
     request(payload) {
       calls.request.push(payload);
       if (payload && typeof payload.success === 'function') {
-        if (payload.url && payload.url.includes('/payments/wechat/jsapi')) {
-          payload.success({
-            statusCode: 200,
-            data: {
-              code: 0,
-              data: {
-                orderNo: 'GCORDER1',
-                payment: {
-                  timeStamp: '1000',
-                  nonceStr: 'nonce',
-                  package: 'prepay_id=test',
-                  signType: 'RSA',
-                  paySign: 'signed',
-                },
-              },
-            },
-          });
-          return;
-        }
-        if (payload.url && payload.url.includes('/payments/wechat/orders/GCORDER1/sync')) {
-          payload.success({
-            statusCode: 200,
-            data: {
-              code: 0,
-              data: { orderNo: 'GCORDER1', itemId: 'skin-jade-rabbit' },
-            },
-          });
-          return;
-        }
         if (payload.url && payload.url.includes('/shop/inventory')) {
           payload.success({
             statusCode: 200,
@@ -170,12 +134,6 @@ function createWxStub() {
             data: {},
           },
         });
-      }
-    },
-    requestPayment(payload) {
-      calls.requestPayment.push(payload);
-      if (payload && typeof payload.success === 'function') {
-        payload.success({ errMsg: 'requestPayment:ok' });
       }
     },
     uploadFile(payload) {
@@ -292,17 +250,218 @@ function createPageInstance(config) {
   return {
     ...config,
     data: JSON.parse(JSON.stringify(config.data || {})),
-    setData(patch) {
+    setData(patch, callback) {
       this.data = {
         ...this.data,
         ...patch,
       };
+      callback?.();
     },
   };
 }
 
 test.beforeEach(() => {
   storage.clear();
+  privacyConsent.isAllowed = () => true;
+  privacyConsent.canEnter = () => true;
+  privacyConsent.assertAllowed = () => {};
+});
+
+test('好友邀请优先加入联网房间，旧本地对局和结算不会截走导航', async (t) => {
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', () => true);
+  for (const status of ['playing', 'finished']) {
+    const calls = createWxStub();
+    const gameStore = require('../utils/game-store');
+    gameStore.__resetForTests(); gameStore.startGame({autoStartTimer: false});
+    if (status === 'finished') gameStore.finishGame();
+    const request = wx.request;
+    wx.request = (payload) => {
+      if (payload.url.endsWith('/rooms/456/join')) {
+        calls.request.push(payload);
+        payload.success({statusCode: 200, data: {code: 0, data: {
+          room: {id: 456, room_code: '1456', status: 'waiting', stage_id: 1},
+          players: [{user_id: 1, nick_name: '我', is_self: true, is_host: 0}],
+        }}});
+      } else request(payload);
+    };
+    const page = createPageInstance(loadPage('../pages/room/index.js'));
+    try {
+      page.onLoad({backendRoomId: '456', roomId: '1456'});
+      await page.initRoom();
+      assert.deepEqual(calls.redirectTo, []);
+      assert.equal(page.data.backendRoomId, '456');
+      assert.ok(calls.request.some((p) => p.method === 'POST' && p.url.endsWith('/rooms/456/join')));
+    } finally {page.onUnload(); gameStore.__resetForTests();}
+  }
+});
+
+test('旧服务器不支持当前联机玩法时，房间码邀请与主动建房都不发送不兼容请求', async (t) => {
+  const calls = createWxStub();
+  const config = require('../utils/runtime-config');
+  t.mock.method(config, 'fetchRemoteConfig', async () => ({}));
+  t.mock.method(config, 'isApiSupported', () => false);
+  for (const options of [{roomId: '1456'}, {}]) {
+    const page = createPageInstance(loadPage('../pages/room/index.js'));
+    page.onLoad(options);
+    await page.initRoom(true);
+    assert.equal(page.data.backendRoomId, '');
+    assert.match(page.data.roomHintText, /联机服务升级中/);
+    if (options.roomId) {
+      page.start();
+      assert.equal(page.data.starting, false);
+    }
+    page.onUnload();
+  }
+  assert.equal(calls.request.filter(({url}) => /\/rooms(?:\/|$)/.test(url)).length, 0);
+  assert.ok(calls.showToast.some(({title}) => /联机服务升级中/.test(title)));
+});
+
+test('旧后端未声明接口能力时，首页不请求公告和当前联机局', async () => {
+  const calls = createWxStub();
+  storage.set('game_codex_api_token_v1', 'test-user');
+  const page = createPageInstance(loadPage('../pages/home/index.js'));
+  page.fetchAnnouncements();
+  assert.equal(await page.syncOnlineGame(), '');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(calls.request.filter(({url}) => /\/(announcements|games\/current)(?:\?|$)/.test(url)).length, 0);
+  assert.deepEqual(calls.showToast, []);
+});
+
+test('旧服务器即使支持当前对局查询，也不恢复不兼容的联机玩法', async (t) => {
+  const calls = createWxStub();
+  storage.set('game_codex_api_token_v1', 'test-user');
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', (name) => name === 'currentGame');
+  const page = createPageInstance(loadPage('../pages/home/index.js'));
+  assert.equal(await page.syncOnlineGame(), '');
+  assert.equal(calls.request.filter(({url}) => url.endsWith('/games/current')).length, 0);
+});
+
+test('首页从服务端找回进行中的联机局，快速开始会返回该局', async (t) => {
+  const calls = createWxStub();
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', () => true);
+  const gameStore = require('../utils/game-store');
+  gameStore.__resetForTests();
+  storage.set('game_codex_api_token_v1', 'test-user');
+  const request = wx.request;
+  wx.request = (payload) => {
+    if (payload.url.endsWith('/games/current')) {
+      calls.request.push(payload);
+      payload.success({statusCode: 200, data: {code: 0, data: {sessionId: 9, roomId: 7}}});
+    } else request(payload);
+  };
+  const page = createPageInstance(loadPage('../pages/home/index.js'));
+  await page.syncOnlineGame();
+  assert.equal(page.data.activeSessionId, '9');
+  await page.startGame();
+  assert.equal(calls.navigateTo.at(-1).url, '/pages/arena/index?sessionId=9');
+  assert.notEqual(gameStore.getState().status, 'room');
+});
+
+test('首页查询联机局期间点击组队或对局，等待查询后返回原局', async (t) => {
+  const api = require('../utils/api-client');
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', () => true);
+  t.mock.method(api, 'isLoggedIn', () => true);
+  for (const target of ['/pages/room/index', '/pages/arena/index']) {
+    const calls = createWxStub();
+    const gameStore = require('../utils/game-store');
+    gameStore.__resetForTests();
+    let resolveCurrent;
+    const current = new Promise((resolve) => {resolveCurrent = resolve;});
+    t.mock.method(api, 'get', () => current);
+    const page = createPageInstance(loadPage('../pages/home/index.js'));
+    const lookup = page.syncOnlineGame();
+    const navigation = page.switchTab({currentTarget: {dataset: {page: target}}});
+    assert.equal(calls.redirectTo.length, 0);
+    resolveCurrent({sessionId: 9, roomId: 7});
+    await Promise.all([lookup, navigation]);
+    assert.equal(calls.redirectTo.at(-1).url, '/pages/arena/index?sessionId=9');
+    assert.notEqual(gameStore.getState().status, 'room');
+  }
+});
+
+test('首页等待公共配置确认接口能力后，再决定是否恢复联机局', async (t) => {
+  const calls = createWxStub();
+  const config = require('../utils/runtime-config');
+  const api = require('../utils/api-client');
+  let finishConfig;
+  let supported = false;
+  t.mock.method(config, 'fetchRemoteConfig', () => new Promise((resolve) => {finishConfig = resolve;}));
+  t.mock.method(config, 'isApiSupported', () => supported);
+  t.mock.method(api, 'isLoggedIn', () => true);
+  t.mock.method(api, 'get', async (path) => {
+    assert.equal(path, '/games/current');
+    return {sessionId: 9};
+  });
+  const page = createPageInstance(loadPage('../pages/home/index.js'));
+  const navigation = page.startGame();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(calls.navigateTo, []);
+  supported = true;
+  finishConfig();
+  await navigation;
+  assert.equal(calls.navigateTo.at(-1).url, '/pages/arena/index?sessionId=9');
+});
+
+test('联机局查询失败保留已知会话，未知状态不会创建本地房间', async (t) => {
+  const calls = createWxStub();
+  const api = require('../utils/api-client');
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', () => true);
+  t.mock.method(api, 'isLoggedIn', () => true);
+  t.mock.method(api, 'get', async () => {throw new Error('网络不可用');});
+  const gameStore = require('../utils/game-store');
+  gameStore.__resetForTests();
+  const page = createPageInstance(loadPage('../pages/home/index.js'));
+  await page.startGame();
+  assert.equal(calls.navigateTo.length, 0);
+  assert.notEqual(gameStore.getState().status, 'room');
+  assert.ok(calls.showToast.some(({title}) => /联机.*重试/.test(title)));
+  page.setData({activeSessionId: '9'});
+  assert.equal(await page.syncOnlineGame(), '9');
+  assert.equal(page.data.activeSessionId, '9');
+});
+
+test('未开局就中断的联机结果显示原因，不显示赢家、表现或播放庆祝', async (t) => {
+  createWxStub();
+  const api = require('../utils/api-client');
+  t.mock.method(api, 'getToken', () => 'result-user');
+  t.mock.method(api, 'get', async () => ({
+    interrupted: true, title: '对局已中断', reason: '有玩家未确认，已取消本次开局',
+    resultId: 'session-9-user-1', rank: 1, gain: 0, coins: 0,
+    ranking: [{id: '1', rank: 1, score: 100, isSelf: true}], achievement: '长城守望者',
+  }));
+  global.getCurrentPages = () => [{options: {sessionId: '9'}}];
+  const page = createPageInstance(loadPage('../pages/result/index.js'));
+  const celebrations = [];
+  page.playResultVoice = () => celebrations.push('voice');
+  page.playResultFirework = () => celebrations.push('firework');
+  page.playKoiEffect = () => celebrations.push('koi');
+  await page.onShow();
+  page.onUnload();
+  assert.equal(page.data.interrupted, true);
+  assert.equal(page.data.resultTitle, '对局已中断');
+  assert.equal(page.data.selfRank, 0);
+  assert.equal(page.data.resultReason, '有玩家未确认，已取消本次开局');
+  assert.equal(page.data.isKoiWinner, false);
+  assert.equal(page.data.performance, null);
+  assert.equal(page.data.guideVisible, false);
+  assert.deepEqual(celebrations, []);
+});
+
+test('联机结算直接展示本人名次，未进前三也能识别', async (t) => {
+  createWxStub();
+  const api = require('../utils/api-client');
+  t.mock.method(api, 'getToken', () => 'result-user');
+  t.mock.method(api, 'get', async () => ({
+    resultId: 'session-9-user-1', gain: 0, coins: 0,
+    ranking: Array.from({length: 8}, (_, i) => ({id: String(i), name: '玩家' + i, rank: i + 1, score: 100 - i, isSelf: i === 6})),
+  }));
+  global.getCurrentPages = () => [{options: {sessionId: '9'}}];
+  const page = createPageInstance(loadPage('../pages/result/index.js'));
+  await page.refreshResult();
+  page.onUnload();
+  assert.equal(page.data.selfRank, 7);
+  assert.equal(page.data.rankList.find((p) => p.isSelf).rank, 7);
+  assert.equal(page.data.isKoiWinner, false);
 });
 
 test('room 页面会完整展示 10 个房间槽位', () => {
@@ -327,12 +486,83 @@ test('room 页面会完整展示 10 个房间槽位', () => {
   assert.equal(roomPage.data.activePercent, 100);
 });
 
-test('room 页面会提示准备后两分钟内开始游戏', () => {
+test('本地与联网房间只显示一个待加入空位，加入和离开后自动调整，满员无空位', () => {
+  createWxStub();
+  const page = createPageInstance(loadPage('../pages/room/index.js'));
+  const players = require('../utils/game-engine').createInitialPlayers({count: 10, random: () => .2});
+  for (const count of [1, 2, 9, 10, 9, 2, 1]) {
+    const members = players.slice(0, count);
+    const assertSlots = () => {
+      assert.equal(page.data.slots.length, Math.min(count + 1, 10));
+      assert.deepEqual(page.data.slots.filter((slot) => slot.filled).map((slot) => slot.name), members.map((player) => player.name));
+      assert.equal(page.data.slots.filter((slot) => !slot.filled).length, count === 10 ? 0 : 1);
+      assert.equal(page.data.activePercent, count * 10);
+    };
+    page.observeState({status: 'room', players: members, stage: {name: '万里长城'}, roomId: '1024'});
+    assertSlots();
+    page.renderBackendRoom({room: {id: 88}, players: members.map((player, index) => ({nick_name: player.name, is_host: index === 0, is_self: index === 0, is_ready: true}))});
+    assertSlots();
+  }
+});
+
+test('结算展示本人跑动统计，本地再来一局重置表现', async () => {
+  const calls = createWxStub(), gameStore = require('../utils/game-store');
+  gameStore.__resetForTests(); gameStore.startGame({autoStartTimer: false}); gameStore.finishGame();
+  const page = createPageInstance(loadPage('../pages/result/index.js'));
+  await page.refreshResult();
+  assert.equal(page.data.performance.complete, true);
+  assert.equal(page.data.selfRank, gameStore.getState().result.ranking.find((player) => player.isSelf).rank);
+  assert.equal(page.data.performance.bags, 0);
+  page.stopNumberAnimations();
+  await page.replay();
+  assert.equal(calls.redirectTo.at(-1).url, '/pages/arena/index');
+  assert.equal(gameStore.getState().status, 'playing');
+  assert.ok(gameStore.getState().runWorld.runners.every((r) => r.stats.bags === 0 && r.stats.contributed === 0));
+  gameStore.__resetForTests();
+});
+
+test('联机再来一局创建同景区房间，重复点击合并，失败后可重试', async (t) => {
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', () => true);
+  t.mock.method(require('../utils/runtime-config'), 'fetchRemoteConfig', async () => ({}));
+  const calls = createWxStub(), api = require('../utils/api-client'), originalPost = api.post;
+  t.after(() => {api.post = originalPost;});
+  const page = createPageInstance(loadPage('../pages/result/index.js'));
+  page.onlineSessionId = '42'; page.replayStage = {id: 6};
+  let resolveRoom, count = 0;
+  api.post = (url, body) => {
+    assert.equal(url, '/rooms'); assert.equal(body.stageId, 6); count++;
+    return new Promise((resolve) => {resolveRoom = resolve;});
+  };
+  const pending = page.replay();
+  await page.replay(); assert.equal(count, 1); assert.equal(page.data.replayPending, true);
+  resolveRoom({room: {id: 88}}); await pending;
+  assert.equal(calls.redirectTo.at(-1).url, '/pages/room/index?backendRoomId=88');
+  assert.equal(page.data.replayPending, false);
+  api.post = async () => {throw new Error('连接中断');};
+  await page.replay();
+  assert.equal(calls.showToast.at(-1).title, '连接中断');
+  assert.equal(page.data.replayPending, false);
+});
+
+test('旧服务器联机结算再来一局时显示升级提示，不创建不兼容房间', async (t) => {
+  const calls = createWxStub();
+  t.mock.method(require('../utils/runtime-config'), 'fetchRemoteConfig', async () => ({}));
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', () => false);
+  t.mock.method(require('../utils/api-client'), 'post', async () => {assert.fail('不应创建旧版房间');});
+  const page = createPageInstance(loadPage('../pages/result/index.js'));
+  page.onlineSessionId = '42';
+  await page.replay();
+  assert.equal(calls.showToast.at(-1).title, '联机服务升级中，请先体验本地对局');
+  assert.equal(page.data.replayPending, false);
+  assert.deepEqual(calls.redirectTo, []);
+});
+
+test('room 页面会提示准备后点击开始游戏', () => {
   const roomJs = fs.readFileSync(path.join(__dirname, '../pages/room/index.js'), 'utf8');
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxml'), 'utf8');
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxss'), 'utf8');
 
-  assert.match(roomJs, /roomHintText:\s*'准备好后，游戏将在两分钟内开始'/);
+  assert.match(roomJs, /roomHintText:\s*'准备好后，点击开始游戏'/);
   assert.match(wxml, /room-hint/);
   assert.match(wxml, /class="secondary-actions"/);
   assert.match(wxss, /\.secondary-actions\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*16rpx;/);
@@ -353,7 +583,7 @@ test('arena 后端模式使用微信原生 WebSocket，并保留 HTTP 轮询兜�
   assert.match(arenaJs, /wx\.connectSocket/);
   assert.match(arenaJs, /\/ws\/arena/);
   assert.match(arenaJs, /startArenaPolling/);
-  assert.match(arenaJs, /startArenaPolling\(sessionId\)/);
+  assert.match(arenaJs, /startArenaPolling\(\)/);
   assert.doesNotMatch(arenaJs, /ws:\/\/localhost/);
   assert.doesNotMatch(arenaJs, /socket\.io/);
 });
@@ -378,7 +608,7 @@ test('room 后端房间非房主不能点击开始游戏', () => {
   assert.equal(roomPage.data.selfReady, false);
   assert.equal(roomPage.data.modeText, '联网对战');
   assert.match(roomJs, /等待房主开始游戏/);
-  assert.match(wxml, /disabled="\{\{starting \|\| \(backendRoomId && !isHost\)\}\}"/);
+  assert.match(wxml, /disabled="\{\{starting \|\| creatingOnlineRoom \|\| \(backendRoomId && !isHost\)\}\}"/);
   assert.match(wxml, /等待房主开始/);
   assert.match(wxml, /start-btn-disabled/);
   assert.match(wxss, /\.start-btn-disabled\s*\{/);
@@ -416,7 +646,7 @@ test('profile 页面使用新版头像昵称填写能力', () => {
   assert.match(profileWxml, /type="nickname"/);
 });
 
-test('profile 选择微信头像后会先本地显示并更新保存状态', async () => {
+test('profile 未登录选择头像不会发布未审核本地文件，并显示可操作错误', async () => {
   storage.clear();
   const calls = createWxStub();
   const apiPath = require.resolve('../utils/api-client');
@@ -427,13 +657,14 @@ test('profile 选择微信头像后会先本地显示并更新保存状态', asy
 
   await profilePage.onChooseAvatar({ detail: { avatarUrl: 'wxfile://avatar.png' } });
 
-  assert.equal(profilePage.data.draft.avatarUrl, 'wxfile://avatar.png');
+  assert.notEqual(profilePage.data.draft.avatarUrl, 'wxfile://avatar.png');
+  assert.match(profilePage.data.profileError, /请先登录/);
   assert.equal(profilePage.data.canSave, false);
   assert.equal(profilePage.data.profileUpdating, false);
   assert.equal(calls.uploadFile.length, 0);
 });
 
-test('requestUpdate 未登录时只更新本地资料，不请求后端资料接口', async () => {
+test('requestUpdate 未登录时拒绝保存且不改缓存、不请求后端', async () => {
   storage.clear();
   const calls = createWxStub();
   const apiPath = require.resolve('../utils/api-client');
@@ -444,13 +675,13 @@ test('requestUpdate 未登录时只更新本地资料，不请求后端资料接
   const userProfile = require('../utils/user-profile');
 
   api.clearToken();
-  const profile = await userProfile.requestUpdate({ nickName: '真机用户', avatarUrl: 'https://example.com/a.png' });
-
-  assert.equal(profile.nickName, '真机用户');
+  const previous = userProfile.getCachedProfile();
+  await assert.rejects(userProfile.requestUpdate({ nickName: '真机用户', avatarUrl: 'https://example.com/a.png' }), /请先登录/);
+  assert.deepEqual(userProfile.getCachedProfile(), previous);
   assert.equal(calls.request.length, 0);
 });
 
-test('服务端空头像不会覆盖本地已选择头像', () => {
+test('服务端空头像清除历史未审核本地头像', () => {
   storage.clear();
   createWxStub();
   const profilePath = require.resolve('../utils/user-profile');
@@ -460,7 +691,46 @@ test('服务端空头像不会覆盖本地已选择头像', () => {
   userProfile.saveProfile({ nickName: '何必远方', avatarUrl: 'wxfile://avatar.png' });
   const profile = userProfile.mergeProfile({ nickName: '何必远方', avatarUrl: '' });
 
-  assert.equal(profile.avatarUrl, 'wxfile://avatar.png');
+  assert.equal(profile.avatarUrl, '');
+});
+
+test('profile 头像异步待审保留已发布头像并显示待审提示', async () => {
+  storage.clear();
+  createWxStub();
+  delete require.cache[require.resolve('../utils/api-client')];
+  delete require.cache[require.resolve('../utils/user-profile')];
+  const api = require('../utils/api-client');
+  const profiles = require('../utils/user-profile');
+  api.setToken('profile-review-token');
+  profiles.saveProfile({nickName: '旧昵称', avatarUrl: 'https://example.com/approved.png'});
+  global.wx.uploadFile = (payload) => payload.success({
+    statusCode: 202,
+    data: JSON.stringify({code: 0, data: {nickName: '旧昵称', avatarUrl: 'https://example.com/approved.png', avatarReview: 'pending'}}),
+  });
+  const page = createPageInstance(loadPage('../pages/profile/index.js'));
+  await page.onChooseAvatar({detail: {avatarUrl: 'wxfile://unreviewed.png'}});
+  assert.equal(page.data.avatarReviewPending, true);
+  assert.equal(page.data.draft.avatarUrl, 'https://example.com/approved.png');
+  assert.equal(profiles.getCachedProfile().avatarUrl, 'https://example.com/approved.png');
+});
+
+test('profile 昵称审核拒绝保留输入但不写入公开缓存、不显示保存成功', async () => {
+  storage.clear();
+  const calls = createWxStub();
+  delete require.cache[require.resolve('../utils/api-client')];
+  delete require.cache[require.resolve('../utils/user-profile')];
+  const api = require('../utils/api-client');
+  const profiles = require('../utils/user-profile');
+  api.setToken('profile-review-token');
+  profiles.saveProfile({nickName: '旧昵称', avatarUrl: ''});
+  global.wx.request = (payload) => payload.success({statusCode: 400, data: {code: 400, message: '昵称未通过内容安全校验'}});
+  const page = createPageInstance(loadPage('../pages/profile/index.js'));
+  page.setData({draft: {nickName: '待审昵称', avatarUrl: ''}, canSave: true});
+  await page.onSaveProfile();
+  assert.equal(profiles.getCachedProfile().nickName, '旧昵称');
+  assert.equal(page.data.draft.nickName, '待审昵称');
+  assert.match(page.data.profileError, /内容安全/);
+  assert.equal(page.data.profileUpdating, false);
 });
 
 test('API 请求失败时错误会带上状态码和请求 URL', async () => {
@@ -488,7 +758,7 @@ test('API 请求失败时错误会带上状态码和请求 URL', async () => {
   );
 });
 
-test('arena 底部导航仍属于 page-content 主内容容器', () => {
+test('arena 原有底部导航仍属于 page-content 主内容容器', () => {
   const arenaWxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
   const bottomNavIndex = arenaWxml.indexOf('class="bottom-nav"');
   const pageContentCloseIndex = arenaWxml.indexOf('\n  </view>\n\n  <view class="bottom-nav"');
@@ -509,7 +779,7 @@ test('核心流程引导浮层保留在 page-content 内且不新增教程路由
   for (const file of files) {
     const wxml = fs.readFileSync(path.join(__dirname, file), 'utf8');
     const pageContentIndex = wxml.indexOf('class="page-content"');
-    const guideIndex = wxml.indexOf('class="guide-overlay');
+    const guideIndex = wxml.indexOf(file.includes('arena') ? 'class="rules-overlay' : 'class="guide-overlay');
 
     assert.ok(pageContentIndex >= 0, `${file} should keep page-content`);
     assert.ok(guideIndex > pageContentIndex, `${file} guide overlay should be inside page-content`);
@@ -526,11 +796,11 @@ test('核心流程引导使用底部单主按钮并复用一次性状态模块',
   const arenaJs = fs.readFileSync(path.join(__dirname, '../pages/arena/index.js'), 'utf8');
   const resultJs = fs.readFileSync(path.join(__dirname, '../pages/result/index.js'), 'utf8');
 
-  assert.match(appWxss, /\.guide-action-panel\s*\{[\s\S]*position:\s*fixed;[\s\S]*bottom:\s*166rpx;/);
+  assert.match(appWxss, /\.guide-action-panel\s*\{[\s\S]*position:\s*fixed;[\s\S]*bottom:\s*calc\(166rpx \+ env\(safe-area-inset-bottom\)\);/);
   assert.match(appWxss, /\.guide-primary\s*\{[\s\S]*height:\s*88rpx;/);
   assert.match(homeJs, /guideStore\.GUIDE_STEPS\.ROOM/);
   assert.match(roomJs, /guideStore\.GUIDE_STEPS\.ARENA_TEAM/);
-  assert.match(arenaJs, /guideStore\.GUIDE_STEPS\.ARENA_BAG/);
+  assert.match(arenaJs, /game_codex_running_rules_v1/);
   assert.match(arenaJs, /guideStore\.GUIDE_STEPS\.RESULT/);
   assert.match(resultJs, /guideStore\.complete\(\)/);
 });
@@ -553,15 +823,6 @@ test('生产页面不会调用测试重置方法', () => {
   assert.doesNotMatch(source, /__resetForTests\s*\(/);
 });
 
-test('room 页面下方两个社交操作按钮使用景区主题色毛玻璃', () => {
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxml'), 'utf8');
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxss'), 'utf8');
-
-  assert.match(wxml, /去群里邀请好友，凑齐队伍更快开局/);
-  assert.match(wxss, /\.invite-hint\s*\{[\s\S]*backdrop-filter:\s*blur\(20rpx\) saturate\(1\.08\);/);
-  assert.match(wxss, /\.invite-btn\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-panel,[\s\S]*backdrop-filter:\s*blur\(26rpx\) saturate\(1\.2\);[\s\S]*color:\s*var\(--stage-primary,\s*#c96a10\);/);
-  assert.match(wxss, /\.ready-btn\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-panel,[\s\S]*backdrop-filter:\s*blur\(26rpx\) saturate\(1\.2\);[\s\S]*color:\s*var\(--stage-primary,\s*#c96a10\);/);
-});
 
 test('room 页面开始游戏按钮会变小并居中', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxss'), 'utf8');
@@ -587,7 +848,7 @@ test('home 页面在没有结算结果时点击历史 Tab 不会误跳转', () =
   assert.equal(calls.showToast.length, 1);
 });
 
-test('home 页面在零经验时也会显示轻微进度填充', () => {
+test('home 页面按实际经验与余额展示成长数据', () => {
   createWxStub();
   const gameStore = require('../utils/game-store');
   const shopStore = require('../utils/shop-store');
@@ -601,18 +862,21 @@ test('home 页面在零经验时也会显示轻微进度填充', () => {
   homePage.syncOverview();
 
   assert.equal(homePage.data.progressPercent, 0);
-  assert.equal(homePage.data.progressVisualPercent, 10);
+  assert.equal(homePage.data.progressVisualPercent, 0);
+  assert.equal(homePage.data.levelText, 'Lv.1');
+  assert.equal(homePage.data.experienceText, '0 / 120 经验');
+  assert.match(homePage.data.balanceAmountText, /^[\d,]+$/);
 });
 
-test('home 景区卡片标题会缩小并使用景区主题色', () => {
+test('home 景区卡片在暗色封面上使用浅色标题', () => {
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxml'), 'utf8');
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxss'), 'utf8');
   const {STAGES} = require('../utils/constants');
 
   assert.match(wxml, /--stage-title-color:\s*\{\{\s*item\.titleColor\s*\}\}/);
   assert.match(wxml, /--stage-accent-color:\s*\{\{\s*item\.accentColor\s*\}\}/);
-  assert.match(wxss, /\.dest-name\s*\{[\s\S]*font-size:\s*48rpx;[\s\S]*color:\s*var\(--stage-title-color,\s*#c76d11\);/);
-  assert.match(wxss, /\.dest-meta\s*\{[\s\S]*color:\s*var\(--stage-accent-color,\s*#e08a18\);/);
+  assert.match(wxss, /\.dest-name\s*\{[\s\S]*color:\s*#fff0c9;/);
+  assert.match(wxss, /\.dest-meta\s*\{[\s\S]*color:\s*#f6dfb0;/);
 
   for (const stage of STAGES) {
     assert.match(stage.titleColor, /^#[0-9a-f]{6}$/i);
@@ -739,7 +1003,8 @@ test('核心页面会按当前景区注入主题模板', async () => {
   assert.match(roomPage.data.stageThemeStyle, /--stage-primary:\s*#b97d91/);
 
   arenaPage.onLoad();
-  arenaPage.syncArena({
+  arenaPage.active = true;
+  arenaPage.acceptState({
     status: 'playing',
     players: [],
     teams: [],
@@ -750,7 +1015,7 @@ test('核心页面会按当前景区注入主题模板', async () => {
   });
 
   assert.equal(arenaPage.data.stageThemeKey, 'xihu');
-  assert.match(arenaPage.data.stageImage, /\/xihu\.png$/);
+  assert.match(arenaPage.data.stageImage, /\/xihhu\.png$/);
   assert.match(arenaPage.data.stageThemeStyle, /--stage-primary:\s*#47a092/);
 
   gameStore.__resetForTests();
@@ -792,8 +1057,9 @@ test('核心页面会保留游戏化动效反馈', () => {
   assert.match(roomWxss, /@keyframes slot-rise/);
   assert.doesNotMatch(roomWxss, /@keyframes activity-flow/);
   assert.match(roomWxss, /voice-box/);
-  assert.match(arenaWxss, /@keyframes timer-breathe/);
-  assert.match(arenaWxss, /@keyframes self-avatar-pulse/);
+  const runRenderer = fs.readFileSync(path.join(__dirname, '../utils/run-arena-renderer.js'), 'utf8');
+  assert.match(runRenderer, /effect\.type === 'team'/);
+  assert.match(runRenderer, /world\.elapsedMs - effect\.at/);
   assert.match(resultWxss, /@keyframes winner-pop/);
   assert.match(resultWxss, /@keyframes rank-row-in/);
   assert.match(shopWxss, /@keyframes goods-rise/);
@@ -811,22 +1077,19 @@ test('全局页面入场动效不使用 transform，避免 fixed 浮层定位跑
 test('home 快速开始按钮会固定在底部导航上方，避免被遮挡', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.start-btn\s*\{[\s\S]*position:\s*fixed;[\s\S]*bottom:\s*166rpx;[\s\S]*z-index:\s*18;/);
+  assert.match(wxss, /\.start-btn\s*\{[\s\S]*position:\s*fixed;[\s\S]*bottom:\s*calc\(166rpx \+ env\(safe-area-inset-bottom\)\);[\s\S]*z-index:\s*18;/);
   assert.match(wxss, /\.home-page \.bottom-nav\s*\{[\s\S]*z-index:\s*20;/);
-  assert.match(wxss, /\.home-page \.page-content\s*\{[\s\S]*padding-bottom:\s*260rpx;/);
+  assert.match(wxss, /\.home-page \.page-content\s*\{[\s\S]*padding-bottom:\s*calc\(290rpx \+ env\(safe-area-inset-bottom\)\);/);
 });
 
-test('boot 页面会引用开机动画并把进度条放进启动页', () => {
-  const appJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../app.json'), 'utf8'));
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/boot/index.wxml'), 'utf8');
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/boot/index.wxss'), 'utf8');
-
-  assert.equal(appJson.pages[0], 'pages/boot/index');
-  assert.match(wxml, /bootVideoSrc|开机动画/);
-  assert.match(wxml, /class="boot-progress-shell"/);
-  assert.match(wxss, /\.boot-progress-fill\s*\{/);
-  assert.doesNotMatch(wxml, /boot-brand|boot-pill|boot-header/);
+test('资料页独立打开时返回首页', () => {
+  const calls = createWxStub();
+  wx.navigateBack = (options) => options.fail();
+  const page = createPageInstance(loadPage('../pages/profile/index.js'));
+  page.onBack();
+  assert.equal(calls.reLaunch[0].url, '/pages/home/index');
 });
+
 
 test('boot loader 会按完成数量推进进度并在结束时完成', async () => {
   const {createBootLoader} = require('../utils/boot-loader');
@@ -857,22 +1120,6 @@ test('boot loader skips SVG image info preload', async () => {
   assert.equal(getImageInfoCalled, false);
 });
 
-test('boot 页面会在预加载结束后跳回首页', async () => {
-  const calls = createWxStub();
-  const bootPage = createPageInstance(loadPage('../pages/boot/index.js'));
-
-  // Inject short timers for testing (production uses 2000/2700/300ms)
-  bootPage._bootMinMs = 50;
-  bootPage._bootMaxMs = 150;
-  bootPage._bootHoldMs = 30;
-
-  bootPage.onLoad();
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  assert.equal(calls.reLaunch.length, 1);
-  assert.equal(calls.reLaunch[0].url, '/pages/home/index');
-  assert.equal(bootPage.data.progress, 100);
-});
 
 test('room 页面在没有结算结果时点击历史 Tab 不会误跳转', () => {
   const calls = createWxStub();
@@ -918,6 +1165,99 @@ test('房间页邀请分享会带上房间号', async () => {
   assert.match(sharePayload.path, /roomId=A1024/);
   assert.match(sharePayload.path, /backendRoomId=88/);
   assert.match(sharePayload.path, /scene=room/);
+  assert.ok(sharePayload.path.startsWith('/pages/room/index?'));
+});
+
+test('头像空位与底部邀请都使用原生分享按钮，仅在联网房就绪后分享', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/room/index.wxml'), 'utf8');
+  const buttons = wxml.match(/<button\b[^>]*bindtap="inviteFriend"[^>]*>/g);
+  assert.equal(buttons.length, 2);
+  assert.ok(buttons.some((button) => button.includes('slot-invite-btn')));
+  for (const button of buttons) {
+    assert.ok(button.includes('open-type="{{backendRoomId && shareEnabled ? \'share\' : \'\'}}"'));
+    assert.ok(button.includes('disabled="{{starting || creatingOnlineRoom || !shareEnabled}}"'));
+  }
+});
+
+test('房间邀请不受后台通用推广路径影响，分享关闭时不泄露房间参数', (t) => {
+  createWxStub();
+  const config = require('../utils/runtime-config');
+  const getValue = config.getValue;
+  t.mock.method(config, 'getValue', (key, fallback) => key === 'wechat.share_path' ? '/pages/shop/index' : getValue(key, fallback));
+  const page = createPageInstance(loadPage('../pages/room/index.js'));
+  page.setData({backendRoomId: '88', roomId: 'A&1024'});
+  const payload = page.onShareAppMessage();
+  assert.equal(payload.path, '/pages/room/index?roomId=A%261024&backendRoomId=88&scene=room');
+  t.mock.method(config, 'getBoolean', (key, fallback) => key === 'wechat.share_enabled' ? false : fallback);
+  assert.doesNotMatch(page.onShareAppMessage().path, /backendRoomId|roomId=/);
+});
+
+test('分享关闭时邀请入口不会创建联网房间', async (t) => {
+  const calls = createWxStub();
+  const config = require('../utils/runtime-config');
+  const api = require('../utils/api-client');
+  t.mock.method(config, 'getBoolean', (key, fallback) => key === 'wechat.share_enabled' ? false : fallback);
+  const post = t.mock.method(api, 'post', async () => {throw new Error('不应建房');});
+  const page = createPageInstance(loadPage('../pages/room/index.js'));
+  await page.inviteFriend();
+  assert.equal(post.mock.callCount(), 0);
+  assert.equal(calls.showToast.at(-1).title, '邀请分享暂未开放');
+});
+
+test('邀请入口创建真实房间，重复点击不重复建房，分享携带新房间信息', async (t) => {
+  const calls = createWxStub();
+  const config = require('../utils/runtime-config');
+  const api = require('../utils/api-client');
+  const store = require('../utils/game-store');
+  store.__resetForTests();
+  const beforePlayers = store.getState().players;
+  t.mock.method(config, 'fetchRemoteConfig', async () => ({}));
+  t.mock.method(config, 'isApiSupported', () => true);
+  let finishCreate;
+  const post = t.mock.method(api, 'post', async () => new Promise((resolve) => {finishCreate = resolve;}));
+  const page = createPageInstance(loadPage('../pages/room/index.js'));
+  t.after(() => page.onUnload());
+  const pending = page.inviteFriend();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(page.data.creatingOnlineRoom, true);
+  await page.inviteFriend();
+  assert.equal(post.mock.callCount(), 1);
+  assert.equal(post.mock.calls[0].arguments[0], '/rooms');
+  finishCreate({room: {id: 88, room_code: 'A1024'}, players: [{nick_name: '房主', is_self: true, is_host: true}]});
+  await pending;
+  assert.equal(page.data.creatingOnlineRoom, false);
+  assert.equal(page.data.backendRoomId, '88');
+  assert.equal(page.data.slots[0].name, '房主');
+  assert.equal(calls.showToast.at(-1).title, '房间已建好，点击＋选择微信群');
+  assert.deepEqual(store.getState().players, beforePlayers);
+  const payload = page.onShareAppMessage();
+  assert.match(payload.path, /backendRoomId=88/);
+  assert.match(payload.path, /roomId=A1024/);
+  await page.inviteFriend();
+  assert.equal(post.mock.callCount(), 1);
+});
+
+test('邀请建房失败后仍可重试，不分享不存在的房间', async (t) => {
+  const calls = createWxStub();
+  const config = require('../utils/runtime-config');
+  const api = require('../utils/api-client');
+  t.mock.method(config, 'fetchRemoteConfig', async () => ({}));
+  t.mock.method(config, 'isApiSupported', () => true);
+  let attempts = 0;
+  t.mock.method(api, 'post', async () => {
+    if (++attempts === 1) throw new Error('连接中断');
+    return {room: {id: 99, room_code: 'B2048'}, players: []};
+  });
+  const page = createPageInstance(loadPage('../pages/room/index.js'));
+  t.after(() => page.onUnload());
+  await page.inviteFriend();
+  assert.equal(page.data.creatingOnlineRoom, false);
+  assert.equal(page.data.backendRoomId, '');
+  assert.equal(calls.showToast.at(-1).title, '连接中断');
+  assert.doesNotMatch(page.onShareAppMessage().path, /backendRoomId|roomId=/);
+  await page.inviteFriend();
+  assert.equal(attempts, 2);
+  assert.match(page.onShareAppMessage().path, /backendRoomId=99/);
 });
 
 test('首页收到房间分享参数会直接跳转到房间页', () => {
@@ -930,7 +1270,8 @@ test('首页收到房间分享参数会直接跳转到房间页', () => {
   assert.equal(calls.redirectTo[0].url, '/pages/room/index?backendRoomId=88&roomId=A1024&scene=room');
 });
 
-test('房间页收到邀请参数会加入已有后端房间', async () => {
+test('房间页收到邀请参数会加入已有后端房间', async (t) => {
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', () => true);
   const calls = createWxStub();
   storage.set('game_codex_api_token_v1', 'token');
   wx.request = (payload) => {
@@ -967,6 +1308,122 @@ test('房间页收到邀请参数会加入已有后端房间', async () => {
   assert.equal(roomPage.data.roomId, 'A1024');
   assert.equal(roomPage.data.slots[0].name, '房主');
   assert.equal(roomPage.data.slots[1].state, '未准备');
+});
+
+
+test('房间页只有房间码（无 backendRoomId）时走 /rooms/code/:code/join 契约', async (t) => {
+  t.mock.method(require('../utils/runtime-config'), 'isApiSupported', () => true);
+  const calls = createWxStub();
+  storage.set('game_codex_api_token_v1', 'token');
+  wx.request = (payload) => {
+    calls.request.push(payload);
+    if (payload.url.includes('/rooms/code/A1024/join')) {
+      payload.success({
+        statusCode: 200,
+        data: {
+          code: 0,
+          data: {
+            room: {id: 88, room_code: 'A1024', stage_id: 1, status: 'waiting'},
+            players: [{nick_name: '房主', avatar_url: 'a.png', is_ready: 1, is_host: 1}],
+          },
+        },
+      });
+      return;
+    }
+    payload.success({statusCode: 200, data: {code: 0, data: {}}});
+  };
+
+  const roomPage = createPageInstance(loadPage('../pages/room/index.js'));
+  roomPage.onLoad({roomId: 'A1024'});
+  roomPage.onShow();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  roomPage.clearPollTimer();
+  roomPage.unsubscribeStore();
+
+  assert.ok(calls.request.some((payload) => payload.url.includes('/rooms/code/A1024/join')));
+  assert.equal(calls.request.some((payload) => payload.url.includes('/rooms/A1024/join')), false);
+  assert.equal(calls.request.some((payload) => payload.url.endsWith('/rooms')), false);
+  assert.equal(roomPage.data.backendRoomId, '88');
+  assert.equal(roomPage.data.roomId, 'A1024');
+});
+
+test('arena 本地对局 onHide 自动暂停 game-store，onShow 恢复', async () => {
+  createWxStub();
+  const gameStore = require('../utils/game-store');
+  gameStore.__resetForTests();
+  gameStore.startGame({autoStartTimer: false, random: () => 0.2});
+
+  const arenaPage = createPageInstance(loadPage('../pages/arena/index.js'));
+  try {
+    arenaPage.onLoad();
+    arenaPage.onShow();
+    assert.equal(arenaPage.data.timeText, '120s');
+    await arenaPage.onStartFromRules();
+
+    gameStore.tick({random: () => 0.2}); // 119
+    arenaPage.onHide();
+    assert.equal(gameStore.getState().status, 'playing');
+
+    // onShow 恢复后 tick 继续推进（时间由 store 驱动）
+    arenaPage.onShow();
+    gameStore.tick({random: () => 0.2});
+    assert.equal(gameStore.getState().timeLeft, 118);
+  } finally {
+    // 清理页面定时器（福袋/表情等真实 setTimeout 链）与 store 定时器，避免挂起进程
+    arenaPage.onUnload();
+    gameStore.pauseGame();
+  }
+});
+
+test('首次玩法介绍等待开始，再次查看玩法保持对局计时', async (t) => {
+  createWxStub();
+  storage.delete('game_codex_running_rules_v1');
+  // 对局计时基于 Date.now() 的真实帧间隔，因此需要同时 mock Date，tick 才会推进对局时间
+  t.mock.timers.enable({apis: ['setInterval', 'setTimeout', 'Date']});
+  const gameStore = require('../utils/game-store');
+  gameStore.__resetForTests();
+  gameStore.startGame({autoStartTimer: false, random: () => 0.2});
+  const page = createPageInstance(loadPage('../pages/arena/index.js'));
+  try {
+    page.onLoad(); page.onShow();
+    assert.equal(page.data.rulesVisible, true);
+    t.mock.timers.tick(5000);
+    assert.equal(gameStore.getState().timeLeft, 120);
+    assert.equal(gameStore.getState().runWorld.drops.length, 0);
+    await page.onStartFromRules();
+    assert.equal(page.data.rulesVisible, false);
+    assert.equal(storage.get('game_codex_running_rules_v1'), '1');
+    t.mock.timers.tick(1000);
+    assert.equal(gameStore.getState().timeLeft, 119);
+    page.onOpenRules();
+    t.mock.timers.tick(1000);
+    assert.equal(gameStore.getState().timeLeft, 118);
+    await page.onStartFromRules();
+    page.onHide(); page.onShow();
+    assert.equal(page.data.rulesVisible, false);
+  } finally {page.onUnload(); gameStore.pauseGame(); t.mock.timers.reset();}
+});
+
+test('好友和房间分享使用随包封面，兼容后台旧纸张地址', (t) => {
+  createWxStub();
+  const config = require('../utils/runtime-config');
+  const {buildShareAppMessage, buildShareTimeline} = require('../utils/share-config');
+  let configuredImage = '';
+  const original = config.getValue.bind(config);
+  t.mock.method(config, 'getValue', (key, fallback) => {
+    if (key === 'wechat.share_image_url' || key === 'wechat.share_timeline_image_url') return configuredImage;
+    return original(key, fallback);
+  });
+  for (const oldImage of ['', 'https://xcx.ukb88.com/assets/bg/screen.png', '/assets-pkg/bg/screen.jpg']) {
+    configuredImage = oldImage;
+    for (const payload of [buildShareAppMessage(), buildShareAppMessage('room'), buildShareTimeline()]) {
+      assert.equal(payload.imageUrl, '/assets-pkg/share/friends-20261111.jpg');
+      assert.ok(require('node:fs').existsSync(require('node:path').join(__dirname, '..', payload.imageUrl)));
+    }
+  }
+  configuredImage = 'https://example.com/custom-share.jpg';
+  assert.equal(buildShareAppMessage().imageUrl, configuredImage);
+  assert.equal(buildShareTimeline().imageUrl, configuredImage);
 });
 
 test('分享时间线会优先使用后台配置的朋友圈图片', () => {
@@ -1008,6 +1465,12 @@ test('boot 页面在后台关闭微信登录时不会触发 wx.login', async () 
     if (key === 'wechat.login_enabled') return false;
     return originalGetBoolean(key, fallback);
   };
+  const legal = require('../utils/legal-config');
+  const originalIsReady = legal.isReady;
+  legal.isReady = () => true;
+  wx.getPrivacySetting = ({success}) => success({needAuthorization: false});
+  wx.requirePrivacyAuthorize = ({success}) => success({});
+  wx.setStorageSync('legal-consent-version', `${legal.legalConfig.privacyVersion}:${legal.legalConfig.agreementVersion}`);
 
   try {
     const bootPage = createPageInstance(loadPage('../pages/boot/index.js'));
@@ -1021,243 +1484,26 @@ test('boot 页面在后台关闭微信登录时不会触发 wx.login', async () 
   } finally {
     wx.login = originalLogin;
     runtimeConfig.getBoolean = originalGetBoolean;
+    legal.isReady = originalIsReady;
+    wx.removeStorageSync('legal-consent-version');
   }
 });
 
-test('商城页会显示后台支付配置状态', () => {
+test('商城页仅展示锦鲤币价格，不包含现金价格或微信支付入口', () => {
   createWxStub();
-  const runtimeConfig = require('../utils/runtime-config');
-  const originalGetBoolean = runtimeConfig.getBoolean;
-  const originalGetValue = runtimeConfig.getValue;
-
-  runtimeConfig.getBoolean = (key, fallback = false) => {
-    if (key === 'wechat.pay_enabled') return true;
-    return originalGetBoolean(key, fallback);
-  };
-  runtimeConfig.getValue = (key, fallback = '') => {
-    if (key === 'wechat.pay_goods_desc') return '锦鲤前程充值包';
-    if (key === 'wechat.pay_currency') return 'CNY';
-    return originalGetValue(key, fallback);
-  };
-
-  try {
-    const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
-    shopPage.syncPage();
-    assert.equal(shopPage.data.payEnabled, true);
-    assert.match(shopPage.data.payStatusText, /已开启/);
-    assert.match(shopPage.data.payHintText, /锦鲤前程充值包/);
-  } finally {
-    runtimeConfig.getBoolean = originalGetBoolean;
-    runtimeConfig.getValue = originalGetValue;
-  }
-});
-
-test('商城页会同时展示微信支付金额和锦鲤币金额', () => {
-  createWxStub();
-  const shopStore = require('../utils/shop-store');
-  shopStore.__resetForTests();
-
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/shop/index.wxml'), 'utf8');
   const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
   shopPage.syncPage();
 
-  const pricedItem = shopPage.data.goods.find((item) => item.price > 0);
-  const cashPrices = shopPage.data.goods
-    .filter((item) => item.price > 0)
-    .map((item) => Number(item.cashPriceText.replace('¥', '')));
   assert.equal(shopPage.data.balanceText, '8,820');
-  assert.equal('balanceCashText' in shopPage.data, false);
-  assert.equal('exchangeRateText' in shopPage.data, false);
-  assert.ok(pricedItem);
-  assert.doesNotMatch(pricedItem.coinPriceText, /¥/);
-  assert.match(pricedItem.cashPriceText, /^¥\d+\.\d{2}$/);
-  assert.ok(cashPrices.every((price) => price > 0 && price < 100));
-  assert.ok(shopPage.data.goods.every((item) => item.price === 0 || item.price === Math.round(Number(item.cashPriceText.replace('¥', '')) * 100)));
-  assert.match(wxml, /class="wechat-price-badge"/);
-  assert.match(wxml, /wx:if="\{\{ item\.status\.action == 'buy' && item\.price !== 0 \}\}" class="wechat-price-badge"/);
+  assert.ok(shopPage.data.goods.some((item) => item.price > 0));
+  assert.ok(shopPage.data.goods.every((item) => !('cashPriceText' in item)));
+  assert.doesNotMatch(wxml, /payment-banner|wechat-price-badge|现金|充值/);
   assert.match(wxml, /class="coin-icon buy-coin-icon koi-coin"/);
   assert.match(wxml, /class="coin-icon asset-coin-icon koi-coin"/);
-  assert.doesNotMatch(wxml, /class="wechat-price-label"/);
-  assert.doesNotMatch(wxml, /asset-cash-badge/);
-  assert.doesNotMatch(wxml, /asset-rate/);
 });
 
-test('商城页支付开启时购买付费商品会拉起微信支付', async () => {
-  const calls = createWxStub();
-  storage.set('game_codex_api_token_v1', 'token');
-  const runtimeConfig = require('../utils/runtime-config');
-  const originalGetBoolean = runtimeConfig.getBoolean;
-  runtimeConfig.getBoolean = (key, fallback = false) => {
-    if (key === 'wechat.pay_enabled') return true;
-    return originalGetBoolean(key, fallback);
-  };
 
-  try {
-    const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
-    shopPage.syncPage();
-    const item = shopPage.data.goods.find((goodsItem) => goodsItem.price > 0);
-    await shopPage.onTapAction({
-      currentTarget: {
-        dataset: {
-          category: item.category,
-          itemId: item.id,
-          action: 'buy',
-        },
-      },
-    });
-
-    assert.equal(calls.requestPayment.length, 1);
-    assert.equal(calls.showActionSheet.length, 1);
-    assert.match(calls.showActionSheet[0].itemList[0], /锦鲤币购买/);
-    assert.match(calls.showActionSheet[0].itemList[1], /微信支付/);
-    assert.equal(calls.requestPayment[0].package, 'prepay_id=test');
-    assert.ok(calls.request.some((payload) => payload.url.includes('/payments/wechat/jsapi')));
-    assert.ok(calls.request.some((payload) => payload.url.includes('/payments/wechat/orders/GCORDER1/sync')));
-  } finally {
-    runtimeConfig.getBoolean = originalGetBoolean;
-  }
-});
-
-test('商城页支付开启时选择锦鲤币不会调用微信支付', async () => {
-  const calls = createWxStub();
-  storage.set('game_codex_api_token_v1', 'token');
-  wx.showActionSheet = (payload) => {
-    calls.showActionSheet.push(payload);
-    payload.success({ tapIndex: 0 });
-  };
-  const runtimeConfig = require('../utils/runtime-config');
-  const originalGetBoolean = runtimeConfig.getBoolean;
-  runtimeConfig.getBoolean = (key, fallback = false) => {
-    if (key === 'wechat.pay_enabled') return true;
-    return originalGetBoolean(key, fallback);
-  };
-
-  try {
-    const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
-    shopPage.syncPage();
-    const item = shopPage.data.goods.find((goodsItem) => goodsItem.price > 0);
-    await shopPage.onTapAction({
-      currentTarget: {
-        dataset: {
-          category: item.category,
-          itemId: item.id,
-          action: 'buy',
-        },
-      },
-    });
-
-    assert.equal(calls.showActionSheet.length, 1);
-    assert.equal(calls.requestPayment.length, 0);
-    assert.ok(calls.request.some((payload) => payload.url.includes('/shop/buy')));
-    assert.ok(!calls.request.some((payload) => payload.url.includes('/payments/wechat/jsapi')));
-  } finally {
-    runtimeConfig.getBoolean = originalGetBoolean;
-  }
-});
-
-test('商城页支付开启但 token 缺失时会先重新登录', async () => {
-  const calls = createWxStub();
-  wx.login = (payload) => {
-    calls.login.push(payload);
-    payload.success({ code: 'WX_CODE' });
-  };
-  wx.request = (payload) => {
-    calls.request.push(payload);
-    if (payload.url.includes('/auth/login')) {
-      payload.success({
-        statusCode: 200,
-        data: {
-          code: 0,
-          data: {
-            token: 'fresh-token',
-            user: { nickName: '微信用户', avatarUrl: '' },
-          },
-        },
-      });
-      return;
-    }
-    if (payload.url.includes('/payments/wechat/jsapi')) {
-      payload.success({
-        statusCode: 200,
-        data: {
-          code: 0,
-          data: {
-            orderNo: 'GCORDER1',
-            payment: {
-              timeStamp: '1000',
-              nonceStr: 'nonce',
-              package: 'prepay_id=test',
-              signType: 'RSA',
-              paySign: 'signed',
-            },
-          },
-        },
-      });
-      return;
-    }
-    if (payload.url.includes('/payments/wechat/orders/GCORDER1/sync')) {
-      payload.success({
-        statusCode: 200,
-        data: {
-          code: 0,
-          data: { orderNo: 'GCORDER1', itemId: 'skin-jade-rabbit' },
-        },
-      });
-      return;
-    }
-    if (payload.url.includes('/shop/inventory')) {
-      payload.success({
-        statusCode: 200,
-        data: {
-          code: 0,
-          data: [
-            { item_id: 'skin-jade-rabbit', category: 'skin', is_equipped: 0 },
-          ],
-        },
-      });
-      return;
-    }
-    payload.success({ statusCode: 200, data: { code: 0, data: {} } });
-  };
-  const runtimeConfig = require('../utils/runtime-config');
-  const originalGetBoolean = runtimeConfig.getBoolean;
-  runtimeConfig.getBoolean = (key, fallback = false) => {
-    if (key === 'wechat.pay_enabled') return true;
-    if (key === 'wechat.login_enabled') return true;
-    return originalGetBoolean(key, fallback);
-  };
-
-  try {
-    const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
-    shopPage.syncPage();
-    const item = shopPage.data.goods.find((goodsItem) => goodsItem.price > 0);
-    await shopPage.onTapAction({
-      currentTarget: {
-        dataset: {
-          category: item.category,
-          itemId: item.id,
-          action: 'buy',
-        },
-      },
-    });
-
-    assert.equal(calls.login.length, 1);
-    assert.equal(storage.get('game_codex_api_token_v1'), 'fresh-token');
-    assert.equal(calls.requestPayment.length, 1);
-    assert.ok(calls.request.some((payload) => payload.url.includes('/auth/login')));
-  } finally {
-    runtimeConfig.getBoolean = originalGetBoolean;
-  }
-});
-
-test('arena 页面把玩家名字渲染在头像之后的独立层，避免被头像遮挡', () => {
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
-  const playerNodeIndex = wxml.indexOf('class="player-node');
-  const nameLayerIndex = wxml.indexOf('class="player-name-layer"');
-
-  assert.ok(playerNodeIndex >= 0);
-  assert.ok(nameLayerIndex > playerNodeIndex);
-});
 
 test('arena 页面会把已装备皮肤头像实时应用到自己的玩家节点', () => {
   createWxStub();
@@ -1273,12 +1519,10 @@ test('arena 页面会把已装备皮肤头像实时应用到自己的玩家节�
 
   const arenaPage = createPageInstance(loadPage('../pages/arena/index.js'));
   arenaPage.onLoad();
-  arenaPage.syncShopDisplay();
-  arenaPage.syncArena(gameStore.getState());
-
-  const selfPlayer = arenaPage.data.players.find((player) => player.isSelf);
-  assert.equal(selfPlayer.avatar, 'https://xcx.ukb88.com/assets/skins/skin-09.png');
-  assert.equal(selfPlayer.skinName, '净心行者');
+  arenaPage.onShow();
+  assert.equal(arenaPage.appearance.skinImage, 'https://xcx.ukb88.com/assets/skins/skin-09.png');
+  assert.equal(arenaPage.appearance.skinName, '净心行者');
+  arenaPage.onUnload();
 });
 
 test('arena 页面会把已装备头像光环叠加到自己的玩家节点', () => {
@@ -1295,42 +1539,13 @@ test('arena 页面会把已装备头像光环叠加到自己的玩家节点', ()
 
   const arenaPage = createPageInstance(loadPage('../pages/arena/index.js'));
   arenaPage.onLoad();
-  arenaPage.syncShopDisplay();
-  arenaPage.syncArena(gameStore.getState());
-
-  const selfPlayer = arenaPage.data.players.find((player) => player.isSelf);
-  assert.equal(selfPlayer.ringName, '瑞冠天光');
-  assert.equal(selfPlayer.ringImage, 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_07.png');
+  arenaPage.onShow();
+  assert.equal(arenaPage.appearance.ringName, '瑞冠天光');
+  assert.equal(arenaPage.appearance.ringImage, 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_07.png');
+  arenaPage.onUnload();
 });
 
-test('arena 福袋主体会放大到头像两倍，并使用卷轴开合弹卡', async () => {
-  createWxStub();
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
-  const arenaPage = createPageInstance(loadPage('../pages/arena/index.js'));
 
-  arenaPage.onLoad();
-  arenaPage.showFortunePanel({fortunePanelAsset: 'https://example.com/bag.png'});
-
-  assert.equal(arenaPage.data.fortunePanelVisible, true);
-  assert.equal(arenaPage.data.fortunePanelPhase, 'opening');
-  assert.match(wxml, /class="fortune-scroll-paper"/);
-  assert.match(wxml, /class="fortune-scroll-rod top"/);
-  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*top:\s*-36rpx;[\s\S]*left:\s*-36rpx;[\s\S]*width:\s*352rpx;[\s\S]*height:\s*352rpx;/);
-  assert.match(wxss, /\.avatar-shell\s*\{[\s\S]*width:\s*120rpx;[\s\S]*height:\s*120rpx;/);
-  assert.match(wxss, /@keyframes scrollPaperOpen/);
-  assert.match(wxss, /@keyframes scrollPaperClose/);
-
-  await new Promise((resolve) => setTimeout(resolve, 450));
-  assert.equal(arenaPage.data.fortunePanelPhase, 'open');
-
-  arenaPage.hideFortunePanel({}, {fortunePanelAsset: ''});
-  assert.equal(arenaPage.data.fortunePanelPhase, 'closing');
-
-  await new Promise((resolve) => setTimeout(resolve, 380));
-  assert.equal(arenaPage.data.fortunePanelVisible, false);
-  assert.equal(arenaPage.data.fortunePanelPhase, 'closed');
-});
 
 test('arena 页面收到 finished 状态时只跳结算，不会再次触发 finishGame', () => {
   const calls = createWxStub();
@@ -1379,21 +1594,22 @@ test('arena 页面纯倒计时刷新不会重复推送玩家和连线整包数�
 
   const arenaPage = createPageInstance(loadPage('../pages/arena/index.js'));
   const patches = [];
-  arenaPage.setData = function setDataWithLog(patch) {
+  arenaPage.setData = function setDataWithLog(patch, callback) {
     patches.push(patch);
     this.data = {
       ...this.data,
       ...patch,
     };
+    callback?.();
   };
   arenaPage.onLoad();
-  arenaPage.syncShopDisplay();
+  arenaPage.active = true;
 
   const firstState = gameStore.getState();
-  arenaPage.syncArena(firstState);
+  arenaPage.acceptState(firstState);
   patches.length = 0;
 
-  arenaPage.syncArena({
+  arenaPage.acceptState({
     ...firstState,
     timeLeft: firstState.timeLeft - 1,
   });
@@ -1405,34 +1621,11 @@ test('arena 页面纯倒计时刷新不会重复推送玩家和连线整包数�
   assert.equal('teamLinks' in patches[0], false);
 });
 
-test('arena 页会为自己的宠物渲染独立跟随层，而不是只显示纯文字徽章', () => {
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
 
-  assert.match(wxml, /class="pet-follower"/);
-  assert.match(wxml, /class="pet-avatar"/);
-  assert.match(wxml, /src="\{\{ item\.petImage \}\}"/);
-  assert.doesNotMatch(wxml, /pet-name-pill/);
-  assert.match(wxss, /\.pet-follower\s*\{[\s\S]*top:\s*-8rpx;[\s\S]*left:\s*108rpx;/);
-  assert.doesNotMatch(wxss, /\.pet-avatar-shell\s*\{[^}]*border:/);
-});
 
-test('arena 页的聊天气泡会保持单行横排，不会把中间玩家的短句拆成竖排', () => {
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.emote-bubble\s*\{[\s\S]*white-space:\s*nowrap;[\s\S]*word-break:\s*keep-all;/);
-});
 
-test('arena 页底部浮层会把机会面板做成卷轴，消息卡保持主题毛玻璃', () => {
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*left:\s*16rpx;[\s\S]*right:\s*16rpx;[\s\S]*min-height:\s*400rpx;[\s\S]*z-index:\s*30;/);
-  assert.match(wxss, /\.fortune-scroll-paper\s*\{[\s\S]*linear-gradient\(180deg,[\s\S]*rgba\(244,\s*229,\s*194,\s*0\.98\)[\s\S]*border:\s*2rpx solid rgba\(181,\s*135,\s*75,\s*0\.3\);/);
-  assert.match(wxss, /\.fortune-scroll-rod\s*\{[\s\S]*linear-gradient\(180deg,[\s\S]*rgba\(187,\s*129,\s*54,\s*0\.96\)/);
-  assert.match(wxss, /\.message-reply-card\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-glow,[\s\S]*var\(--stage-panel,[\s\S]*border:\s*1rpx solid var\(--stage-border,[\s\S]*backdrop-filter:\s*blur\(48rpx\) saturate\(1\.22\) brightness\(1\.03\);[\s\S]*z-index:\s*26;/);
-  assert.match(wxss, /\.invest-btn\.ghost\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-chip,[\s\S]*border:\s*1rpx solid rgba\(255,\s*255,\s*255,\s*0\.34\);/);
-  assert.match(wxss, /\.quick-reply-chip\s*\{[\s\S]*background:\s*[\s\S]*var\(--stage-chip,/);
-});
 
 test('arena 页高频战场元素不使用大面积无限动画', () => {
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
@@ -1443,37 +1636,9 @@ test('arena 页高频战场元素不使用大面积无限动画', () => {
   assert.doesNotMatch(wxss, /\.avatar-ring-overlay\s*\{[\s\S]*animation:\s*ring-sparkle[^;]*infinite/);
 });
 
-test('arena 页背景视频会做景深模糊以突出前景', () => {
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
 
-  assert.match(wxss, /\.arena-page \.scene-backdrop-video\s*\{[\s\S]*transform:\s*scale\(1\.08\);[\s\S]*filter:\s*blur\(9rpx\) saturate\(0\.96\) brightness\(0\.86\);/);
-  assert.match(wxss, /\.arena-scene-mask\s*\{[\s\S]*backdrop-filter:\s*blur\(3rpx\) saturate\(1\);[\s\S]*linear-gradient\(90deg/);
-});
 
-test('arena 页的福袋主体会放大到头像两倍，并保留掉落特效', () => {
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
 
-  assert.match(wxss, /\.fortune-bag-wrap\s*\{[\s\S]*width:\s*352rpx;[\s\S]*height:\s*404rpx;/);
-  assert.match(wxss, /\.fortune-bag-stage\s*\{[\s\S]*width:\s*280rpx;[\s\S]*height:\s*280rpx;/);
-  assert.match(wxss, /\.fortune-bag-image\s*\{[\s\S]*top:\s*-36rpx;[\s\S]*left:\s*-36rpx;[\s\S]*width:\s*352rpx;[\s\S]*height:\s*352rpx;/);
-  assert.match(wxss, /\.fortune-bag-halo\s*\{[\s\S]*width:\s*208rpx;[\s\S]*height:\s*208rpx;/);
-  assert.match(wxss, /\.fortune-bag-spotlight\s*\{[\s\S]*width:\s*244rpx;[\s\S]*height:\s*236rpx;/);
-  assert.match(wxss, /\.fortune-bag-countdown\s*\{[\s\S]*top:\s*344rpx;/);
-  assert.match(wxss, /\.fortune-bag-ripple\.ripple-one\s*\{[\s\S]*bagRipple/);
-  assert.match(wxss, /\.fortune-bag-spark\.spark-left\s*\{[\s\S]*bagSparkFloatLeft/);
-  assert.doesNotMatch(wxss, /\.fortune-bag-shell\s*\{/);
-  assert.doesNotMatch(wxss, /\.fortune-bag-label\s*\{/);
-  assert.match(wxml, /fortune-bag-countdown/);
-  assert.match(wxml, /fortune-bag-ripple ripple-one/);
-  assert.match(wxml, /fortune-bag-spark spark-left/);
-  assert.match(wxml, /fortune-panel/);
-  assert.match(wxml, /invest-head-icon/);
-  assert.match(wxml, /确认卖出/);
-  assert.match(wxss, /\.invest-panel\s*\{[\s\S]*left:\s*16rpx;[\s\S]*right:\s*16rpx;[\s\S]*min-height:\s*400rpx;/);
-  assert.match(wxss, /\.fortune-scroll-paper\s*\{[\s\S]*transform-origin:\s*center;/);
-  assert.match(wxss, /\.invest-actions\s*\{[\s\S]*margin-top:\s*26rpx;/);
-});
 
 test('arena 页面不会再为自己头像额外渲染 我 标签', () => {
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
@@ -1483,87 +1648,15 @@ test('arena 页面不会再为自己头像额外渲染 我 标签', () => {
   assert.doesNotMatch(wxss, /\.self-tag\s*\{/);
 });
 
-test('arena 页面在血条模式下仍显示玩家姓名和资金', () => {
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
 
-  assert.match(wxml, /class="score-visible-tag" wx:if="\{\{ item\.showScore && !item\.isSelf \}\}"/);
-  assert.match(wxml, /class="node-name name-\{\{ item\.namePos \|\| 'center' \}\} \{\{ item\.isSelf \? 'self-node-name' : '' \}\}">\{\{ item\.scoreLabel \}\}/);
-  assert.doesNotMatch(wxml, /wx:if="\{\{ !item\.showScore \|\| item\.isSelf \}\}"/);
-});
 
-test('arena 页面在持仓存在时再次点红包会直接切到卖出面板', () => {
-  createWxStub();
-  const gameStore = require('../utils/game-store');
-  const shopStore = require('../utils/shop-store');
 
-  gameStore.__resetForTests();
-  shopStore.__resetForTests();
-  gameStore.startGame({ autoStartTimer: false });
 
-  const arenaPage = createPageInstance(loadPage('../pages/arena/index.js'));
-  arenaPage.onLoad();
-  arenaPage.syncShopDisplay();
-  arenaPage.syncArena(gameStore.getState());
-  arenaPage.setData({
-    fortuneBag: {
-      id: 'bag-test',
-      x: 240,
-      y: 320,
-      asset: 'https://xcx.ukb88.com/assets/battle/fortune-gupiao.png',
-      opportunity: {
-        category: '股票',
-        name: '测试机会',
-        asset: 'https://xcx.ukb88.com/assets/battle/fortune-gupiao.png',
-      },
-    },
-    activePosition: {
-      id: 'pos-test',
-      ownerId: 'player-self',
-      category: '股票',
-      name: '测试持仓',
-      riskLevel: 'mid',
-      riskText: '中波动',
-      cost: 200,
-      buyAt: Date.now() - 12000,
-      asset: 'https://xcx.ukb88.com/assets/battle/fortune-gupiao.png',
-    },
-  });
 
-  arenaPage.onTapFortuneBag({
-    currentTarget: {
-      dataset: {},
-    },
-  });
 
-  assert.equal(arenaPage.data.fortunePanelVisible, true);
-  assert.equal(arenaPage.data.activeOpportunity, null);
-  assert.match(arenaPage.data.actionHintText, /卖出/);
-  assert.equal(arenaPage.data.activePosition.name, '测试持仓');
-  assert.equal(arenaPage.data.fortunePanelAsset, 'https://xcx.ukb88.com/assets/battle/fortune-gupiao.png');
-});
 
-test('arena 页面福袋不会再套一层 shell', () => {
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
 
-  assert.match(wxml, /<image class="fortune-bag-image" src="\{\{ fortuneBag\.asset \}\}" mode="aspectFit"><\/image>/);
-  assert.doesNotMatch(wxml, /fortune-bag-shell/);
-  assert.doesNotMatch(wxss, /\.fortune-bag-shell/);
-  assert.doesNotMatch(wxml, /fortune-bag-label/);
-});
-
-test('arena 页面头像最外层黑框会去掉且橘色外框更窄', () => {
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxss'), 'utf8');
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
-
-  assert.match(wxss, /\.avatar-shell\s*\{[\s\S]*padding:\s*var\(--avatar-ring-padding,\s*3rpx\);/);
-  assert.match(wxss, /\.avatar \{[\s\S]*border:\s*0;/);
-  assert.match(wxss, /\.self-avatar-shell\s*\{[\s\S]*box-shadow:[\s\S]*3rpx/);
-  assert.match(wxml, /class="avatar-ring-overlay"/);
-  assert.match(wxss, /\.avatar-ring-overlay\s*\{[\s\S]*position:\s*absolute;/);
-});
-
-test('红包和结算音效会切到新的资源文件', () => {
+test('福袋和结算音效会切到新的资源文件', () => {
   const audioJs = fs.readFileSync(path.join(__dirname, '../utils/audio.js'), 'utf8');
   const investmentJs = fs.readFileSync(path.join(__dirname, '../utils/investment.js'), 'utf8');
   const resultJs = fs.readFileSync(path.join(__dirname, '../pages/result/index.js'), 'utf8');
@@ -1575,7 +1668,7 @@ test('红包和结算音效会切到新的资源文件', () => {
   assert.match(audioJs, /'万里长城':\s*SOURCES\.changcheng/);
   assert.match(investmentJs, /FORTUNE_BAG_ASSETS[\s\S]*fortune-fangchan\.png/);
   assert.match(investmentJs, /FORTUNE_BAG_ASSETS[\s\S]*fortune-gupiao\.png/);
-  assert.match(investmentJs, /FORTUNE_BAG_ASSETS[\s\S]*fortune-bitebi\.png/);
+  assert.doesNotMatch(investmentJs, /bitebi/);
   assert.match(resultJs, /playResultWinAudio\(\)/);
   assert.match(projectConfig, /assets\/iocns\/2657\.png_300\.png/);
 });
@@ -1598,7 +1691,8 @@ test('结算页会提供你是锦鲤揭晓特效', () => {
   assert.match(wxml, /class="koi-effect-layer"/);
   assert.match(wxml, /你是锦鲤/);
   assert.match(wxml, /收下好运/);
-  assert.match(wxml, /src="\/assets\/iocns\/result-koi\.png"/);
+  // 锦鲤装饰改为纯 CSS 圆点（原 result-koi.png 不存在，避免 404）
+  assert.doesNotMatch(wxml, /result-koi\.png/);
   assert.doesNotMatch(wxml, /koi-seal/);
   assert.match(wxss, /\.koi-reveal-card\s*\{/);
   assert.doesNotMatch(wxss, /\.koi-seal\s*\{/);
@@ -1746,6 +1840,37 @@ test('语音播报会使用独立 voice 资源并在播放时压低背景音乐'
   assert.equal(audio.playVoice('missingVoiceKey'), null);
 });
 
+test('设备信息新 API 可用时，震动判断不调用废弃的系统信息 API', () => {
+  const calls = createWxStub();
+  wx.getSystemInfoSync = () => {throw new Error('不应调用废弃 API');};
+  wx.getDeviceInfo = () => ({platform: 'devtools'});
+  const audio = loadAudioModule();
+  audio.playVibrate('light');
+  assert.deepEqual(calls.vibrateShort, []);
+  wx.getDeviceInfo = () => ({platform: 'android'});
+  audio.playVibrate('medium');
+  assert.deepEqual(calls.vibrateShort, [{type: 'medium'}]);
+});
+
+test('模拟器播放音乐跳过不支持的全局音频选项，真机只初始化一次并处理失败', (t) => {
+  createWxStub();
+  const options = [];
+  wx.getDeviceInfo = () => ({platform: 'devtools'});
+  wx.setInnerAudioOption = (value) => options.push(value);
+  loadAudioModule().playStageBgm({name: '万里长城'});
+  assert.deepEqual(options, []);
+
+  wx.getDeviceInfo = () => ({platform: 'ios'});
+  const audio = loadAudioModule();
+  audio.playStageBgm({name: '万里长城'});
+  audio.playStageBgm({name: '富士山'});
+  assert.equal(options.length, 1);
+  const warnings = [];
+  t.mock.method(console, 'warn', (...args) => warnings.push(args));
+  options[0].fail({errMsg: 'setInnerAudioOption:fail'});
+  assert.equal(warnings.length, 1);
+});
+
 test('震动反馈只在真机平台触发，开发者工具不触发', () => {
   const calls = createWxStub();
   const originalGetSystemInfoSync = global.wx.getSystemInfoSync;
@@ -1809,63 +1934,7 @@ test('房间倒计时会触发语音播报', () => {
   }
 });
 
-test('对局关键事件会触发语音播报', () => {
-  createWxStub();
-  const gameStore = require('../utils/game-store');
-  const voiceCalls = [];
-  const arenaPage = loadPageWithStubbedAudio('../pages/arena/index.js', {
-    playCue() {},
-    playStageBgm() {},
-    playVibrate() {},
-    playVoice(name) {
-      voiceCalls.push(name);
-    },
-  });
 
-  gameStore.__resetForTests();
-  arenaPage.playRoundAudio({
-    status: 'playing',
-    round: 1,
-    lastEvents: [],
-  });
-  assert.ok(voiceCalls.includes('arenaStart'));
-
-  arenaPage.playInviteAnimation({
-    pairKey: 'self::p2',
-    style: 'left:375rpx; top:400rpx;',
-  });
-  assert.ok(voiceCalls.includes('teamInvite'));
-  arenaPage.clearInviteTimers();
-
-  voiceCalls.length = 0;
-  arenaPage.playRemoteTeamAnimation({
-    pairKey: 'p2::p3',
-    fromName: '风起青萍',
-    toName: '星河旅者',
-    style: 'left:375rpx; top:400rpx;',
-  });
-  assert.equal(voiceCalls.includes('teamInvite'), false);
-  assert.equal(voiceCalls.includes('teamSuccess'), false);
-  arenaPage.clearInviteTimers();
-
-  gameStore.startGame({autoStartTimer: false});
-  arenaPage.setData({players: [{id: 'self', isSelf: true, score: '100'}, {id: 'p2', score: '100'}], timeText: '120s'});
-  const originalSetTimeout = global.setTimeout;
-  let timeoutCallCount = 0;
-  global.setTimeout = (handler) => {
-    timeoutCallCount += 1;
-    if (timeoutCallCount === 1 && typeof handler === 'function') handler();
-    return {mockTimer: true};
-  };
-  try {
-    arenaPage.scheduleNextBagDrop();
-  } finally {
-    global.setTimeout = originalSetTimeout;
-    arenaPage.clearBagTimers();
-    arenaPage.onUnload();
-  }
-  assert.ok(voiceCalls.includes('fortuneBag'));
-});
 
 test('结算页会按排名触发语音播报', () => {
   createWxStub();
@@ -2012,4 +2081,34 @@ test('结算页进入时会先停掉背景音乐', () => {
   });
 
   assert.deepEqual(calls, ['stopBgm']);
+});
+
+test('商城页不依赖平台类型，也不会暴露微信支付能力', () => {
+  createWxStub();
+  const shopPage = createPageInstance(loadPage('../pages/shop/index.js'));
+  shopPage.onLoad();
+  shopPage.syncPage();
+  const wxml = fs.readFileSync(path.join(__dirname, '../pages/shop/index.wxml'), 'utf8');
+
+  assert.equal('isIOS' in shopPage.data, false);
+  assert.equal('payEnabled' in shopPage.data, false);
+  assert.doesNotMatch(wxml, /payment-banner|wechat-price-badge/);
+});
+
+test('all game page lifecycle entries stop before business effects when consent is missing', () => {
+  const calls = createWxStub();
+  privacyConsent.isAllowed = () => false;
+  privacyConsent.canEnter = () => false;
+  const gameStore = require('../utils/game-store');
+  const before = JSON.stringify(gameStore.getState());
+  for (const name of ['home', 'room', 'arena', 'shop', 'profile', 'income', 'result']) {
+    const page = createPageInstance(loadPage(`../pages/${name}/index.js`));
+    page.onLoad({backendRoomId: '28'});
+    if (page.onShow) page.onShow();
+    assert.equal(page.data.nav.statusBarHeight, 20, name);
+  }
+  assert.equal(calls.request.length, 0);
+  assert.equal(calls.login.length, 0);
+  assert.equal(calls.redirectTo.length, 0);
+  assert.equal(JSON.stringify(gameStore.getState()), before);
 });

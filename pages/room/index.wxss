@@ -5,7 +5,7 @@
 }
 
 .page-content {
-  padding-bottom: 184rpx;
+  padding-bottom: calc(184rpx + env(safe-area-inset-bottom));
 }
 
 .room-page .scene-backdrop-mask {
@@ -103,12 +103,10 @@
 }
 
 .slot {
-  min-height: 178rpx;
+  min-height: 156rpx;
   border-radius: 18rpx;
   border: 1rpx solid var(--stage-border, rgba(255, 238, 199, 0.38));
-  background:
-    radial-gradient(circle at 24% 12%, rgba(255, 255, 255, 0.42) 0%, transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.32), var(--stage-panel, rgba(255, 248, 232, 0.38)) 52%, rgba(16, 24, 36, 0.16));
+  background: #f6ebd1;
   -webkit-backdrop-filter: blur(26rpx) saturate(1.22) brightness(1.03);
   backdrop-filter: blur(26rpx) saturate(1.22) brightness(1.03);
   position: relative;
@@ -167,32 +165,57 @@
   animation: avatar-settle 0.5s ease-out both;
 }
 
-.plus {
+.empty-avatar {
   width: 78rpx;
   height: 78rpx;
-  border: 0;
+  border: 2rpx dashed var(--stage-border, #d2ad67);
   border-radius: 50%;
-  color: var(--stage-primary, #9c723d);
-  font-size: 52rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: plus-pulse 1.8s ease-in-out infinite;
+  color: var(--stage-bright, #d2ad67);
+}
+
+.empty-avatar .invite-plus {
+  margin: 0;
+}
+
+.slot-invite-btn {
+  box-sizing: border-box;
+  width: 88rpx;
+  max-width: 88rpx;
+  height: 88rpx;
+  min-width: 88rpx;
+  min-height: 88rpx;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  line-height: 1;
+}
+
+.slot-invite-btn::after {
+  border: 0;
 }
 
 .slot-name {
   margin-top: 10rpx;
   font-size: 28rpx;
-  color: var(--stage-title, #fff7e8);
+  color: #3a281a;
   font-weight: 700;
-  text-shadow: 0 4rpx 14rpx rgba(8, 12, 20, 0.38);
+  max-width: 90%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .slot-state {
   margin-top: 4rpx;
   font-size: 20rpx;
-  color: var(--stage-bright, #f5bc60);
-  text-shadow: 0 3rpx 10rpx rgba(8, 12, 20, 0.34);
+  color: #80552d;
+}
+
+.slot.empty .slot-name {
+  color: #fff7e8;
 }
 
 .star {
@@ -330,6 +353,36 @@
   justify-content: center;
 }
 
+.invite-plus {
+  position: relative;
+  flex: none;
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 12rpx;
+}
+
+.invite-plus::before,
+.invite-plus::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+  border-radius: 2rpx;
+}
+
+.invite-plus::before {
+  left: 0;
+  top: 14rpx;
+  width: 32rpx;
+  height: 4rpx;
+}
+
+.invite-plus::after {
+  left: 14rpx;
+  top: 0;
+  width: 4rpx;
+  height: 32rpx;
+}
+
 .start-btn {
   width: 560rpx !important;
   max-width: calc(100% - 80rpx) !important;
@@ -459,16 +512,6 @@
   }
 }
 
-@keyframes plus-pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.72;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 1;
-  }
-}
 
 @keyframes ready-breathe {
   0%, 100% {

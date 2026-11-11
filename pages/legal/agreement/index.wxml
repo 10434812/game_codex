@@ -1,0 +1,26 @@
+<view class="paper-bg legal-page">
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill"></image>
+  <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
+    <text class="legal-title">用户协议</text>
+  </view>
+  <view class="page-content legal-content">
+    <view class="legal-card">
+      <block wx:if="{{legalReady}}">
+        <text class="legal-updated">版本：{{legal.agreementVersion}} · 生效日期：{{legal.effectiveDate}}</text>
+        <text class="legal-heading">运营主体</text>
+        <text class="legal-text">{{legal.operatorName}}</text>
+        <block wx:for="{{legal.agreementSections}}" wx:key="heading">
+          <text class="legal-heading">{{item.heading}}</text>
+          <text class="legal-text">{{item.text}}</text>
+        </block>
+        <text class="legal-heading">联系方式</text>
+        <text class="legal-text">{{legal.contact}}</text>
+      </block>
+      <block wx:else>
+        <text class="legal-heading">正式用户协议尚未配置</text>
+        <text class="legal-text">运营主体、正式用户协议、联系方式、生效日期及版本尚未完成配置。当前不提供正式协议，也不接受用户同意；登录及游戏入口已阻断。</text>
+        <text class="legal-note">本说明不是可供接受的用户协议。实际运营方须明确服务范围、账号规则、未成年人保护措施、用户权利与争议处理渠道，并提供正式文档后，才可开放使用。</text>
+      </block>
+    </view>
+  </view>
+</view>

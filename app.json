@@ -1,13 +1,16 @@
 {
   "pages": [
     "pages/boot/index",
+    "pages/legal/privacy/index",
+    "pages/legal/agreement/index",
     "pages/home/index",
     "pages/arena/index",
     "pages/room/index",
     "pages/result/index",
     "pages/profile/index",
     "pages/shop/index",
-    "pages/income/index"
+    "pages/income/index",
+    "pages/tasks/index"
   ],
   "window": {
     "navigationStyle": "custom",

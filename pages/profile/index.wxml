@@ -4,23 +4,25 @@
   <view class="app-header profile-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
     <view class="app-user">
       <view class="app-user-avatar"></view>
-      <text class="app-user-name">完善资料</text>
+      <text class="app-user-name">修改名字和头像</text>
     </view>
     <view class="app-header-right">
       <view class="app-status-pill">
         <text class="app-status-text">个人资料</text>
       </view>
-      <view class="app-gear">⚙</view>
+      <view class="app-gear" bindtap="onBack" aria-label="返回">←</view>
     </view>
   </view>
 
   <view class="page-content profile-content">
     <view class="scene-backdrop theme-page-backdrop profile-scene-backdrop" wx:if="{{stageImage || stageVideo}}">
-      <image wx:if="{{!stageVideo && stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <image wx:if="{{stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
       <video
         wx:if="{{stageVideo}}"
+        id="scene-backdrop-video"
         class="scene-backdrop-video"
         src="{{stageVideo}}"
+        poster="{{stageImage}}"
         autoplay
         muted
         loop
@@ -44,21 +46,35 @@
             <image wx:elif="{{defaultAvatar}}" class="picked-avatar" src="{{defaultAvatar}}" mode="aspectFill"></image>
             <view wx:else class="picked-avatar empty">+</view>
           </view>
-          <view class="helper">{{profileUpdating ? '正在上传头像...' : '选择微信头像'}}</view>
+          <view class="helper">{{profileUpdating ? '正在上传头像...' : '修改头像'}}</view>
         </button>
       </view>
+      <view wx:if="{{avatarReviewPending}}" class="privacy-hint">头像审核中，暂时保留原头像。通过后自动生效；如30分钟后仍未更新，请重新上传。</view>
+      <view wx:if="{{profileError}}" class="privacy-hint" role="alert">{{profileError}}</view>
 
       <view class="form-section">
+        <view class="helper">游戏名字</view>
         <input
           class="nickname-input"
           type="nickname"
-          placeholder="选择或填写微信昵称"
+          maxlength="32"
+          disabled="{{profileUpdating}}"
+          placeholder="输入游戏名字或选择微信昵称"
           value="{{draft.nickName}}"
           bindinput="onNicknameInput"
           bindblur="onNicknameInput"
         />
 
-        <button class="primary-btn save-btn" bindtap="onSaveProfile" disabled="{{!canSave}}">保存并返回</button>
+        <button class="primary-btn save-btn" bindtap="onSaveProfile" loading="{{profileUpdating}}" disabled="{{!canSave || profileUpdating || deletingAccount}}">保存并返回</button>
+        <button class="link-btn" bindtap="onLogout" disabled="{{profileUpdating || deletingAccount}}">退出登录</button>
+        <button class="link-btn" bindtap="onRevokePrivacy" disabled="{{profileUpdating || deletingAccount}}">撤回隐私授权</button>
+        <button class="link-btn danger-link" bindtap="onDeleteAccount" loading="{{deletingAccount}}" disabled="{{profileUpdating || deletingAccount}}">注销账号</button>
+        <view class="privacy-hint">注销后个人资料、头像、锦鲤币和商城库存会删除；历史对局仅保留匿名记录。</view>
+        <view class="legal-links">
+          <text bindtap="openPrivacyPolicy">隐私政策</text>
+          <text bindtap="openUserAgreement">用户协议</text>
+          <text bindtap="onContactSupport">联系客服</text>
+        </view>
       </view>
     </view>
     </view>

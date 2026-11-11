@@ -1,7 +1,7 @@
 const MIN_PLAYERS = 4;
 const MAX_PLAYERS = 10;
 const ROOM_UI_LIMIT = MAX_PLAYERS;
-const GAME_DURATION_SECONDS = 180;
+const GAME_DURATION_SECONDS = 120;
 const ROUND_INTERVAL_SECONDS = 3;
 const TEAM_SIZE = 2;
 const ROOM_PLAYER_COUNT_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
@@ -183,7 +183,7 @@ const STAGES = [
     income: '+142%',
     online: '4.6k',
     slogan: '江南夜色 · 一舟揽福',
-    image: `${STAGE_ASSET_BASE_URL}/xihu.png`,
+    image: `${STAGE_ASSET_BASE_URL}/xihhu.png`,
     video: `${STAGE_ASSET_BASE_URL}/xihhu-bg.mp4`,
     titleColor: '#2f7e73',
     accentColor: '#47a092',

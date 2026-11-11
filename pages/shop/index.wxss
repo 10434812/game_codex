@@ -1,7 +1,7 @@
 /* Oriental Paper Theme */
 .shop-page {
   min-height: 100vh;
-  padding: 14rpx 24rpx 44rpx;
+  padding: 14rpx 24rpx calc(44rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
@@ -52,8 +52,35 @@
 }
 
 .asset-tip {
-  color: var(--stage-soft, #ad8f6b);
+  color: #80552d;
   font-size: 20rpx;
+}
+
+.asset-sync-state {
+  position: relative;
+  margin-top: 18rpx;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.asset-sync-message {
+  flex: 1;
+  min-width: 240rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: var(--stage-deep, #8c6841);
+}
+
+.asset-sync-retry {
+  margin: 0;
+  padding: 0 22rpx;
+  min-height: 80rpx;
+  line-height: 80rpx;
+  font-size: 28rpx;
+  color: var(--stage-deep, #8c6841);
+  background: var(--stage-panel-solid, #f7ecs0);
 }
 
 .asset-body {
@@ -176,37 +203,6 @@
   font-weight: 700;
 }
 
-.payment-banner {
-  margin-top: 22rpx;
-  padding: 18rpx 22rpx;
-  border-radius: 20rpx;
-  border: 2rpx solid var(--stage-border, rgba(194, 139, 74, 0.18));
-  background: var(--stage-panel, rgba(255, 248, 235, 0.88));
-  animation: shop-card-in 0.42s ease-out 0.16s both;
-}
-
-.payment-banner.enabled {
-  border-color: rgba(103, 194, 58, 0.28);
-  background: rgba(244, 252, 239, 0.94);
-}
-
-.payment-banner.disabled {
-  border-color: var(--stage-border, rgba(188, 142, 85, 0.22));
-}
-
-.payment-banner-title {
-  color: var(--stage-ink, #7c5528);
-  font-size: 24rpx;
-  font-weight: 800;
-}
-
-.payment-banner-text {
-  margin-top: 8rpx;
-  color: var(--stage-deep, #9a7c59);
-  font-size: 22rpx;
-  line-height: 1.5;
-}
-
 .category-tabs {
   margin-top: 32rpx;
   display: flex;
@@ -283,24 +279,6 @@
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
   font-weight: 700;
-}
-
-.wechat-price-badge {
-  min-width: 92rpx;
-  padding: 8rpx 10rpx;
-  border-radius: 14rpx;
-  background:
-    radial-gradient(circle at 26% 18%, rgba(255, 255, 255, 0.82), transparent 34%),
-    linear-gradient(135deg, rgba(101, 201, 125, 0.14), rgba(245, 252, 242, 0.96));
-  border: 2rpx solid rgba(103, 194, 58, 0.18);
-  text-align: center;
-}
-
-.wechat-price-value {
-  display: block;
-  color: #1f7a3f;
-  font-size: 24rpx;
-  font-weight: 900;
 }
 
 .price-num {
@@ -441,10 +419,10 @@
 }
 
 .goods-action-btn.disabled {
-  opacity: 0.6;
+  opacity: 1;
   background: var(--stage-chip, #d2c4b0);
   box-shadow: none;
-  color: #fff;
+  color: #80552d;
 }
 
 .buy-coin-icon {

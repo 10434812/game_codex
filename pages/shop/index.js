@@ -6,10 +6,9 @@ const userProfile = require('../../utils/user-profile');
 const {DEFAULT_AVATAR} = require('../../utils/constants');
 const {formatNumber} = require('../../utils/format');
 const {playCue, playVibrate} = require('../../utils/audio');
-const runtimeConfig = require('../../utils/runtime-config');
 const {createStageThemeData, resolveAmbientStage, saveStageTheme} = require('../../utils/stage-theme');
-
-const COINS_PER_CNY = 100;
+const pageHelpers = require('../../utils/page-helpers');
+const privacy = require('../../utils/privacy-consent');
 
 const CATEGORY_OPTIONS = [
   {key: 'skin', label: '皮肤'},
@@ -52,56 +51,14 @@ function formatCoinAmount(value) {
   return formatNumber(amount);
 }
 
-function formatWechatAmount(value) {
-  const amount = Math.max(0, Number(value) || 0);
-  return `¥${(amount / COINS_PER_CNY).toFixed(2)}`;
-}
-
-function buildGoods(category) {
-  return shopStore.buildGoodsView(category).map((item) => ({
-    ...item,
-    coinPriceText: item.price === 0 ? '免费' : formatCoinAmount(item.price),
-    cashPriceText: item.price === 0 ? '免费' : formatWechatAmount(item.price),
-    status: buildStatus(item),
-  }));
-}
-
-function requestWechatPayment(payment) {
-  return new Promise((resolve, reject) => {
-    if (!wx.requestPayment) {
-      reject(new Error('当前环境不支持微信支付'));
-      return;
-    }
-    wx.requestPayment({
-      ...payment,
-      success: resolve,
-      fail: (err) => {
-        reject(new Error((err && err.errMsg) || '微信支付取消或失败'));
-      },
-    });
-  });
-}
-
-function choosePurchaseMethod(item) {
-  return new Promise((resolve, reject) => {
-    if (!wx.showActionSheet) {
-      resolve('coin');
-      return;
-    }
-    wx.showActionSheet({
-      itemList: [`锦鲤币购买 ${formatCoinAmount(item.price)}`, `微信支付 ${formatWechatAmount(item.price)}`],
-      success(res) {
-        resolve(res.tapIndex === 1 ? 'wechat' : 'coin');
-      },
-      fail(err) {
-        const message = err && err.errMsg ? err.errMsg : '';
-        if (message.includes('cancel')) {
-          resolve('');
-          return;
-        }
-        reject(new Error(message || '请选择支付方式'));
-      },
-    });
+function buildGoods(category, disabled = false) {
+  return shopStore.buildGoodsView(category).map((item) => {
+    const status = buildStatus(item);
+    return {
+      ...item,
+      coinPriceText: item.price === 0 ? '免费' : formatCoinAmount(item.price),
+      status: {...status, disabled: disabled || status.disabled},
+    };
   });
 }
 
@@ -117,6 +74,10 @@ Page({
     coins: 0,
     balanceText: '0',
     goods: [],
+    assetMessage: '',
+    syncFailed: false,
+    syncing: false,
+    actionPending: false,
     avatarUrl: '',
     defaultAvatar: DEFAULT_AVATAR,
     stageName: DEFAULT_STAGE_THEME_DATA.stageName,
@@ -124,20 +85,22 @@ Page({
     stageVideo: DEFAULT_STAGE_THEME_DATA.stageVideo,
     stageThemeKey: DEFAULT_STAGE_THEME_DATA.stageThemeKey,
     stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
-    payEnabled: false,
-    payStatusText: '微信支付未开启',
-    payHintText: '当前使用锦鲤币完成购买，后续可在后台开启微信支付联调。',
   },
   onLoad() {
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}
-    runtimeConfig.fetchRemoteConfig().finally(() => {
-      this.syncPage();
-    });
+    if (!privacy.canEnter()) return;
+    this.syncPage();
+  },
+  onHide() {
+    pageHelpers.pauseBackdropVideo(this);
   },
   onShow() {
+    if (!privacy.canEnter()) return;
+    pageHelpers.resumeBackdropVideo(this);
     this.syncPage();
+    this.refreshAccountAssets();
   },
   syncPage() {
     const state = shopStore.getStoreState();
@@ -145,25 +108,39 @@ Page({
     const theme = saveStageTheme(resolveAmbientStage(gameState));
     const profile = userProfile.getCachedProfile();
     const activeCategory = this.data.activeCategory || 'skin';
-    const payEnabled = runtimeConfig.getBoolean('wechat.pay_enabled', false);
-    const payGoodsDesc = runtimeConfig.getValue('wechat.pay_goods_desc', '锦鲤前程锦鲤币充值');
-    const payCurrency = runtimeConfig.getValue('wechat.pay_currency', 'CNY');
     this.setData({
       coins: state.coins,
-      balanceText: formatCoinAmount(state.coins),
-      goods: buildGoods(activeCategory),
+      balanceText: state.assetSource === 'server' && state.syncStatus !== 'ready'
+        ? '--' : formatCoinAmount(state.coins),
+      goods: buildGoods(activeCategory, this.data.actionPending ||
+        (state.assetSource === 'server' && state.syncStatus !== 'ready')),
+      assetMessage: state.assetSource !== 'server'
+        ? '游客本地体验，资产不会转入登录账号'
+        : state.syncStatus === 'ready' ? '账号资产已与服务器同步'
+          : state.syncStatus === 'error' ? '账号资产同步失败，确认最新余额和库存前暂停操作'
+            : '正在同步账号资产…',
+      syncFailed: state.assetSource === 'server' && state.syncStatus === 'error',
       avatarUrl: profile.avatarUrl,
       stageName: theme.stageName,
       stageImage: theme.stageImage,
       stageVideo: theme.stageVideo,
       stageThemeKey: theme.stageThemeKey,
       stageThemeStyle: theme.stageThemeStyle,
-      payEnabled,
-      payStatusText: payEnabled ? '微信支付配置已开启' : '微信支付未开启',
-      payHintText: payEnabled
-        ? `后台已开启支付配置，默认商品为“${payGoodsDesc}”，结算币种 ${payCurrency}。`
-        : '当前使用锦鲤币完成购买，商品右上角同步展示微信支付等价金额。',
     });
+  },
+  async refreshAccountAssets() {
+    if (!api.isLoggedIn() || this.data.syncing) return;
+    this.setData({syncing: true});
+    const pending = shopStore.refreshInventory();
+    this.syncPage();
+    try {
+      await pending;
+    } catch (error) {
+      wx.showToast({title: error.message || '资产同步失败，请重试', icon: 'none'});
+    } finally {
+      this.setData({syncing: false});
+      this.syncPage();
+    }
   },
   onSwitchCategory(e) {
     const category = e.currentTarget.dataset.category;
@@ -174,62 +151,34 @@ Page({
     playVibrate('light');
     this.setData({
       activeCategory: category,
-      goods: buildGoods(category),
+      goods: buildGoods(category, this.data.actionPending ||
+        (shopStore.getStoreState().assetSource === 'server' && shopStore.getStoreState().syncStatus !== 'ready')),
     });
   },
   async onTapAction(e) {
     const category = e.currentTarget.dataset.category;
     const itemId = e.currentTarget.dataset.itemId;
     const action = e.currentTarget.dataset.action;
-    if (!category || !itemId || !action || action === 'equipped') {
+    if (!category || !itemId || !['buy', 'equip'].includes(action) ||
+        this.data.actionPending || this.data.syncing) {
       return;
     }
-    const item = this.data.goods.find((goodsItem) => goodsItem.id === itemId);
-    let hasApiSession = api.isLoggedIn();
-    if (!hasApiSession && action === 'buy' && this.data.payEnabled && item && item.price > 0) {
-      await userProfile.login();
-      hasApiSession = api.isLoggedIn();
-    }
-
-    // Try API first
-    if (hasApiSession) {
-      if (action === 'buy') {
-        if (this.data.payEnabled && item && item.price > 0) {
-          const method = await choosePurchaseMethod(item);
-          if (!method) {
-            return;
-          }
-          if (method === 'wechat') {
-            await this.startWechatPayment(itemId);
-            return;
-          }
-        }
-        const apiSuccess = await shopStore.buyViaApi(itemId);
-        if (apiSuccess) {
-          playCue('pairSelf', {volume: 0.8});
-          playVibrate('medium');
-          wx.showToast({title: '购买成功', icon: 'success'});
-          this.syncPage();
-          return;
-        }
-      } else if (action === 'equip') {
-        const apiSuccess = await shopStore.equipViaApi(itemId, category);
-        if (apiSuccess) {
-          playCue('tap', {volume: 0.7});
-          playVibrate('light');
-          this.syncPage();
-          return;
-        }
-      }
-    } else if (action === 'buy' && this.data.payEnabled && item && item.price > 0) {
-      wx.showToast({title: '请先完成微信登录', icon: 'none'});
+    const hasApiSession = api.isLoggedIn();
+    if (hasApiSession && shopStore.getStoreState().syncStatus !== 'ready') {
+      wx.showToast({title: '请先重新同步账号资产', icon: 'none'});
       return;
     }
-
-    // Fall back to local
-    const result =
-      action === 'buy' ? shopStore.purchaseItem(category, itemId) : shopStore.equipItem(category, itemId);
-
+    this.setData({actionPending: true});
+    this.syncPage();
+    let result;
+    try {
+      result = hasApiSession
+        ? await (action === 'buy' ? shopStore.buyViaApi(itemId) : shopStore.equipViaApi(itemId, category))
+        : (action === 'buy' ? shopStore.purchaseItem(category, itemId) : shopStore.equipItem(category, itemId));
+    } finally {
+      this.setData({actionPending: false});
+      this.syncPage();
+    }
     if (!result.ok) {
       playCue('actionFail', {volume: 0.7});
       wx.showToast({title: result.message || '操作未完成', icon: 'none'});
@@ -246,38 +195,6 @@ Page({
 
     wx.showToast({title: result.message || '操作已完成', icon: 'none'});
     this.syncPage();
-  },
-  async startWechatPayment(itemId) {
-    let loadingVisible = false;
-    const showPaymentLoading = (title) => {
-      wx.showLoading({title});
-      loadingVisible = true;
-    };
-    const hidePaymentLoading = () => {
-      if (loadingVisible) {
-        wx.hideLoading();
-        loadingVisible = false;
-      }
-    };
-
-    try {
-      showPaymentLoading('正在拉起支付');
-      const order = await api.post('/payments/wechat/jsapi', {itemId});
-      hidePaymentLoading();
-      await requestWechatPayment(order.payment);
-      showPaymentLoading('正在确认支付');
-      await api.post(`/payments/wechat/orders/${order.orderNo}/sync`);
-      await shopStore.refreshInventory();
-      hidePaymentLoading();
-      playCue('pairSelf', {volume: 0.8});
-      playVibrate('medium');
-      wx.showToast({title: '支付成功', icon: 'success'});
-      this.syncPage();
-    } catch (err) {
-      hidePaymentLoading();
-      playCue('actionFail', {volume: 0.7});
-      wx.showToast({title: (err && err.message) || '支付未完成', icon: 'none'});
-    }
   },
   onBack() {
     playCue('tap', {volume: 0.6});

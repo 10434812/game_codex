@@ -1,0 +1,20 @@
+<view class="paper-bg tasks-page">
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill" />
+  <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
+    <text class="app-user-name">每日任务</text>
+    <button class="task-back" bindtap="onBack">返回</button>
+  </view>
+  <view class="page-content">
+    <view class="task-intro"><text class="task-heading">今日积福</text><text class="task-note">每天完成小目标，领取锦鲤币奖励</text></view>
+    <text class="task-note">北京时间每日 00:00 重置 · {{date}}</text>
+    <view wx:if="{{loading}}" class="task-message">正在加载今日任务…</view>
+    <view wx:elif="{{error}}" class="task-message"><text>{{error}}</text><button bindtap="loadTasks">重新加载</button></view>
+    <view wx:else class="task-list">
+      <view wx:for="{{tasks}}" wx:key="id" class="task-row">
+        <view class="task-details"><text class="task-title">{{item.title}}</text><text class="task-note">进度 {{item.progress}} / {{item.target}} · 奖励 {{item.reward}} 金币</text></view>
+        <button class="task-claim" data-id="{{item.id}}" bindtap="claimReward" loading="{{item.isLoading}}" disabled="{{item.disabled}}">{{item.buttonText}}</button>
+      </view>
+    </view>
+    <text class="task-note task-rules">仅统计正常结算的联机对局；组队任务需结算时保持组队。中断对局不计入，未领取奖励不跨日保留。</text>
+  </view>
+</view>

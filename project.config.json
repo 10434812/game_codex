@@ -3,131 +3,167 @@
   "packOptions": {
     "ignore": [
       {
-        "type": "folder",
-        "value": "assets"
+        "value": "output",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "素材"
+        "value": ".scratch",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "back"
+        "value": "assets-opt",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "docs"
+        "value": ".github",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "tests"
+        "value": "config",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "scripts"
+        "value": "assets-pkg/.DS_Store",
+        "type": "file"
       },
       {
-        "type": "folder",
-        "value": "images"
+        "value": "assets",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".playwright-mcp"
+        "value": "minigame",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".voice-venv"
+        "value": "素材",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".claude"
+        "value": "back",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "assets/stages/gulangyu.mov"
+        "value": "docs",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "assets/stages/xihhu.mov"
+        "value": "tests",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".i18n_work"
+        "value": "scripts",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".sisyphus"
+        "value": "images",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".git"
+        "value": ".playwright-mcp",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".superpowers"
+        "value": ".voice-venv",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": ".vscode"
+        "value": ".claude",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": ".DS_Store"
+        "value": "assets/stages/gulangyu.mov",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "pages/.DS_Store"
+        "value": "assets/stages/xihhu.mov",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "pages/home/.DS_Store"
+        "value": ".i18n_work",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "AGENTS.md"
+        "value": ".sisyphus",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "README.md"
+        "value": ".git",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "package.json"
+        "value": ".superpowers",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "game_logic_analysis.md"
+        "value": ".vscode",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "package-lock.json"
+        "value": ".DS_Store",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "admin-dashboard.png"
+        "value": "pages/.DS_Store",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "admin-login.png"
+        "value": "pages/home/.DS_Store",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "优化建议报告.md"
+        "value": "AGENTS.md",
+        "type": "file"
+      },
+      {
+        "value": "README.md",
+        "type": "file"
+      },
+      {
+        "value": "package.json",
+        "type": "file"
+      },
+      {
+        "value": "game_logic_analysis.md",
+        "type": "file"
+      },
+      {
+        "value": "package-lock.json",
+        "type": "file"
+      },
+      {
+        "value": "admin-dashboard.png",
+        "type": "file"
+      },
+      {
+        "value": "admin-login.png",
+        "type": "file"
+      },
+      {
+        "value": "优化建议报告.md",
+        "type": "file"
+      },
+      {
+        "value": "design-preview",
+        "type": "folder"
+      },
+      {
+        "value": ".impeccable",
+        "type": "folder"
+      },
+      {
+        "value": "PRODUCT.md",
+        "type": "file"
       }
     ],
     "include": [
       {
-        "type": "file",
-        "value": "assets/iocns/2657.png_300.png"
-      },
-      {
-        "type": "file",
-        "value": "assets/iocns/result-koi.png"
+        "value": "assets/iocns/2657.png_300.png",
+        "type": "file"
       }
     ]
   },
   "setting": {
-    "urlCheck": false,
+    "urlCheck": true,
     "es6": true,
     "postcss": true,
     "minified": true,
@@ -154,7 +190,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.4.0",
-  "appid": "wx742cfddc2b05ccd4",
+  "appid": "wxd7f500f3f21f15dd",
   "projectname": "锦鲤前程",
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},

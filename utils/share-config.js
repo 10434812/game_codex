@@ -1,5 +1,12 @@
 const runtimeConfig = require('./runtime-config');
-const { getCachedProfile } = require('./user-profile');
+const DEFAULT_SHARE_IMAGE = '/assets-pkg/share/friends-20261111.jpg';
+
+function resolveShareImage(value) {
+  const image = String(value || '').trim();
+  // 已有后台配置仍可能返回旧的竖版纸张背景；新封面随包发布，不依赖 CDN 更新。
+  const legacyBackground = /^(?:https:\/\/xcx\.ukb88\.com)?\/(?:assets|assets-pkg)\/bg\/screen\.(?:png|jpg)(?:[?#].*)?$/;
+  return !image || legacyBackground.test(image) ? DEFAULT_SHARE_IMAGE : image;
+}
 
 function joinQuery(baseQuery, extraQuery) {
   const parts = [baseQuery, extraQuery]
@@ -31,15 +38,9 @@ function buildShareTitle(scene) {
     return '锦鲤前程邀你来房间组队冲榜';
   }
   if (scene === 'result') {
-    return '我刚在锦鲤前程赢下一局，来一起试试手气';
+    return '我刚在锦鲤前程赢下一局，来一起试试运气';
   }
   return '锦鲤前程邀你一起组队闯世界';
-}
-
-function buildInviteQuery() {
-  const profile = getCachedProfile();
-  const nickname = encodeURIComponent(profile.nickName || '锦鲤玩家');
-  return `inviteName=${nickname}`;
 }
 
 function buildShareAppMessage(scene = 'default', options = {}) {
@@ -50,13 +51,11 @@ function buildShareAppMessage(scene = 'default', options = {}) {
     };
   }
   const extraQuery = options.extraQuery || '';
-  const mergedQuery = scene === 'room'
-    ? joinQuery(extraQuery, buildInviteQuery())
-    : extraQuery;
+  const mergedQuery = extraQuery;
   return {
     title: buildShareTitle(scene),
     path: buildSharePath(scene, mergedQuery),
-    imageUrl: runtimeConfig.getValue('wechat.share_image_url', ''),
+    imageUrl: resolveShareImage(runtimeConfig.getValue('wechat.share_image_url', '')),
   };
 }
 
@@ -68,10 +67,10 @@ function buildShareTimeline(scene = 'default', options = {}) {
       runtimeConfig.getValue('wechat.share_query', 'from=admin_share'),
       joinQuery(extraQuery, `scene=${scene}`)
     ),
-    imageUrl: runtimeConfig.getValue(
+    imageUrl: resolveShareImage(runtimeConfig.getValue(
       'wechat.share_timeline_image_url',
       runtimeConfig.getValue('wechat.share_image_url', '')
-    ),
+    )),
   };
 }
 

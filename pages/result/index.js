@@ -1,6 +1,7 @@
 const {getNavLayout} = require('../../utils/nav');
 const api = require('../../utils/api-client');
-const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS} = require('../../utils/constants');
+const privacyConsent = require('../../utils/privacy-consent');
+const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, resolveStage} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const playerStats = require('../../utils/player-stats');
 const {playCue, playVoice, stopBgm, playVibrate} = require('../../utils/audio');
@@ -12,6 +13,7 @@ const runtimeConfig = require('../../utils/runtime-config');
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config');
 const {createStageThemeData, loadStageTheme, saveStageTheme} = require('../../utils/stage-theme');
 const guideStore = require('../../utils/guide-store');
+const {performanceFeedback} = require('../../utils/arena-feedback');
 
 // 烟花颜色配置
 const FIREWORK_COLORS = [
@@ -189,6 +191,12 @@ Page({
     stageThemeKey: DEFAULT_STAGE_THEME_DATA.stageThemeKey,
     stageThemeStyle: DEFAULT_STAGE_THEME_DATA.stageThemeStyle,
     resultId: '',
+    interrupted: false,
+    resultTitle: '本局结算',
+    selfRank: 0,
+    resultReason: '',
+    performance: null,
+    replayPending: false,
     gainText: '0',
     incomeText: '🐟锦鲤币 0',
     incomeAmountText: '0',
@@ -207,6 +215,8 @@ Page({
     defaultAvatar: DEFAULT_AVATAR,
     showScorePopup: false,
     selectedPlayer: null,
+    selectedPerformance: null,
+    hasScoreBreakdown: false,
     scoreBreakdown: {
       round: '0',
       teamBonus: '0',
@@ -221,20 +231,23 @@ Page({
     koiBlessings: generateKoiBlessings(),
     guideVisible: false,
   },
-  onLoad() {
+  onLoad(options = {}) {
+    this.onlineSessionId = String(options.sessionId || '');
     try {
       this.setData({nav: getNavLayout()});
     } catch (error) {}
+    if (!privacyConsent.canEnter()) return;
     runtimeConfig.fetchRemoteConfig().finally(() => {
       enableShareMenu();
     });
   },
   async onShow() {
+    if (!privacyConsent.canEnter()) return;
     this.syncUserProfile();
     stopBgm();
     await this.refreshResult();
     this.syncGuide();
-    if (this.data.resultId && this.data.resultId !== this.lastPlayedResultId) {
+    if (!this.data.interrupted && this.data.resultId && this.data.resultId !== this.lastPlayedResultId) {
       this.playResultVoice();
       this.playResultFirework();
       this.playKoiEffect();
@@ -264,7 +277,7 @@ Page({
   },
   syncGuide() {
     this.setData({
-      guideVisible: guideStore.shouldShowStep(guideStore.GUIDE_STEPS.RESULT),
+      guideVisible: !this.data.interrupted && guideStore.shouldShowStep(guideStore.GUIDE_STEPS.RESULT),
     });
   },
   finishGuide() {
@@ -330,7 +343,8 @@ Page({
     } catch (error) {}
   },
   animateNumber(targetValue, formatFn, stateKey, duration = 1200) {
-    const steps = 30;
+    // 降步数：7 步 × 2 个数字并行滚动 = 14 次 setData（≤15），避免 JS 高频驱动动画
+    const steps = 7;
     const stepTime = duration / steps;
     let currentStep = 0;
     const startValue = 0;
@@ -439,14 +453,23 @@ Page({
     }
   },
   async refreshResult() {
-    // Try API first
+    const requestId = (this.resultRequestId || 0) + 1;
+    this.resultRequestId = requestId;
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    const sessionId = currentPage && currentPage.options && currentPage.options.sessionId;
+    const token = api.getToken();
     try {
-      const pages = getCurrentPages();
-      const currentPage = pages[pages.length - 1];
-      const sessionId = currentPage.options.sessionId;
-      if (sessionId && api.isLoggedIn()) {
+      if (sessionId) {
+        if (!token) throw new Error('请重新登录后查看服务器结算');
         const result = await api.get(`/games/${sessionId}/result`);
+        if (requestId !== this.resultRequestId) return;
+        if (token !== api.getToken()) throw new Error('登录账号已变更，请重新查看结算');
         if (result) {
+          this.resultPerformanceMap = result.performanceMap || {};
+          this.resultBreakdownMap = result.scoreBreakdownMap || {};
+          this.onlineSessionId = String(sessionId);
+          this.replayStage = getStageFromResult(result);
           const achievementMedal = createResultMedal(result);
           const themePatch = buildSavedThemePatch(getStageFromResult(result));
           this.stopNumberAnimations();
@@ -460,18 +483,29 @@ Page({
             achievementMedal,
             modeText: result.modeText || this.data.modeText,
             resultId: result.resultId || '',
+            interrupted: !!result.interrupted,
+            resultTitle: result.interrupted ? (result.title || '对局已中断') : '本局结算',
+            selfRank: result.interrupted ? 0 : findSelfRank(result),
+            resultReason: result.interrupted ? (result.reason || '本局未完成，未发放奖励，可重新开局') : '',
+            performance: result.interrupted ? null : performanceFeedback(result),
             totalText: `总计 ${(result.ranking || []).length} 玩家`,
             expProgress: buildExpProgress(playerStats.getSummary().totalExp),
-            isKoiWinner: findSelfRank(result) === 1,
+            isKoiWinner: !result.interrupted && findSelfRank(result) === 1,
             ...themePatch,
           });
           this.gainAnimTimer = this.animateNumber(result.gain || 0, formatNumber, 'gainText', 1200);
           this.incomeAnimTimer = this.animateNumber(result.coins || 0, formatNumber, 'incomeAmountText', 1500);
           return;
         }
+        throw new Error('服务器结算尚未确认，请稍后重试');
       }
     } catch (err) {
       console.warn('[result] API error:', err);
+      if (requestId !== this.resultRequestId) return;
+      this.stopNumberAnimations();
+      this.setData({incomeAmountText: '--', gainText: '--'});
+      wx.showToast({title: err.message || '结算同步失败，请稍后重试', icon: 'none'});
+      return;
     }
 
     // Fall back to local gameStore
@@ -482,6 +516,8 @@ Page({
     }
 
     this.stopNumberAnimations();
+    this.resultPerformanceMap = state.result.performanceMap || {};
+    this.resultBreakdownMap = state.result.scoreBreakdownMap || {};
     const achievementMedal = createResultMedal(state.result);
     const themePatch = buildSavedThemePatch(state.stage || getStageFromResult(state.result));
 
@@ -495,19 +531,48 @@ Page({
       achievementMedal,
       modeText: state.modeText || MATCH_MODE_TEXT,
       resultId: state.result.resultId || '',
+      interrupted: false,
+      resultTitle: '本局结算',
+      selfRank: findSelfRank(state.result),
+      resultReason: '',
+      performance: performanceFeedback(state.result),
       totalText: `总计 ${state.result.ranking.length} 玩家`,
       expProgress: buildExpProgress(playerStats.getSummary().totalExp),
       isKoiWinner: findSelfRank(state.result) === 1,
       ...themePatch,
     });
+    if (state.result.rewardNotice) {
+      wx.showToast({title: state.result.rewardNotice, icon: 'none'});
+    }
 
     // 播放数字滚动动画
     this.gainAnimTimer = this.animateNumber(state.result.gain, formatNumber, 'gainText', 1200);
-    this.incomeAnimTimer = this.animateNumber(state.result.coins, formatNumber, 'incomeAmountText', 1500);
+    // 游客已完成的本地结算也不能在登录后展示为账号入账。
+    const localCoins = token ? 0 : state.result.coins;
+    this.incomeAnimTimer = this.animateNumber(localCoins, formatNumber, 'incomeAmountText', 1500);
   },
-  replay() {
+  async replay() {
+    if (this.data.replayPending) return;
     playCue('tap', {volume: 0.75});
     playVibrate('medium');
+    if (this.onlineSessionId) {
+      this.setData({replayPending: true});
+      try {
+        await runtimeConfig.fetchRemoteConfig();
+        if (!runtimeConfig.isApiSupported('onlineArena')) {
+          wx.showToast({title: '联机服务升级中，请先体验本地对局', icon: 'none'});
+          return;
+        }
+        const stage = resolveStage(this.replayStage || {name: this.data.stageName});
+        const payload = await api.post('/rooms', {stageId: stage.id});
+        const roomId = (payload.room || payload).id;
+        if (!roomId) throw new Error('房间创建失败，请重试');
+        wx.redirectTo({url: `/pages/room/index?backendRoomId=${encodeURIComponent(roomId)}`});
+      } catch (error) {
+        wx.showToast({title: error.message || '再来一局失败，请重试', icon: 'none'});
+      } finally {this.setData({replayPending: false});}
+      return;
+    }
     gameStore.restartGame();
     wx.redirectTo({url: '/pages/arena/index'});
   },
@@ -538,23 +603,19 @@ Page({
 
     playCue('tap', {volume: 0.75});
     playVibrate('light');
-    const state = gameStore.getState();
-    const breakdownMap = (state.result && state.result.scoreBreakdownMap) || {};
-    const breakdown = breakdownMap[player.id] || {
-      round: 0,
-      teamBonus: 0,
-      investment: 0,
-      fortuneBag: 0,
-    };
+    const breakdown = (this.resultBreakdownMap || {})[player.id];
+    const performance = (this.resultPerformanceMap || {})[player.id] || null;
 
     this.setData({
       showScorePopup: true,
       selectedPlayer: player,
+      selectedPerformance: performance,
+      hasScoreBreakdown: !!breakdown,
       scoreBreakdown: {
-        round: formatSigned(breakdown.round),
-        teamBonus: formatSigned(breakdown.teamBonus),
-        investment: formatSigned(breakdown.investment),
-        fortuneBag: formatSigned(breakdown.fortuneBag),
+        round: formatSigned(breakdown?.round),
+        teamBonus: formatSigned(breakdown?.teamBonus),
+        investment: formatSigned(breakdown?.investment),
+        fortuneBag: formatSigned(breakdown?.fortuneBag),
       },
     });
   },

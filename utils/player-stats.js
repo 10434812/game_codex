@@ -144,6 +144,15 @@ async function fetchHistory(page = 1, limit = 20) {
   return { records: [], total: 0, page, limit };
 }
 
+function clearLocalData() {
+  try {
+    wx.removeStorageSync(STATS_STORAGE_KEY);
+  } catch (error) {
+    console.warn('[player-stats] clearLocalData error:', error);
+  }
+  return getState();
+}
+
 function __resetForTests() {
   try {
     wx.removeStorageSync(STATS_STORAGE_KEY);
@@ -158,5 +167,6 @@ module.exports = {
   fetchSummary,
   fetchHistory,
   recordSettlement,
+  clearLocalData,
   __resetForTests,
 };

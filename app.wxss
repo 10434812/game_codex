@@ -70,6 +70,7 @@ page {
 
 .app-user {
   display: flex;
+  flex: 1;
   align-items: center;
   min-width: 0;
 }
@@ -87,7 +88,7 @@ page {
 .app-user-name {
   margin-left: 12rpx;
   color: var(--stage-bright, #9e743e);
-  font-size: 44rpx;
+  font-size: 30rpx;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -100,11 +101,19 @@ page {
   align-items: center;
   gap: 12rpx;
   flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.profile-page .app-user-name,
+.income-page .app-user-name,
+.shop-page .app-user-name {
+  color: #80552d;
+  text-shadow: none;
 }
 
 .app-status-pill {
   height: 56rpx;
-  padding: 0 22rpx;
+  padding: 0 16rpx;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
@@ -124,7 +133,8 @@ page {
 
 .app-status-text {
   color: var(--stage-deep, #9a7643);
-  font-size: 28rpx;
+  font-size: 24rpx;
+  white-space: nowrap;
   font-weight: 600;
 }
 
@@ -267,7 +277,7 @@ page {
   position: fixed;
   left: 20rpx;
   right: 20rpx;
-  bottom: 16rpx;
+  bottom: calc(16rpx + env(safe-area-inset-bottom));
   background:
     radial-gradient(circle at 18% 12%, var(--stage-glow, rgba(245, 188, 96, 0.32)) 0%, transparent 34%),
     radial-gradient(circle at 82% 0%, rgba(255, 255, 255, 0.56) 0%, transparent 38%),
@@ -447,7 +457,7 @@ page {
   position: fixed;
   left: 48rpx;
   right: 48rpx;
-  bottom: 166rpx;
+  bottom: calc(166rpx + env(safe-area-inset-bottom));
   z-index: 2;
   pointer-events: auto;
 }

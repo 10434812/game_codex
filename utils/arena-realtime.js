@@ -1,4 +1,5 @@
 const api = require('./api-client');
+const privacy = require('./privacy-consent');
 
 let socketTask = null;
 let activeSessionId = '';
@@ -21,10 +22,22 @@ function buildRealtimeBaseUrl(baseUrl) {
 
 function buildArenaRealtimeUrl(baseUrl, sessionId, token) {
   const realtimeBase = buildRealtimeBaseUrl(baseUrl);
-  if (!realtimeBase || !sessionId || !token) {
+  if (!realtimeBase || !sessionId) {
     return '';
   }
-  return `${realtimeBase}/ws/arena?sessionId=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(token)}`;
+  // The token is deliberately NOT placed in the URL query: it travels in a
+  // Sec-WebSocket-Protocol subprotocol (see buildArenaRealtimeProtocols) so
+  // it never leaks into server logs, proxies or referrers.
+  return `${realtimeBase}/ws/arena?sessionId=${encodeURIComponent(sessionId)}`;
+}
+
+/**
+ * Subprotocol carrying the arena auth token. The backend reads the token
+ * from `Sec-WebSocket-Protocol` (format `arena.<jwt>`), falling back to the
+ * legacy `?token=` query for old clients.
+ */
+function buildArenaRealtimeProtocols(baseUrl, sessionId, token) {
+  return token ? [`arena.${token}`] : [];
 }
 
 function disconnect() {
@@ -39,6 +52,7 @@ function disconnect() {
 }
 
 function connect(sessionId, handlers = {}) {
+  privacy.assertAllowed();
   const token = api.getToken();
   const url = buildArenaRealtimeUrl(api.getBaseUrl(), sessionId, token);
   if (!url || typeof wx === 'undefined' || typeof wx.connectSocket !== 'function') {
@@ -49,7 +63,10 @@ function connect(sessionId, handlers = {}) {
 
   activeSessionId = String(sessionId);
   activeHandlers = handlers || {};
-  socketTask = wx.connectSocket({ url });
+  socketTask = wx.connectSocket({
+    url,
+    protocols: buildArenaRealtimeProtocols(api.getBaseUrl(), sessionId, token),
+  });
 
   socketTask.onOpen(() => {
     if (typeof activeHandlers.onOpen === 'function') {
@@ -102,6 +119,7 @@ function connect(sessionId, handlers = {}) {
 module.exports = {
   buildRealtimeBaseUrl,
   buildArenaRealtimeUrl,
+  buildArenaRealtimeProtocols,
   connect,
   disconnect,
 };

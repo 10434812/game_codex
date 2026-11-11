@@ -16,11 +16,13 @@
 
   <view class="page-content">
     <view class="scene-backdrop theme-page-backdrop income-scene-backdrop" wx:if="{{stageImage || stageVideo}}">
-      <image wx:if="{{!stageVideo && stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
+      <image wx:if="{{stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
       <video
         wx:if="{{stageVideo}}"
+        id="scene-backdrop-video"
         class="scene-backdrop-video"
         src="{{stageVideo}}"
+        poster="{{stageImage}}"
         autoplay
         muted
         loop
@@ -38,11 +40,11 @@
     <view class="scene-layer income-scene-layer">
     <view class="card summary-card">
       <view class="summary-main">
-        <image class="currency-icon" src="/images/koi-coin.png" mode="aspectFit"></image>
+        <image class="currency-icon" src="https://xcx.ukb88.com/assets/icons/koi-coin.svg" mode="aspectFit"></image>
         <text class="currency-unit">锦鲤币</text>
         <text class="currency-amount">{{balanceAmountText}}</text>
       </view>
-      <view class="summary-sub">统一资金账户</view>
+      <view class="summary-sub">{{accountLabel}}</view>
     </view>
 
     <view class="list-head">完整资金明细</view>
@@ -64,7 +66,8 @@
       </view>
     </view>
 
-    <view wx:else class="empty-state">暂无资金记录，先开始一局吧</view>
+    <button wx:elif="{{recordsStatusText}}" class="empty-state" bindtap="syncRecords">{{recordsStatusText}}</button>
+    <view wx:else class="empty-state">暂无资金记录</view>
     </view>
   </view>
 </view>
