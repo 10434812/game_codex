@@ -1,12 +1,18 @@
+# ⚠️ 安全提醒：
+# 1. MySQL 不暴露公网端口：仅绑定 127.0.0.1 供本机调试；生产环境建议完全去掉 ports（容器间内网互通）。
+# 2. 生产环境必须通过 .env 注入强口令（DB_PASSWORD），禁止使用默认/示例密码。
+# 3. 该 compose 只适合本地开发，生产请使用云数据库并配置安全组/防火墙。
 services:
   mysql:
     image: mysql:8.0
     container_name: game_codex_mysql
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      # 仅本机可访问（不暴露公网）；生产部署请删除本段
+      - "127.0.0.1:3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-game_codex_pass}
+      # 生产必须由外部注入强口令，例如: DB_PASSWORD=$(openssl rand -hex 24)
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?请在 .env 中设置强 DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME:-game_codex}
     volumes:
       - mysql_data:/var/lib/mysql
@@ -15,7 +21,14 @@ services:
       - ./sql/003_admin_features.sql:/docker-entrypoint-initdb.d/003_admin_features.sql
       - ./sql/004_add_ring_category.sql:/docker-entrypoint-initdb.d/004_add_ring_category.sql
       - ./sql/005_fortune_reality.sql:/docker-entrypoint-initdb.d/005_fortune_reality.sql
-      - ./sql/006_wechat_payment_orders.sql:/docker-entrypoint-initdb.d/006_wechat_payment_orders.sql
+      - ./sql/006_disable_payment_and_external_reality.sql:/docker-entrypoint-initdb.d/006_disable_payment_and_external_reality.sql
+      - ./sql/007_room_playing_unique.sql:/docker-entrypoint-initdb.d/007_room_playing_unique.sql
+      - ./sql/008_privacy_account_deletion.sql:/docker-entrypoint-initdb.d/008_privacy_account_deletion.sql
+      - ./sql/009_avatar_content_safety.sql:/docker-entrypoint-initdb.d/009_avatar_content_safety.sql
+      - ./sql/010_simulated_fortune_only.sql:/docker-entrypoint-initdb.d/010_simulated_fortune_only.sql
+      - ./sql/011_game_duration_100.sql:/docker-entrypoint-initdb.d/011_game_duration_100.sql
+      - ./sql/012_daily_tasks.sql:/docker-entrypoint-initdb.d/012_daily_tasks.sql
+      - ./sql/013_game_duration_120.sql:/docker-entrypoint-initdb.d/013_game_duration_120.sql
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
 volumes:

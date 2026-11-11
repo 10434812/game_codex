@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS game_sessions (
     room_id     INT UNSIGNED    NOT NULL                    COMMENT '房间ID',
     stage_id    INT UNSIGNED    NOT NULL                    COMMENT '景区ID',
     status      ENUM('playing','finished') DEFAULT 'playing' COMMENT '对局状态',
-    duration    INT UNSIGNED    DEFAULT 180                 COMMENT '对局时长(秒)',
+    duration    INT UNSIGNED    DEFAULT 120                 COMMENT '对局时长(秒)',
     round_count INT UNSIGNED    DEFAULT 0                   COMMENT '回合数',
     started_at  DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '开始时间',
     finished_at DATETIME        NULL                        COMMENT '结束时间',

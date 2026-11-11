@@ -2,26 +2,31 @@
   "name": "game-codex-backend",
   "version": "1.0.0",
   "description": "锦鲤前程 后端服务 - Node.js + Express + MySQL + Socket.IO",
+  "engines": {
+    "node": ">=24"
+  },
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
     "dev": "cross-env NODE_ENV=development nodemon src/app.js",
     "test": "node --test tests/*.test.js",
+    "test:integration": "node scripts/test-full-flow.js",
+    "release:check": "node scripts/check-release.js",
     "fortune:refresh": "node scripts/refresh-fortune-reality.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.0",
+    "express": "^4.22.3",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "multer": "^2.1.1",
+    "multer": "^2.4.0",
     "mysql2": "^3.11.0",
-    "socket.io": "^4.7.5",
-    "uuid": "^10.0.0",
-    "ws": "~8.18.3"
+    "sharp": "^0.35.5",
+    "socket.io": "^4.8.4",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

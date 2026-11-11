@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminAuth = require('../../middleware/admin-auth');
 const roomService = require('../../services/admin-room-service');
+const { logOperation } = require('../../middleware/operation-logger');
 const { success, fail } = require('../../utils/response');
 
 router.get('/', adminAuth, async (req, res) => {
@@ -37,8 +38,17 @@ router.get('/:id', adminAuth, async (req, res) => {
 
 router.put('/:id/close', adminAuth, async (req, res) => {
   try {
-    await roomService.forceCloseRoom(req.params.id);
-    res.json(success(null, '房间已强制关闭'));
+    const settle = String(req.query.settle || 'true') !== 'false';
+    const data = await roomService.forceCloseRoom(req.params.id, {
+      realtime: req.app.get('arenaRealtime') || null,
+      settle,
+    });
+    await logOperation(req.admin, 'close', 'room', req.params.id, {
+      roomId: req.params.id,
+      sessionId: data.sessionId,
+      settle,
+    }, req.ip);
+    res.json(success(data, '房间已强制关闭'));
   } catch (err) {
     console.error('[Admin Close Room]', err);
     res.status(500).json(fail('强制关闭房间失败', 500));

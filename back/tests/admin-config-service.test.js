@@ -17,32 +17,32 @@ function patchDb(stubs) {
   };
 }
 
-test('exportConfigs returns a portable bundle with sensitive payment config metadata', async (t) => {
+test('exportConfigs returns a portable bundle with sensitive config metadata', async (t) => {
   const restore = patchDb({
     execute: async () => [[], []],
     queryAll: async () => [
       {
-        config_key: 'wechat.pay_enabled',
+        config_key: 'wechat.login_enabled',
         config_value: 'true',
-        description: '是否开启微信支付能力',
+        description: '是否开启微信登录',
       },
       {
-        config_key: 'wechat.pay_private_key',
+        config_key: 'wechat.login_secret',
         config_value: '-----BEGIN PRIVATE KEY-----\\nsecret\\n-----END PRIVATE KEY-----',
-        description: '微信支付商户 API 证书私钥 PEM（仅服务端保存）',
+        description: '小程序 AppSecret',
       },
     ],
   });
   t.after(restore);
 
   const bundle = await configService.exportConfigs();
-  const privateKey = bundle.configs.find((item) => item.key === 'wechat.pay_private_key');
+  const privateKey = bundle.configs.find((item) => item.key === 'wechat.login_secret');
 
   assert.equal(bundle.schemaVersion, 1);
   assert.equal(bundle.app, 'game_codex');
   assert.equal(bundle.totalConfigs, 2);
   assert.equal(privateKey.isSensitive, true);
-  assert.equal(privateKey.valueType, 'textarea');
+  assert.equal(privateKey.valueType, 'password');
   assert.match(privateKey.value, /BEGIN PRIVATE KEY/);
 });
 
@@ -50,8 +50,8 @@ test('getConfigMap returns requested config values and falls back to defaults', 
   const restore = patchDb({
     execute: async () => [[], []],
     queryAll: async (_sql, params = []) => {
-      if (params.includes('wechat.pay_enabled')) {
-        return [{ config_key: 'wechat.pay_enabled', config_value: 'true' }];
+      if (params.includes('wechat.login_enabled')) {
+        return [{ config_key: 'wechat.login_enabled', config_value: 'true' }];
       }
       return [];
     },
@@ -59,26 +59,26 @@ test('getConfigMap returns requested config values and falls back to defaults', 
   t.after(restore);
 
   const map = await configService.getConfigMap([
-    'wechat.pay_enabled',
-    'wechat.pay_mch_id',
+    'wechat.login_enabled',
+    'wechat.login_app_id',
   ]);
 
-  assert.equal(map['wechat.pay_enabled'], 'true');
-  assert.equal(map['wechat.pay_mch_id'], '');
+  assert.equal(map['wechat.login_enabled'], 'true');
+  assert.equal(map['wechat.login_app_id'], 'wxd7f500f3f21f15dd');
 });
 
 test('prepareImportConfigs accepts object exports and skips unknown keys', () => {
   const prepared = configService.__private.prepareImportConfigs({
     configs: {
-      'wechat.pay_enabled': true,
-      'wechat.pay_private_key': '  -----BEGIN PRIVATE KEY-----\\nsecret\\n-----END PRIVATE KEY-----  ',
+      'wechat.login_enabled': true,
+      'wechat.login_secret': '  -----BEGIN PRIVATE KEY-----\\nsecret\\n-----END PRIVATE KEY-----  ',
       'unknown.key': 'ignored',
     },
   });
 
   assert.deepEqual(prepared.configs, [
-    { key: 'wechat.pay_enabled', value: 'true' },
-    { key: 'wechat.pay_private_key', value: '-----BEGIN PRIVATE KEY-----\\nsecret\\n-----END PRIVATE KEY-----' },
+    { key: 'wechat.login_enabled', value: 'true' },
+    { key: 'wechat.login_secret', value: '-----BEGIN PRIVATE KEY-----\\nsecret\\n-----END PRIVATE KEY-----' },
   ]);
   assert.deepEqual(prepared.skipped, [
     { key: 'unknown.key', reason: 'unknown_config_key' },
@@ -106,8 +106,8 @@ test('importConfigs writes valid configs and reports skipped rows', async (t) =>
 
   const result = await configService.importConfigs({
     configs: [
-      { key: 'wechat.pay_enabled', value: 1 },
-      { key: 'wechat.pay_mch_id', value: '1900000109' },
+      { key: 'wechat.login_enabled', value: 1 },
+      { key: 'wechat.login_app_id', value: 'wxd7f500f3f21f15dd' },
       { key: 'legacy.removed', value: 'skip' },
     ],
   }, 7);
@@ -115,7 +115,7 @@ test('importConfigs writes valid configs and reports skipped rows', async (t) =>
   assert.equal(result.importedCount, 2);
   assert.equal(result.skippedCount, 1);
   assert.equal(result.configs[0].value, 'true');
-  assert.equal(result.configs[1].value, '1900000109');
+  assert.equal(result.configs[1].value, 'wxd7f500f3f21f15dd');
   assert.deepEqual(result.skipped, [
     { key: 'legacy.removed', reason: 'unknown_config_key' },
   ]);

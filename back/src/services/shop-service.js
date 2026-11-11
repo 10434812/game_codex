@@ -231,7 +231,7 @@ const GOODS = [
     name: '淘气龙',
     price: 5800,
     accent: '#9f5b2b',
-    description: '掌管云雨的小神龙，打架最凶却最爱撒娇。',
+    description: '掌管云雨的小神龙，性格张扬却最爱撒娇。',
     petIcon: '🐉',
     petLabel: '淘气龙',
     petImage: 'https://xcx.ukb88.com/assets/111/pets/taoqilong.png',
@@ -319,7 +319,7 @@ const GOODS = [
     name: '瑞犬',
     price: 1100,
     accent: '#9a5e3b',
-    description: '极其忠诚，能守护主人的每一次关键抉择。',
+    description: '忠心护主，能守护主人的每一次关键抉择。',
     petIcon: '🐶',
     petLabel: '瑞犬',
     petImage: 'https://xcx.ukb88.com/assets/111/pets/ruiquan.png',
@@ -409,7 +409,7 @@ const GOODS = [
     name: '瑞冠天光',
     price: 2880,
     accent: '#c88a2b',
-    description: '层次最完整的高级款，适合压轴登场。',
+    description: '层次丰富的高级款，适合压轴登场。',
     ringIcon: '👑',
     ringLabel: '光环',
     ringImage: 'https://xcx.ukb88.com/assets/avatar-rings/avatar_ring_07.png',
@@ -461,20 +461,35 @@ async function buyItem(userId, itemId) {
   try {
     await conn.beginTransaction();
 
-    // Deduct coins
-    await conn.execute(
+    // Deduct coins. The conditional UPDATE doubles as a row lock: if a
+    // concurrent purchase drained the balance between the pre-check and this
+    // statement, affectedRows is 0 and we must NOT hand out the item for free.
+    const [deductResult] = await conn.execute(
       'UPDATE users SET coins = coins - ? WHERE id = ? AND coins >= ?',
       [item.price, userId, item.price]
     );
+    if (!deductResult || deductResult.affectedRows !== 1) {
+      await conn.rollback();
+      throw Object.assign(new Error('金币不足'), { status: 400 });
+    }
 
     // Get updated balance
     const [[{ coins }]] = await conn.execute('SELECT coins FROM users WHERE id = ?', [userId]);
 
-    // Insert user_item
-    await conn.execute(
-      'INSERT INTO user_items (user_id, item_id, category) VALUES (?, ?, ?)',
-      [userId, itemId, item.category]
-    );
+    // Insert user_item (map duplicate-ownership race to a friendly error
+    // instead of leaking the raw SQL duplicate-key message)
+    try {
+      await conn.execute(
+        'INSERT INTO user_items (user_id, item_id, category) VALUES (?, ?, ?)',
+        [userId, itemId, item.category]
+      );
+    } catch (err) {
+      if (err && err.code === 'ER_DUP_ENTRY') {
+        await conn.rollback();
+        throw Object.assign(new Error('已拥有该物品'), { status: 400 });
+      }
+      throw err;
+    }
 
     // Insert coin record
     await conn.execute(
@@ -502,14 +517,16 @@ async function buyItem(userId, itemId) {
  * @returns {Promise<{ success: boolean }>}
  */
 async function equipItem(userId, itemId, category) {
-  // Verify user owns the item
+  // Verify user owns the item. The category is taken from the owned row, never
+  // from the client, so a skin cannot be marked equipped under the "pet" slot.
   const owned = await db.queryOne(
-    'SELECT id FROM user_items WHERE user_id = ? AND item_id = ?',
+    'SELECT id, category FROM user_items WHERE user_id = ? AND item_id = ?',
     [userId, itemId]
   );
   if (!owned) {
     throw Object.assign(new Error('未拥有该物品'), { status: 400 });
   }
+  const slot = owned.category || category;
 
   // Transaction: unequip all in category, then equip this one
   const conn = await db.pool.getConnection();
@@ -519,7 +536,7 @@ async function equipItem(userId, itemId, category) {
     // Unequip all items in this category
     await conn.execute(
       'UPDATE user_items SET is_equipped = 0 WHERE user_id = ? AND category = ?',
-      [userId, category]
+      [userId, slot]
     );
 
     // Equip this specific item

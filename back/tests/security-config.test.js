@@ -10,7 +10,15 @@ test('production config does not ship insecure auth defaults', () => {
   assert.doesNotMatch(config, /change-this-to-random-secret-in-production/);
   assert.doesNotMatch(config, /admin123/);
   assert.match(config, /requireProductionEnv/);
-  assert.match(adminAuth, /config\.admin\.password/);
+  assert.match(config, /requireStrongSecret/);
+  assert.match(config, /ADMIN_JWT_SECRET/);
+
+  // 管理员登录：不再自举建号、使用独立密钥、带限流
+  // （注释里允许提及已删除的旧函数名，只校验不存在自举建号实现）
+  assert.doesNotMatch(adminAuth, /function\s+ensureBootstrapAdmin/);
+  assert.match(adminAuth, /config\.jwt\.adminSecret/);
+  assert.match(adminAuth, /adminLoginRateLimit/);
+  assert.match(adminAuth, /scripts\/create-admin/);
 });
 
 test('production CORS is environment controlled instead of unconditional wildcard', () => {
@@ -20,15 +28,4 @@ test('production CORS is environment controlled instead of unconditional wildcar
   assert.doesNotMatch(app, /app\.use\(cors\(\)\)/);
   assert.match(app, /cors\(\{ origin: config\.cors\.origin/);
   assert.match(config, /CORS_ORIGIN/);
-});
-
-test('avatar upload URL uses CDN or forwarded public origin instead of localhost default', () => {
-  const routeSource = fs.readFileSync(path.join(__dirname, '../src/routes/user.js'), 'utf8');
-  const envExample = fs.readFileSync(path.join(__dirname, '../.env.example'), 'utf8');
-
-  assert.match(routeSource, /CDN_BASE_URL/);
-  assert.match(routeSource, /x-forwarded-host/);
-  assert.match(routeSource, /x-forwarded-proto/);
-  assert.doesNotMatch(routeSource, /http:\/\/localhost:\$\{process\.env\.PORT/);
-  assert.match(envExample, /CDN_BASE_URL=/);
 });

@@ -43,8 +43,10 @@ async function ensureItemsSeeded() {
 
 async function listItems() {
   await ensureItemsSeeded();
+  // Return ALL items (including is_active=0) so the admin UI can see and
+  // re-enable 下架 items via PUT /items/:id/toggle.
   const rows = await db.queryAll(
-    'SELECT * FROM shop_items WHERE is_active = 1 ORDER BY sort_order ASC, id ASC'
+    'SELECT * FROM shop_items ORDER BY sort_order ASC, id ASC'
   );
   return rows.map(mapItem);
 }

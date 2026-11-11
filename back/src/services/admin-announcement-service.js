@@ -100,6 +100,24 @@ async function archiveAnnouncement(id) {
   return getAnnouncement(id);
 }
 
+/**
+ * List published announcements for the mini-program (public endpoint).
+ * Only status='published' rows are returned, newest first, urgent/high
+ * priority items first.
+ * @param {number} [limit=10] - Max records (capped at 20)
+ */
+async function listPublishedAnnouncements(limit = 10) {
+  const max = Math.min(Math.max(Number(limit) || 10, 1), 20);
+  const rows = await db.queryAll(
+    `SELECT * FROM announcements
+     WHERE status = 'published'
+     ORDER BY FIELD(priority, 'urgent', 'high', 'normal', 'low'), published_at DESC, id DESC
+     LIMIT ?`,
+    [String(max)]
+  );
+  return rows.map(mapAnnouncement);
+}
+
 module.exports = {
   listAnnouncements,
   getAnnouncement,
@@ -108,4 +126,5 @@ module.exports = {
   deleteAnnouncement,
   publishAnnouncement,
   archiveAnnouncement,
+  listPublishedAnnouncements,
 };

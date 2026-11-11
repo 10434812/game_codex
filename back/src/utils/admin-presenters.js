@@ -65,14 +65,20 @@ function mapItem(row) {
   };
 }
 
+/**
+ * 系统配置输出。注意：不展开原始行（SELECT * 会带出 config_value 原始列），
+ * 敏感配置的真实值只通过 value 字段输出，由读取中间件按角色决定是否脱敏。
+ */
 function mapConfig(row, definition = null) {
   if (!row) return null;
+  // 剔除原始 config_value 列，避免绕过 value 字段的角色脱敏
+  const { config_value: rawValue, ...rest } = row;
   return {
-    ...row,
+    ...rest,
     key: row.config_key,
-    value: row.config_value,
+    value: rawValue,
     description: row.description || (definition && definition.description) || '',
-    defaultValue: definition ? definition.defaultValue : row.config_value,
+    defaultValue: definition ? definition.defaultValue : rawValue,
     valueType: definition ? definition.valueType : 'text',
     group: definition ? definition.group : (row.config_key || '').split('.')[0],
     isPublic: definition ? !!definition.isPublic : false,

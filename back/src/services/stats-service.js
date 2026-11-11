@@ -9,7 +9,7 @@ const db = require('../models/db');
 async function getSummary(userId) {
   const user = await db.queryOne(
     `SELECT total_income, total_exp, game_count, win_count, level
-     FROM users WHERE id = ?`,
+     FROM users WHERE id = ? AND deleted_at IS NULL`,
     [userId]
   );
 
@@ -41,7 +41,7 @@ async function getSummary(userId) {
  * @returns {Promise<{ records: Array, page: number, limit: number, total: number }>}
  */
 async function getHistory(userId, page = 1, limit = 20) {
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const pageNum = Math.min(1000000, Math.max(1, parseInt(page, 10) || 1));
   const pageSize = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
   const offset = (pageNum - 1) * pageSize;
 
@@ -71,14 +71,14 @@ async function getHistory(userId, page = 1, limit = 20) {
      WHERE gp.user_id = ?
      ORDER BY gs.started_at DESC
      LIMIT ? OFFSET ?`,
-    [userId, pageSize, offset]
+    [userId, String(pageSize), String(offset)]
   );
 
   return { records, page: pageNum, limit: pageSize, total };
 }
 
 async function getCoinRecords(userId, page = 1, limit = 50) {
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const pageNum = Math.min(1000000, Math.max(1, parseInt(page, 10) || 1));
   const pageSize = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
   const offset = (pageNum - 1) * pageSize;
 
@@ -93,7 +93,7 @@ async function getCoinRecords(userId, page = 1, limit = 50) {
      WHERE user_id = ?
      ORDER BY created_at DESC, id DESC
      LIMIT ? OFFSET ?`,
-    [userId, pageSize, offset]
+    [userId, String(pageSize), String(offset)]
   );
 
   const records = rows.map((row) => ({
@@ -143,10 +143,10 @@ async function getLeaderboard(type = 'income', limit = 50) {
        game_count AS gameCount,
        win_count AS winCount
      FROM users
-     WHERE is_banned = 0
+     WHERE is_banned = 0 AND deleted_at IS NULL
      ORDER BY ${orderBy}
      LIMIT ?`,
-    [maxLimit]
+    [String(maxLimit)]
   );
 
   return players;

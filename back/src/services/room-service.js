@@ -1,12 +1,20 @@
 const db = require('../models/db');
 
 // ─── Game Constants ───────────────────────────────────────
-const MIN_PLAYERS = 4;
-const MAX_PLAYERS = 10;
-const GAME_DURATION_SECONDS = 180;
-const INITIAL_SCORE_RANGE = { min: 80, max: 220 };
+const {MIN_PLAYERS, MAX_PLAYERS, GAME_DURATION_SECONDS, INITIAL_SCORE_RANGE} = require('../game-engine/constants');
 
 // ─── Helpers ──────────────────────────────────────────────
+// Every membership-creating transaction takes account locks before room locks.
+// This serializes against account deletion, including already-authenticated requests.
+async function lockActiveUser(connection, userId) {
+  const [rows] = await connection.execute(
+    'SELECT id, deleted_at, is_banned FROM users WHERE id = ? FOR UPDATE', [userId]
+  );
+  const user = rows[0];
+  if (!user || user.deleted_at || user.is_banned) {
+    throw Object.assign(new Error('账号不可用，无法加入或开始对局'), {statusCode: 403});
+  }
+}
 
 /**
  * Generate a random 4-digit room code (1000-9999).
@@ -17,14 +25,13 @@ function generateRoomCode() {
 }
 
 /**
- * Check if a room code is unique (not already in use for active rooms).
- * Only checks rooms not in 'finished' status.
+ * Match the database unique index across persisted room codes.
  * @param {string} code
  * @returns {Promise<boolean>}
  */
 async function isCodeUnique(code) {
   const existing = await db.queryOne(
-    "SELECT id FROM rooms WHERE room_code = ? AND status != 'finished'",
+    'SELECT id FROM rooms WHERE room_code = ?',
     [code]
   );
   return !existing;
@@ -73,6 +80,7 @@ async function createRoom(userId, stageId) {
   const connection = await db.pool.getConnection();
   try {
     await connection.beginTransaction();
+    await lockActiveUser(connection, userId);
 
     // Insert the room
     const [roomResult] = await connection.execute(
@@ -146,24 +154,19 @@ async function getRoomByCode(roomCode, viewerUserId) {
  * @returns {Promise<Array>}
  */
 async function listAvailableRooms() {
+  // Single query with a bounded result set (no per-room COUNT round trips).
   const rooms = await db.queryAll(
-    "SELECT * FROM rooms WHERE status = 'waiting' ORDER BY created_at DESC"
+    `SELECT r.*, (SELECT COUNT(*) FROM room_players rp WHERE rp.room_id = r.id) AS player_count
+       FROM rooms r
+      WHERE r.status = 'waiting'
+      ORDER BY r.created_at DESC
+      LIMIT 100`
   );
 
-  // For each room, count the current players
-  const result = [];
-  for (const room of rooms) {
-    const countResult = await db.queryOne(
-      'SELECT COUNT(*) as count FROM room_players WHERE room_id = ?',
-      [room.id]
-    );
-    result.push({
-      ...room,
-      player_count: countResult ? countResult.count : 0,
-    });
-  }
-
-  return result;
+  return rooms.map((room) => ({
+    ...room,
+    player_count: Number(room.player_count) || 0,
+  }));
 }
 
 /**
@@ -179,26 +182,38 @@ async function joinRoom(roomId, userId) {
   if (!room) {
     throw Object.assign(new Error('房间不存在'), { statusCode: 404 });
   }
-  if (room.status !== 'waiting') {
-    throw Object.assign(new Error('游戏已开始，无法加入'), { statusCode: 400 });
-  }
-  if (room.current_players >= room.max_players) {
-    throw Object.assign(new Error('房间已满'), { statusCode: 400 });
-  }
-
-  const existing = await db.queryOne(
-    'SELECT id FROM room_players WHERE room_id = ? AND user_id = ?',
-    [roomId, userId]
-  );
-  if (existing) {
-    return getRoom(roomId);
-  }
-
   const connection = await db.pool.getConnection();
   try {
     await connection.beginTransaction();
+    await lockActiveUser(connection, userId);
+    const [lockedRooms] = await connection.execute('SELECT * FROM rooms WHERE id = ? FOR UPDATE', [roomId]);
+    const lockedRoom = lockedRooms[0];
+    if (!lockedRoom) throw Object.assign(new Error('房间不存在'), {statusCode: 404});
+    const [members] = await connection.execute(
+      'SELECT id FROM room_players WHERE room_id = ? AND user_id = ? FOR UPDATE', [roomId, userId]
+    );
+    if (members.length) {
+      await connection.commit();
+      return getRoom(roomId, userId);
+    }
+    if (lockedRoom.status !== 'waiting') throw Object.assign(new Error('游戏已开始，无法加入'), {statusCode: 400});
 
-    // Find next available seat (find the highest seat + 1)
+    // Atomically claim a seat slot: the conditional UPDATE locks the room row
+    // and only succeeds while the room is still waiting and not full, closing
+    // the concurrent-join overfill race. If it affects 0 rows the pre-checks
+    // above were stale and this join must fail.
+    const [claimResult] = await connection.execute(
+      'UPDATE rooms SET current_players = current_players + 1 WHERE id = ? AND status = ? AND current_players < max_players',
+      [roomId, 'waiting']
+    );
+    if (!claimResult || claimResult.affectedRows !== 1) {
+      await connection.rollback();
+      throw Object.assign(new Error('房间已满或游戏已开始'), { statusCode: 400 });
+    }
+
+    // Find next available seat (find the highest seat + 1).
+    // The room row is locked by the UPDATE above, so concurrent joins are
+    // serialized and cannot compute the same seat.
     const seatResult = await connection.execute(
       'SELECT MAX(seat) as max_seat FROM room_players WHERE room_id = ?',
       [roomId]
@@ -209,12 +224,6 @@ async function joinRoom(roomId, userId) {
     await connection.execute(
       'INSERT INTO room_players (room_id, user_id, seat, is_ready, is_host) VALUES (?, ?, ?, 0, 0)',
       [roomId, userId, nextSeat]
-    );
-
-    // Update current_players count
-    await connection.execute(
-      'UPDATE rooms SET current_players = current_players + 1 WHERE id = ?',
-      [roomId]
     );
 
     await connection.commit();
@@ -244,26 +253,35 @@ async function joinRoomByCode(roomCode, userId) {
  * @returns {Promise<Object>} Result with updated state
  */
 async function leaveRoom(roomId, userId) {
-  // Validate room exists
-  const room = await db.queryOne('SELECT * FROM rooms WHERE id = ?', [roomId]);
-  if (!room) {
-    throw Object.assign(new Error('房间不存在'), { statusCode: 404 });
-  }
-
-  // Get the player record
-  const player = await db.queryOne(
-    'SELECT * FROM room_players WHERE room_id = ? AND user_id = ?',
-    [roomId, userId]
-  );
-  if (!player) {
-    throw Object.assign(new Error('你不在该房间中'), { statusCode: 400 });
-  }
-
-  const isHost = player.is_host === 1;
-
   const connection = await db.pool.getConnection();
   try {
     await connection.beginTransaction();
+
+    // Lock the room row first (same order as joinRoom/startGame: rooms before
+    // room_players). This serializes with joins and keeps the member count
+    // consistent, and prevents an InnoDB deadlock with startGame.
+    const [roomRows] = await connection.execute(
+      'SELECT * FROM rooms WHERE id = ? FOR UPDATE',
+      [roomId]
+    );
+    const room = roomRows[0];
+    if (!room) {
+      throw Object.assign(new Error('房间不存在'), { statusCode: 404 });
+    }
+    if (room.status === 'playing') {
+      throw Object.assign(new Error('对局进行中无法离开房间'), { statusCode: 400 });
+    }
+
+    const [playerRows] = await connection.execute(
+      'SELECT * FROM room_players WHERE room_id = ? AND user_id = ? FOR UPDATE',
+      [roomId, userId]
+    );
+    const player = playerRows[0];
+    if (!player) {
+      throw Object.assign(new Error('你不在该房间中'), { statusCode: 400 });
+    }
+
+    const isHost = player.is_host === 1;
 
     // Remove the player
     await connection.execute(
@@ -368,37 +386,43 @@ async function toggleReady(roomId, userId) {
  * @returns {Promise<Object>} { roomId, sessionId, players[] }
  */
 async function startGame(roomId, userId) {
-  // Validate room exists and is waiting
-  const room = await db.queryOne('SELECT * FROM rooms WHERE id = ?', [roomId]);
-  if (!room) {
-    throw Object.assign(new Error('房间不存在'), { statusCode: 404 });
-  }
-  if (room.status !== 'waiting') {
-    throw Object.assign(new Error('游戏已开始'), { statusCode: 400 });
-  }
-  if (room.host_user_id !== userId) {
-    throw Object.assign(new Error('仅房主可以开始游戏'), { statusCode: 403 });
-  }
-
-  // Validate min players
-  if (room.current_players < 1) {
-    throw Object.assign(new Error('房间内至少需要1名玩家才能开始'), {
-      statusCode: 400,
-    });
-  }
-
-  // Get all room players
-  const roomPlayers = await getPlayers(roomId);
+  // Candidates only determine account lock order; never use this snapshot to
+  // create game_players. A join/leave before the room lock causes a safe retry.
+  const candidates = await db.queryAll('SELECT user_id FROM room_players WHERE room_id = ? ORDER BY user_id', [roomId]);
+  const candidateIds = [...new Set([...candidates.map((player) => Number(player.user_id)), Number(userId)])].sort((a, b) => a - b);
 
   const connection = await db.pool.getConnection();
   try {
     await connection.beginTransaction();
+    for (const id of candidateIds) await lockActiveUser(connection, id);
+    const [rooms] = await connection.execute('SELECT * FROM rooms WHERE id = ? FOR UPDATE', [roomId]);
+    const room = rooms[0];
+    if (!room) throw Object.assign(new Error('房间不存在'), {statusCode: 404});
+    if (room.status !== 'waiting') throw Object.assign(new Error('游戏已开始'), {statusCode: 400});
+    if (Number(room.host_user_id) !== Number(userId)) throw Object.assign(new Error('仅房主可以开始游戏'), {statusCode: 403});
+    const [roomPlayers] = await connection.execute(
+      'SELECT * FROM room_players WHERE room_id = ? ORDER BY user_id FOR UPDATE', [roomId]
+    );
+    const currentIds = roomPlayers.map((player) => Number(player.user_id)).sort((a, b) => a - b);
+    if (!currentIds.includes(Number(userId))) throw Object.assign(new Error('房主已不在房间内'), {statusCode: 403});
+    if (currentIds.length !== candidateIds.length || currentIds.some((id, index) => id !== candidateIds[index])) {
+      throw Object.assign(new Error('房间成员已变化，请重试开始游戏'), {statusCode: 409});
+    }
+    if (roomPlayers.some((player) => !player.is_host && !player.is_ready)) {
+      throw Object.assign(new Error('请等待所有玩家准备后开始'), {statusCode: 409});
+    }
 
-    // Update room status
-    await connection.execute(
-      "UPDATE rooms SET status = 'playing' WHERE id = ?",
+    // Atomically claim the room for this game: only succeeds while the room
+    // is still 'waiting', so two concurrent start requests (double-tap) can
+    // never both create a game_session / tick loop for the same room.
+    const [statusResult] = await connection.execute(
+      "UPDATE rooms SET status = 'playing' WHERE id = ? AND status = 'waiting'",
       [roomId]
     );
+    if (!statusResult || statusResult.affectedRows !== 1) {
+      await connection.rollback();
+      throw Object.assign(new Error('游戏已开始'), { statusCode: 400 });
+    }
 
     // Create game session
     const [sessionResult] = await connection.execute(

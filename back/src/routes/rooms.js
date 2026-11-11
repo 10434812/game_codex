@@ -23,7 +23,8 @@ router.post('/', async (req, res) => {
     return res.json(success(result, '房间创建成功'));
   } catch (err) {
     console.error('[rooms] createRoom error:', err);
-    return res.status(err.statusCode || 500).json(fail(err.message));
+    const status = err.statusCode || 500;
+    return res.status(status).json(fail(err.message, status));
   }
 });
 
@@ -92,7 +93,8 @@ router.post('/:id/join', async (req, res) => {
     return res.json(success(result, '加入房间成功'));
   } catch (err) {
     console.error('[rooms] joinRoom error:', err);
-    return res.status(err.statusCode || 500).json(fail(err.message));
+    const status = err.statusCode || 500;
+    return res.status(status).json(fail(err.message, status));
   }
 });
 
@@ -105,7 +107,8 @@ router.post('/code/:code/join', async (req, res) => {
     return res.json(success(result, '加入房间成功'));
   } catch (err) {
     console.error('[rooms] joinRoomByCode error:', err);
-    return res.status(err.statusCode || 500).json(fail(err.message));
+    const status = err.statusCode || 500;
+    return res.status(status).json(fail(err.message, status));
   }
 });
 
@@ -123,7 +126,8 @@ router.post('/:id/leave', async (req, res) => {
     return res.json(success(result, '已离开房间'));
   } catch (err) {
     console.error('[rooms] leaveRoom error:', err);
-    return res.status(err.statusCode || 500).json(fail(err.message));
+    const status = err.statusCode || 500;
+    return res.status(status).json(fail(err.message, status));
   }
 });
 
@@ -141,7 +145,8 @@ router.post('/:id/ready', async (req, res) => {
     return res.json(success(result));
   } catch (err) {
     console.error('[rooms] toggleReady error:', err);
-    return res.status(err.statusCode || 500).json(fail(err.message));
+    const status = err.statusCode || 500;
+    return res.status(status).json(fail(err.message, status));
   }
 });
 
@@ -157,18 +162,29 @@ router.post('/:id/start', async (req, res) => {
 
     const result = await roomService.startGame(roomId, req.user.userId);
 
+    // Await session initialization instead of fire-and-forget: a failure here
+    // (e.g. DB error) must reach the client instead of silently leaving the
+    // room stuck in 'playing' with no tick loop driving it.
     const arenaRealtime = req.app.get('arenaRealtime');
-    if (arenaRealtime && result && result.sessionId) {
+    if (result && result.sessionId) {
       const gameService = require('../services/game-service');
-      gameService.startGameSession(result.roomId, req.user.userId, arenaRealtime).catch(err => {
-        console.error('[rooms] startTickLoop error:', err);
-      });
+      try {
+        await gameService.startGameSession(result.roomId, req.user.userId, arenaRealtime);
+      } catch (err) {
+        try {
+          await gameService.recoverFailedStart(result.sessionId);
+        } catch (recoveryError) {
+          console.error('[rooms] failed start recovery error:', recoveryError);
+        }
+        throw err;
+      }
     }
 
     return res.json(success(result, '游戏开始'));
   } catch (err) {
     console.error('[rooms] startGame error:', err);
-    return res.status(err.statusCode || 500).json(fail(err.message));
+    const status = err.statusCode || 500;
+    return res.status(status).json(fail(err.message, status));
   }
 });
 

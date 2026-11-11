@@ -3,16 +3,16 @@ const { formatDateTime, mapUser, mapItem, mapGameSession } = require('../utils/a
 
 async function listUsers(page = 1, limit = 20, keyword = '') {
   const offset = (page - 1) * limit;
-  let where = '';
+  let where = 'WHERE deleted_at IS NULL';
   let params = [];
-  if (keyword) { where = 'WHERE nick_name LIKE ? OR openid LIKE ?'; params.push(`%${keyword}%`, `%${keyword}%`); }
+  if (keyword) { where += ' AND (nick_name LIKE ? OR openid LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
   const total = await db.queryOne(`SELECT COUNT(*) as total FROM users ${where}`, params);
   const records = await db.queryAll(`SELECT * FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, String(limit), String(offset)]);
   return { records: records.map(mapUser), total: total?.total || 0, page: Number(page), limit: Number(limit) };
 }
 
 async function getUserDetail(userId) {
-  const user = await db.queryOne('SELECT * FROM users WHERE id = ?', [userId]);
+  const user = await db.queryOne('SELECT * FROM users WHERE id = ? AND deleted_at IS NULL', [userId]);
   if (!user) return null;
   const items = await db.queryAll('SELECT * FROM user_items WHERE user_id = ?', [userId]);
   const games = await db.queryAll('SELECT gp.*, gs.started_at, gs.stage_id, gs.status as game_status, gs.duration FROM game_players gp JOIN game_sessions gs ON gp.session_id = gs.id WHERE gp.user_id = ? ORDER BY gs.started_at DESC LIMIT 20', [userId]);
@@ -45,7 +45,7 @@ async function getUserDetail(userId) {
 }
 
 async function toggleBan(userId, isBanned, reason = '') {
-  await db.execute('UPDATE users SET is_banned = ?, banned_reason = ? WHERE id = ?', [isBanned ? 1 : 0, reason, userId]);
+  await db.execute('UPDATE users SET is_banned = ?, banned_reason = ? WHERE id = ? AND deleted_at IS NULL', [isBanned ? 1 : 0, reason, userId]);
   const user = await db.queryOne('SELECT id, nick_name, avatar_url, game_count, win_count, total_income, total_exp, coins, level, is_banned, banned_reason FROM users WHERE id = ?', [userId]);
   return mapUser(user);
 }

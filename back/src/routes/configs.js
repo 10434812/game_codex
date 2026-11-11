@@ -7,7 +7,10 @@ const router = express.Router();
 router.get('/public', async (_req, res) => {
   try {
     const data = await configService.getPublicConfigs();
-    res.json(success(data));
+    res.json(success({
+      ...data,
+      features: {...data.features, api: {announcements: true, currentGame: true, authRefresh: true, onlineArena: true}},
+    }));
   } catch (err) {
     console.error('[Public Configs]', err);
     res.status(500).json(fail('获取公共配置失败', 500));

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminAuth = require('../../middleware/admin-auth');
 const userService = require('../../services/admin-user-service');
+const { logOperation } = require('../../middleware/operation-logger');
 const { success, fail } = require('../../utils/response');
 
 router.get('/', adminAuth, async (req, res) => {
@@ -19,12 +20,31 @@ router.get('/:id', adminAuth, async (req, res) => {
 });
 
 router.put('/:id/ban', adminAuth, async (req, res) => {
-  try { const data = await userService.toggleBan(req.params.id, req.body.isBanned, req.body.reason || ''); res.json(success(data)); }
+  try {
+    const isBanned = !!req.body.isBanned;
+    const data = await userService.toggleBan(req.params.id, isBanned, req.body.reason || '');
+    await logOperation(req.admin, isBanned ? 'ban' : 'unban', 'user', req.params.id, {
+      userId: req.params.id,
+      isBanned,
+      reason: req.body.reason || '',
+    }, req.ip);
+    res.json(success(data));
+  }
   catch (err) { console.error('[Admin Ban]', err); res.status(500).json(fail('操作失败', 500)); }
 });
 
 router.put('/:id/coins', adminAuth, async (req, res) => {
-  try { const data = await userService.adjustCoins(req.params.id, Number(req.body.amount) || 0, req.body.reason || ''); res.json(success(data)); }
+  try {
+    const amount = Number(req.body.amount) || 0;
+    const data = await userService.adjustCoins(req.params.id, amount, req.body.reason || '');
+    await logOperation(req.admin, 'adjust_coins', 'user', req.params.id, {
+      userId: req.params.id,
+      amount,
+      reason: req.body.reason || '',
+      coinsAfter: data.coins,
+    }, req.ip);
+    res.json(success(data));
+  }
   catch (err) { console.error('[Admin Coins]', err); res.status(500).json(fail('调整金币失败', 500)); }
 });
 

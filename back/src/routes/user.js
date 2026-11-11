@@ -1,62 +1,86 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
 const userService = require('../services/user-service');
-const uploadService = require('../services/upload-service');
+const contentSafetyService = require('../services/content-safety-service');
+const avatarReviewService = require('../services/avatar-review-service');
 const authMiddleware = require('../middleware/auth');
 const { success, fail } = require('../utils/response');
 
-const AVATAR_DIR = path.resolve(__dirname, '../../uploads/avatars');
-const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB
-
-const avatarStorage = multer.diskStorage({
-  destination(_req, _file, cb) {
-    uploadService.ensureDir(AVATAR_DIR);
-    cb(null, AVATAR_DIR);
-  },
-  filename(_req, file, cb) {
-    cb(null, uploadService.generateUniqueName(file.originalname));
-  },
-});
-
+const AVATAR_MAX_SIZE = 2 * 1024 * 1024;
+// Keep unreviewed bytes outside express.static, including during multipart parsing.
 const avatarUpload = multer({
-  storage: avatarStorage,
-  limits: { fileSize: AVATAR_MAX_SIZE },
-  fileFilter(_req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
-      return cb(new Error('仅支持 jpg/png/webp 格式'));
-    }
-    cb(null, true);
-  },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: AVATAR_MAX_SIZE, files: 1 },
 });
 
 const router = express.Router();
 
+router.get('/content-safety/callback', async (req, res) => {
+  try {
+    const challenge = contentSafetyService.verifyChallenge(req.query);
+    res.type('text/plain').send(challenge);
+  } catch (_) {
+    res.status(403).end();
+  }
+});
+
+router.post('/content-safety/callback', async (req, res) => {
+  try {
+    const plain = await contentSafetyService.decodeCallback(req.query, req.body && req.body.Encrypt);
+    const event = JSON.parse(plain);
+    await avatarReviewService.applyEvent(event);
+    res.type('text/plain').send('success');
+  } catch (_) {
+    res.status(503).end();
+  }
+});
+
+router.get('/content-safety/media/:token', async (req, res) => {
+  try {
+    const file = await avatarReviewService.mediaPath(req.params.token);
+    if (!file) return res.status(404).end();
+    res.set('Cache-Control', 'no-store');
+    res.sendFile(file, (error) => { if (error && !res.headersSent) res.status(404).end(); });
+  } catch (_) {
+    res.status(503).end();
+  }
+});
+
 router.use(authMiddleware);
 
-function getUploadBaseUrl(req) {
-  if (process.env.CDN_BASE_URL) {
-    return process.env.CDN_BASE_URL;
+// DELETE /api/user/account - permanently remove personal data and anonymize game history
+router.delete('/account', async (req, res) => {
+  try {
+    await userService.deleteAccount(req.user.userId);
+    if (authMiddleware.__private && typeof authMiddleware.__private.invalidateUserState === 'function') {
+      authMiddleware.__private.invalidateUserState(req.user.userId);
+    }
+    res.json(success({ deleted: true }, '账号已注销，个人资料已删除'));
+  } catch (err) {
+    if (err.statusCode === 404 || err.statusCode === 409) {
+      return res.status(err.statusCode).json(fail(err.message, err.statusCode));
+    }
+    console.error('Delete account error:', err);
+    res.status(500).json(fail('账号注销失败，请稍后重试', 500));
   }
-  const host = req.get('x-forwarded-host') || req.get('host') || `localhost:${process.env.PORT || 3000}`;
-  const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
-  return `${proto}://${host}`;
-}
+});
+
 
 // POST /api/user/avatar - Upload avatar image
-router.post('/avatar', avatarUpload.single('file'), async (req, res) => {
+router.post('/avatar', (req, res, next) => {
+  avatarUpload.single('file')(req, res, (error) => {
+    if (error) return res.status(400).json(fail(error.code === 'LIMIT_FILE_SIZE' ? '头像不能超过2MB' : '头像上传格式错误', 400));
+    next();
+  });
+}, async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json(fail('请选择头像文件', 400));
-    }
-    const baseUrl = getUploadBaseUrl(req);
-    const avatarUrl = uploadService.buildAvatarUrl(req.file.filename, { baseUrl });
-    const profile = await userService.updateProfile(req.user.userId, { avatarUrl });
-    res.json(success(profile, '头像上传成功'));
+    if (!req.file) return res.status(400).json(fail('请选择头像文件', 400));
+    const review = await avatarReviewService.submit(req.user.userId, req.user.openid, req.file.buffer);
+    const profile = await userService.getProfile(req.user.userId);
+    res.status(202).json(success({ ...profile, ...review }, review.message));
   } catch (err) {
-    console.error('Avatar upload error:', err);
-    res.status(500).json(fail('头像上传失败', 500));
+    if (err.statusCode === 400) return res.status(400).json(fail(err.message, 400));
+    res.status(503).json(fail('内容安全服务暂不可用，请稍后重试', 503));
   }
 });
 
@@ -92,6 +116,9 @@ router.put('/profile', async (req, res) => {
   } catch (err) {
     if (err.statusCode === 400) {
       return res.status(400).json(fail(err.message, 400));
+    }
+    if (err.statusCode === 503) {
+      return res.status(503).json(fail('内容安全服务暂不可用，请稍后重试', 503));
     }
     if (err.statusCode === 404) {
       return res.status(404).json(fail(err.message, 404));

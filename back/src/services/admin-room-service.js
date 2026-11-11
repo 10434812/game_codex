@@ -56,12 +56,50 @@ async function getRoomDetail(roomId) {
   };
 }
 
-async function forceCloseRoom(roomId) {
+/**
+ * Force close a room. This not only flips the rooms row: if the room has a
+ * playing game session, the in-memory game is truly terminated via
+ * gameService.forceFinishSession (tick loop stopped, end event broadcast,
+ * DB session/players written back, rewards settled by elapsed time or rolled
+ * back). See report: 强制关闭房间之前只改 rooms 表，内存对局继续跑完并发币。
+ *
+ * @param {number} roomId
+ * @param {object} [options]
+ * @param {object} [options.realtime] - arenaRealtime hub for broadcasting
+ * @param {boolean} [options.settle=true] - settle rewards or roll back
+ * @returns {Promise<{closed: boolean, sessionId: number|null, aborted: boolean}>}
+ */
+async function forceCloseRoom(roomId, options = {}) {
+  const gameService = require('./game-service');
+  const realtime = options.realtime || null;
+
+  const session = await db.queryOne(
+    "SELECT id FROM game_sessions WHERE room_id = ? AND status = 'playing' ORDER BY id DESC LIMIT 1",
+    [roomId]
+  );
+
+  let sessionResult = null;
+  if (session) {
+    try {
+      sessionResult = await gameService.forceFinishSession(session.id, realtime, {
+        settle: options.settle !== false,
+        reason: '管理员强制关闭房间',
+      });
+    } catch (err) {
+      console.error('[AdminRoom] forceFinishSession failed for session', session.id, err.message);
+    }
+  }
+
   await db.execute(
     "UPDATE rooms SET status = 'finished', finished_at = NOW() WHERE id = ?",
     [roomId]
   );
-  return { closed: true };
+
+  return {
+    closed: true,
+    sessionId: session ? session.id : null,
+    aborted: !!(sessionResult && sessionResult.aborted),
+  };
 }
 
 async function getRoomStats() {

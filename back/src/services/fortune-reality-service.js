@@ -6,96 +6,61 @@ const {
   mapFortuneSource,
 } = require('../utils/admin-presenters');
 
+// 题材数据仅由内部模拟生成，不支持外部金融数据源。
 const DEFAULT_SOURCES = [
   {
-    source_key: 'cn_stock_hs300',
-    name: '沪深300 ETF 510300',
-    category: 'stock',
-    provider: 'sina_quote',
-    endpoint_url: 'https://hq.sinajs.cn/list=sh510300',
-    parser_config: { symbol: 'sh510300', currency: 'CNY', unit: 'price', label: '沪深300 ETF 最新价' },
-    refresh_interval_seconds: 900,
-  },
-  {
-    source_key: 'cn_stock_star50',
-    name: '科创50 ETF 588000',
-    category: 'stock',
-    provider: 'sina_quote',
-    endpoint_url: 'https://hq.sinajs.cn/list=sh588000',
-    parser_config: { symbol: 'sh588000', currency: 'CNY', unit: 'price', label: '科创50 ETF 最新价' },
-    refresh_interval_seconds: 900,
-  },
-  {
-    source_key: 'stock_spy',
-    name: '标普500 ETF SPY',
-    category: 'stock',
-    provider: 'stooq',
-    endpoint_url: 'https://stooq.com/q/l/?s=spy.us&f=sd2t2ohlcv&h&e=csv',
-    parser_config: { symbol: 'SPY.US', currency: 'USD', unit: 'price', label: 'SPY 最新价' },
-    refresh_interval_seconds: 900,
-  },
-  {
-    source_key: 'stock_qqq',
-    name: '纳斯达克100 ETF QQQ',
-    category: 'stock',
-    provider: 'stooq',
-    endpoint_url: 'https://stooq.com/q/l/?s=qqq.us&f=sd2t2ohlcv&h&e=csv',
-    parser_config: { symbol: 'QQQ.US', currency: 'USD', unit: 'price', label: 'QQQ 最新价' },
-    refresh_interval_seconds: 900,
-  },
-  {
-    source_key: 'crypto_btc',
-    name: 'Bitcoin BTC',
+    source_key: 'myth_ancient_well',
+    name: '神秘古井',
     category: 'crypto',
-    provider: 'coingecko',
-    endpoint_url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true',
-    parser_config: { coinId: 'bitcoin', vsCurrency: 'usd', currency: 'USD', unit: 'price', label: 'BTC 最新价' },
-    refresh_interval_seconds: 300,
+    provider: 'simulated',
+    endpoint_url: '',
+    parser_config: { baseValue: 108, volatility: 0.05, currency: '福缘', unit: 'point', label: '神秘古井 福缘值' },
+    refresh_interval_seconds: 900,
   },
   {
-    source_key: 'crypto_eth',
-    name: 'Ethereum ETH',
+    source_key: 'myth_spirit_turtle',
+    name: '灵龟秘境',
     category: 'crypto',
-    provider: 'coingecko',
-    endpoint_url: 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true',
-    parser_config: { coinId: 'ethereum', vsCurrency: 'usd', currency: 'USD', unit: 'price', label: 'ETH 最新价' },
-    refresh_interval_seconds: 300,
+    provider: 'simulated',
+    endpoint_url: '',
+    parser_config: { baseValue: 96, volatility: 0.03, currency: '福缘', unit: 'point', label: '灵龟秘境 福缘值' },
+    refresh_interval_seconds: 900,
   },
   {
-    source_key: 'cn_real_estate_vanke',
-    name: '万科A 000002',
+    source_key: 'wonder_koi_gate',
+    name: '锦鲤跃龙门',
     category: 'real_estate',
-    provider: 'sina_quote',
-    endpoint_url: 'https://hq.sinajs.cn/list=sz000002',
-    parser_config: { symbol: 'sz000002', currency: 'CNY', unit: 'price', label: '万科A 最新价' },
-    refresh_interval_seconds: 1800,
+    provider: 'simulated',
+    endpoint_url: '',
+    parser_config: { baseValue: 120, volatility: 0.06, currency: '福缘', unit: 'point', label: '锦鲤跃龙门 福缘值' },
+    refresh_interval_seconds: 900,
   },
   {
-    source_key: 'cn_real_estate_poly',
-    name: '保利发展 600048',
+    source_key: 'wonder_moon_spring',
+    name: '月下灵泉',
     category: 'real_estate',
-    provider: 'sina_quote',
-    endpoint_url: 'https://hq.sinajs.cn/list=sh600048',
-    parser_config: { symbol: 'sh600048', currency: 'CNY', unit: 'price', label: '保利发展 最新价' },
-    refresh_interval_seconds: 1800,
+    provider: 'simulated',
+    endpoint_url: '',
+    parser_config: { baseValue: 88, volatility: 0.04, currency: '福缘', unit: 'point', label: '月下灵泉 福缘值' },
+    refresh_interval_seconds: 900,
   },
   {
-    source_key: 'real_estate_vnq',
-    name: '美国房地产 ETF VNQ',
-    category: 'real_estate',
-    provider: 'stooq',
-    endpoint_url: 'https://stooq.com/q/l/?s=vnq.us&f=sd2t2ohlcv&h&e=csv',
-    parser_config: { symbol: 'VNQ.US', currency: 'USD', unit: 'price', label: 'VNQ 最新价' },
-    refresh_interval_seconds: 1800,
+    source_key: 'omen_cloud_land',
+    name: '祥云福地',
+    category: 'stock',
+    provider: 'simulated',
+    endpoint_url: '',
+    parser_config: { baseValue: 132, volatility: 0.07, currency: '福缘', unit: 'point', label: '祥云福地 福缘值' },
+    refresh_interval_seconds: 900,
   },
   {
-    source_key: 'real_estate_itb',
-    name: '美国住宅建设 ETF ITB',
-    category: 'real_estate',
-    provider: 'stooq',
-    endpoint_url: 'https://stooq.com/q/l/?s=itb.us&f=sd2t2ohlcv&h&e=csv',
-    parser_config: { symbol: 'ITB.US', currency: 'USD', unit: 'price', label: 'ITB 最新价' },
-    refresh_interval_seconds: 1800,
+    source_key: 'omen_golden_cave',
+    name: '金鳞洞天',
+    category: 'stock',
+    provider: 'simulated',
+    endpoint_url: '',
+    parser_config: { baseValue: 76, volatility: 0.05, currency: '福缘', unit: 'point', label: '金鳞洞天 福缘值' },
+    refresh_interval_seconds: 900,
   },
 ];
 
@@ -162,7 +127,7 @@ function detectTrend(changePercent) {
 
 function formatChange(changePercent) {
   const change = Number(changePercent);
-  if (!Number.isFinite(change)) return '暂无涨跌幅';
+  if (!Number.isFinite(change)) return '暂无变化';
   const sign = change > 0 ? '+' : '';
   return `${sign}${change.toFixed(2)}%`;
 }
@@ -178,201 +143,6 @@ function toMysqlDateTime(value) {
   return date.toISOString().slice(0, 19).replace('T', ' ');
 }
 
-function parseCsvLine(line) {
-  const values = [];
-  let current = '';
-  let inQuotes = false;
-  for (const char of String(line || '')) {
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      values.push(current);
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  values.push(current);
-  return values.map((item) => item.trim());
-}
-
-function parseStooqCsv(text, source) {
-  const lines = String(text || '').trim().split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) {
-    throw new Error('Stooq 响应为空');
-  }
-  const headers = parseCsvLine(lines[0]);
-  const values = parseCsvLine(lines[1]);
-  const row = headers.reduce((acc, key, index) => {
-    acc[key] = values[index];
-    return acc;
-  }, {});
-
-  const close = toNumber(row.Close);
-  const open = toNumber(row.Open);
-  if (close === null) {
-    throw new Error('Stooq 响应缺少 Close');
-  }
-
-  const changePercent = open && open > 0 ? ((close - open) / open) * 100 : null;
-  const parserConfig = safeJsonParse(source.parser_config);
-  const observedAt = normalizeDateTime(`${row.Date || ''}T${row.Time || '00:00:00'}Z`);
-
-  return {
-    sourceId: source.id,
-    sourceKey: source.source_key,
-    category: source.category,
-    name: source.name,
-    metricLabel: parserConfig.label || row.Symbol || source.name,
-    metricValue: close,
-    changePercent,
-    currency: parserConfig.currency || '',
-    unit: parserConfig.unit || 'price',
-    trend: detectTrend(changePercent),
-    summary: `${source.name} 当前值 ${close}${parserConfig.currency ? ` ${parserConfig.currency}` : ''}，日内变化 ${formatChange(changePercent)}`,
-    rawJson: row,
-    observedAt,
-  };
-}
-
-function parseSinaQuoteText(text, source) {
-  const parserConfig = safeJsonParse(source.parser_config);
-  const match = String(text || '').match(/="([\s\S]*?)";?\s*$/);
-  if (!match) {
-    throw new Error('新浪行情响应为空');
-  }
-  const values = match[1].split(',');
-  if (values.length < 32) {
-    throw new Error('新浪行情响应字段不足');
-  }
-
-  const previousClose = toNumber(values[2]);
-  const currentPrice = toNumber(values[3]);
-  if (currentPrice === null) {
-    throw new Error('新浪行情响应缺少当前价');
-  }
-
-  const changePercent = previousClose && previousClose > 0
-    ? ((currentPrice - previousClose) / previousClose) * 100
-    : null;
-  const observedAt = normalizeDateTime(`${values[30]}T${values[31] || '00:00:00'}+08:00`);
-
-  return {
-    sourceId: source.id,
-    sourceKey: source.source_key,
-    category: source.category,
-    name: source.name,
-    metricLabel: parserConfig.label || source.name,
-    metricValue: currentPrice,
-    changePercent,
-    currency: parserConfig.currency || 'CNY',
-    unit: parserConfig.unit || 'price',
-    trend: detectTrend(changePercent),
-    summary: `${source.name} 当前值 ${currentPrice}${parserConfig.currency ? ` ${parserConfig.currency}` : ''}，日内变化 ${formatChange(changePercent)}`,
-    rawJson: {
-      quoteName: values[0],
-      open: toNumber(values[1]),
-      previousClose,
-      currentPrice,
-      high: toNumber(values[4]),
-      low: toNumber(values[5]),
-      volume: toNumber(values[8]),
-      turnover: toNumber(values[9]),
-      date: values[30],
-      time: values[31],
-    },
-    observedAt,
-  };
-}
-
-function parseCoinGeckoJson(json, source) {
-  const parserConfig = safeJsonParse(source.parser_config);
-  const coinId = parserConfig.coinId || 'bitcoin';
-  const vsCurrency = parserConfig.vsCurrency || 'usd';
-  const coin = json && json[coinId];
-  if (!coin || coin[vsCurrency] === undefined) {
-    throw new Error(`CoinGecko 响应缺少 ${coinId}.${vsCurrency}`);
-  }
-
-  const price = toNumber(coin[vsCurrency]);
-  const changePercent = toNumber(coin[`${vsCurrency}_24h_change`]);
-  const observedAt = coin.last_updated_at
-    ? new Date(Number(coin.last_updated_at) * 1000)
-    : new Date();
-
-  return {
-    sourceId: source.id,
-    sourceKey: source.source_key,
-    category: source.category,
-    name: source.name,
-    metricLabel: parserConfig.label || `${coinId.toUpperCase()} 最新价`,
-    metricValue: price,
-    changePercent,
-    currency: parserConfig.currency || vsCurrency.toUpperCase(),
-    unit: parserConfig.unit || 'price',
-    trend: detectTrend(changePercent),
-    summary: `${source.name} 当前价格 ${price} ${parserConfig.currency || vsCurrency.toUpperCase()}，24小时变化 ${formatChange(changePercent)}`,
-    rawJson: coin,
-    observedAt,
-  };
-}
-
-function getByPath(object, path) {
-  if (!path) return undefined;
-  return String(path).split('.').reduce((current, key) => {
-    if (current === null || current === undefined) return undefined;
-    return current[key];
-  }, object);
-}
-
-function parseGenericJson(json, source) {
-  const parserConfig = safeJsonParse(source.parser_config);
-  const value = toNumber(getByPath(json, parserConfig.valuePath));
-  if (value === null) {
-    throw new Error('JSON 响应缺少数值字段');
-  }
-  const changePercent = toNumber(getByPath(json, parserConfig.changePercentPath));
-  const observedAtValue = getByPath(json, parserConfig.observedAtPath);
-  return {
-    sourceId: source.id,
-    sourceKey: source.source_key,
-    category: source.category,
-    name: source.name,
-    metricLabel: parserConfig.label || source.name,
-    metricValue: value,
-    changePercent,
-    currency: parserConfig.currency || '',
-    unit: parserConfig.unit || '',
-    trend: detectTrend(changePercent),
-    summary: `${source.name} 当前值 ${value}，变化 ${formatChange(changePercent)}`,
-    rawJson: json,
-    observedAt: normalizeDateTime(observedAtValue, new Date()),
-  };
-}
-
-function parseRssText(text, source) {
-  const itemBlocks = String(text || '').match(/<item[\s\S]*?<\/item>/gi) || [];
-  const titles = itemBlocks.slice(0, 5).map((item) => {
-    const match = item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/i);
-    return (match && (match[1] || match[2]) || '').replace(/<[^>]+>/g, '').trim();
-  }).filter(Boolean);
-  return {
-    sourceId: source.id,
-    sourceKey: source.source_key,
-    category: source.category,
-    name: source.name,
-    metricLabel: '最新资讯',
-    metricValue: null,
-    changePercent: null,
-    currency: '',
-    unit: 'news',
-    trend: 'unknown',
-    summary: titles.length ? titles.join(' / ') : `${source.name} 已抓取，但没有解析到标题`,
-    rawJson: { titles },
-    observedAt: new Date(),
-  };
-}
-
 async function ensureFortuneTables() {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS fortune_sources (
@@ -380,7 +150,7 @@ async function ensureFortuneTables() {
       source_key VARCHAR(64) NOT NULL,
       name VARCHAR(128) NOT NULL,
       category ENUM('stock','crypto','real_estate','macro','news') NOT NULL,
-      provider ENUM('coingecko','stooq','sina_quote','json','csv','rss','manual') NOT NULL DEFAULT 'json',
+      provider ENUM('coingecko','stooq','sina_quote','json','csv','rss','manual','simulated') NOT NULL DEFAULT 'simulated',
       endpoint_url VARCHAR(1024) NOT NULL,
       parser_config JSON NULL,
       refresh_interval_seconds INT UNSIGNED NOT NULL DEFAULT 900,
@@ -394,11 +164,6 @@ async function ensureFortuneTables() {
       INDEX idx_category_active (category, is_active),
       INDEX idx_last_fetched_at (last_fetched_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  `);
-
-  await db.execute(`
-    ALTER TABLE fortune_sources
-    MODIFY COLUMN provider ENUM('coingecko','stooq','sina_quote','json','csv','rss','manual') NOT NULL DEFAULT 'json'
   `);
 
   await db.execute(`
@@ -427,7 +192,7 @@ async function ensureFortuneTables() {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS fortune_ai_reports (
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      report_type VARCHAR(64) NOT NULL DEFAULT 'market_digest',
+      report_type VARCHAR(64) NOT NULL DEFAULT 'entertainment_digest',
       title VARCHAR(128) NOT NULL,
       summary TEXT NOT NULL,
       sentiment ENUM('positive','neutral','negative','mixed') NOT NULL DEFAULT 'neutral',
@@ -471,7 +236,7 @@ async function ensureDefaultSources() {
 
 async function listSources() {
   await ensureDefaultSources();
-  const rows = await db.queryAll('SELECT * FROM fortune_sources');
+  const rows = await db.queryAll("SELECT * FROM fortune_sources WHERE provider = 'simulated'");
   return rows
     .map(mapFortuneSource)
     .sort(compareSourcePriority);
@@ -497,6 +262,12 @@ async function updateSource(id, data = {}) {
     refresh_interval_seconds: data.refreshIntervalSeconds ?? data.refresh_interval_seconds,
     is_active: data.isActive ?? data.is_active,
   };
+  if (normalized.provider !== undefined && normalized.provider !== 'simulated') {
+    throw new Error('纯娱乐版本仅允许 simulated 数据源');
+  }
+  if (normalized.endpoint_url !== undefined && String(normalized.endpoint_url || '').trim()) {
+    throw new Error('纯娱乐版本不允许外部数据源地址');
+  }
   const setClauses = [];
   const params = [];
   for (const field of allowedFields) {
@@ -507,9 +278,9 @@ async function updateSource(id, data = {}) {
   }
   if (setClauses.length > 0) {
     params.push(id);
-    await db.execute(`UPDATE fortune_sources SET ${setClauses.join(', ')} WHERE id = ?`, params);
+    await db.execute(`UPDATE fortune_sources SET ${setClauses.join(', ')} WHERE id = ? AND provider = 'simulated'`, params);
   }
-  const row = await db.queryOne('SELECT * FROM fortune_sources WHERE id = ?', [id]);
+  const row = await db.queryOne("SELECT * FROM fortune_sources WHERE id = ? AND provider = 'simulated'", [id]);
   return mapFortuneSource(row);
 }
 
@@ -532,50 +303,61 @@ async function fetchWithTimeout(url, options = {}) {
       method: options.method || 'GET',
       headers: options.headers || { accept: '*/*' },
       signal: controller.signal,
+      body: options.body !== undefined
+        ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body))
+        : undefined,
     });
   } finally {
     clearTimeout(timeout);
   }
 }
 
+// 确定性伪随机（同一种子结果稳定，避免每次请求跳动）
+function seededRandom(seed) {
+  let state = Number(seed) >>> 0 || 1;
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+/**
+ * 内部模拟数据源：不访问任何外部 API，按时间分片生成虚构题材的福缘值。
+ * 同分钟内的结果稳定，随时间自然波动，用于驱动福袋机会的涨跌与波段。
+ */
+function generateSimulatedSnapshot(source) {
+  const parserConfig = safeJsonParse(source.parser_config);
+  const baseValue = toNumber(parserConfig.baseValue) || 100;
+  const volatility = Math.min(Math.max(toNumber(parserConfig.volatility) || 0.05, 0.01), 0.2);
+  const seed = Math.floor(Date.now() / 60000) + Number(source.id || 0) + (source.source_key ? source.source_key.length : 0);
+  const rand = seededRandom(seed);
+  const drift = (rand() - 0.5) * 2 * volatility;
+  const changePercent = Number((drift * 100).toFixed(2));
+  const metricValue = Number((baseValue * (1 + drift)).toFixed(2));
+  const currency = parserConfig.currency || '福缘';
+  const observedAt = new Date();
+  return {
+    sourceId: source.id,
+    sourceKey: source.source_key,
+    category: source.category,
+    name: source.name,
+    metricLabel: parserConfig.label || source.name,
+    metricValue,
+    changePercent,
+    currency,
+    unit: parserConfig.unit || 'point',
+    trend: detectTrend(changePercent),
+    summary: `${source.name} 模拟福缘值 ${metricValue} ${currency}，本轮模拟变化 ${formatChange(changePercent)}（纯娱乐）`,
+    rawJson: { seed, simulated: true },
+    observedAt,
+  };
+}
+
 async function fetchSourceSnapshot(source) {
-  const provider = source.provider || 'json';
-  if (provider === 'manual') {
-    throw new Error('手动数据源不能自动抓取');
+  if (source.provider !== 'simulated') {
+    throw new Error('纯娱乐版本仅允许 simulated 数据源，历史外部数据源已停用');
   }
-
-  const response = await fetchWithTimeout(source.endpoint_url, {
-    timeoutMs: 12000,
-    headers: provider === 'sina_quote'
-      ? {
-          accept: '*/*',
-          referer: 'https://finance.sina.com.cn',
-          'user-agent': 'Mozilla/5.0 Codex Fortune Reality Feed',
-        }
-      : { accept: '*/*' },
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-
-  if (provider === 'coingecko' || provider === 'json') {
-    const json = await response.json();
-    return provider === 'coingecko'
-      ? parseCoinGeckoJson(json, source)
-      : parseGenericJson(json, source);
-  }
-
-  const text = await response.text();
-  if (provider === 'sina_quote') {
-    return parseSinaQuoteText(text, source);
-  }
-  if (provider === 'stooq' || provider === 'csv') {
-    return parseStooqCsv(text, source);
-  }
-  if (provider === 'rss') {
-    return parseRssText(text, source);
-  }
-  throw new Error(`不支持的数据源类型: ${provider}`);
+  return generateSimulatedSnapshot(source);
 }
 
 async function insertSnapshot(snapshot) {
@@ -618,7 +400,7 @@ async function refreshSources(options = {}) {
   const force = !!options.force;
   const rows = await db.queryAll(
     `SELECT * FROM fortune_sources
-     WHERE is_active = 1 ${sourceKey ? 'AND source_key = ?' : ''}
+     WHERE is_active = 1 AND provider = 'simulated' ${sourceKey ? 'AND source_key = ?' : ''}
      ORDER BY category ASC, id ASC`,
     sourceKey ? [sourceKey] : []
   );
@@ -665,9 +447,10 @@ async function listSnapshots(query = {}) {
   const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
   const category = query.category || '';
   const rows = await db.queryAll(
-    `SELECT * FROM fortune_snapshots
-     ${category ? 'WHERE category = ?' : ''}
-     ORDER BY observed_at DESC, id DESC
+    `SELECT s.* FROM fortune_snapshots s
+     INNER JOIN fortune_sources source ON source.id = s.source_id AND source.provider = 'simulated'
+     WHERE JSON_EXTRACT(s.raw_json, '$.simulated') = true ${category ? 'AND s.category = ?' : ''}
+     ORDER BY s.observed_at DESC, s.id DESC
      LIMIT ${limit}`,
     category ? [category] : []
   );
@@ -681,9 +464,11 @@ async function getLatestSnapshots(limit = 20) {
     `SELECT s.*
      FROM fortune_snapshots s
      INNER JOIN (
-       SELECT source_key, MAX(id) AS latest_id
-       FROM fortune_snapshots
-       GROUP BY source_key
+       SELECT snapshots.source_key, MAX(snapshots.id) AS latest_id
+       FROM fortune_snapshots snapshots
+       INNER JOIN fortune_sources source ON source.id = snapshots.source_id AND source.provider = 'simulated'
+       WHERE JSON_EXTRACT(snapshots.raw_json, '$.simulated') = true
+       GROUP BY snapshots.source_key
      ) latest ON latest.latest_id = s.id
      ORDER BY s.observed_at DESC
      LIMIT ${safeLimit}`
@@ -692,12 +477,10 @@ async function getLatestSnapshots(limit = 20) {
 }
 
 function mapCategoryToGame(category, name = '') {
-  if (category === 'crypto') return '比特币';
-  if (category === 'real_estate') return '房产';
-  if (category === 'stock') return '股票';
-  if (/房|地产|REIT|VNQ|ITB/i.test(name)) return '房产';
-  if (/BTC|ETH|Bitcoin|Ethereum|币/i.test(name)) return '比特币';
-  return '股票';
+  if (category === 'crypto') return '秘境';
+  if (category === 'real_estate') return '奇遇';
+  if (category === 'stock') return '祥瑞';
+  return '秘境';
 }
 
 function estimateRiskLevel(snapshot) {
@@ -733,7 +516,7 @@ function buildPublicOpportunities(snapshots) {
 }
 
 async function getLatestPublicFeed() {
-  const enabled = normalizeBoolean(await configService.getConfig('fortune.reality_enabled'), true);
+  const enabled = normalizeBoolean(await configService.getConfig('fortune.reality_enabled'), false);
   const limit = Number(await configService.getConfig('fortune.public_signal_limit')) || 6;
   if (!enabled) {
     return {
@@ -742,8 +525,10 @@ async function getLatestPublicFeed() {
       report: null,
     };
   }
+  // 取全部数据源的最新快照（getLatestSnapshots 上限 100 条），按优先级排序后再截断到
+  // 配置的 public_signal_limit，避免先 LIMIT 后排序把高优先级源挤出公共订阅源。
   const [snapshots, report] = await Promise.all([
-    getLatestSnapshots(limit),
+    getLatestSnapshots(100),
     getLatestReport(),
   ]);
   return {
@@ -775,14 +560,14 @@ function buildHeuristicDigest(snapshots, meta = {}) {
   const strongest = list
     .filter((item) => Number.isFinite(Number(item.changePercent)))
     .sort((a, b) => Math.abs(Number(b.changePercent)) - Math.abs(Number(a.changePercent)))[0];
-  const title = '福袋现实行情摘要';
+  const title = '福袋题材事件摘要';
   const summary = [
-    `已同步 ${list.length} 条现实数据源。`,
+    `已同步 ${list.length} 条题材数据源。`,
     strongest
       ? `当前波动最大的是 ${strongest.name}，变化 ${formatChange(strongest.changePercent)}。`
-      : '当前数据源缺少涨跌幅，建议先观察数值变化。',
+      : '当前数据源缺少变化数据，建议先观察数值变化。',
     upCount >= downCount
-      ? '规则判断偏进攻，可给股票/比特币类福袋更高曝光。'
+      ? '规则判断偏进攻，可给高波动题材福袋更高曝光。'
       : '规则判断偏防守，可降低高波动福袋权重。',
   ].join('');
 
@@ -825,12 +610,12 @@ async function callOpenAiCompatibleDigest(snapshots, settings) {
     messages: [
       {
         role: 'system',
-        content: '你是锦鲤前程小游戏的福袋行情运营助手。只输出 JSON，字段为 title、summary、sentiment，sentiment 只能是 positive、neutral、negative、mixed。',
+        content: '你是锦鲤前程小游戏的福袋题材运营助手。只输出 JSON，字段为 title、summary、sentiment，sentiment 只能是 positive、neutral、negative、mixed。',
       },
       {
         role: 'user',
         content: JSON.stringify({
-          task: '基于现实数据生成一段给后台运营看的福袋摘要，说明风险和可用玩法方向。',
+          task: '基于虚构题材数据生成一段给后台运营看的福袋摘要，说明波动风险和可用玩法方向。',
           snapshots: snapshots.map((item) => ({
             name: item.name,
             category: item.category,
@@ -867,10 +652,10 @@ async function callOpenAiCompatibleDigest(snapshots, settings) {
   try {
     parsed = JSON.parse(String(content).trim());
   } catch (_error) {
-    parsed = { title: '福袋现实行情摘要', summary: String(content || '').trim(), sentiment: 'neutral' };
+    parsed = { title: '福袋题材事件摘要', summary: String(content || '').trim(), sentiment: 'neutral' };
   }
   return {
-    title: String(parsed.title || '福袋现实行情摘要').slice(0, 128),
+    title: String(parsed.title || '福袋题材事件摘要').slice(0, 128),
     summary: String(parsed.summary || '').trim() || '大模型已返回，但摘要为空。',
     sentiment: ['positive', 'neutral', 'negative', 'mixed'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral',
     modelProvider: settings.provider,
@@ -887,6 +672,7 @@ async function saveDigestReport(report) {
       (report_type, title, summary, sentiment, model_provider, model_name, source_count, raw_json, generated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
+      'entertainment_digest',
       report.title,
       report.summary,
       report.sentiment,
@@ -925,7 +711,7 @@ async function generateDigestReport() {
 async function getLatestReport() {
   await ensureDefaultSources();
   const row = await db.queryOne(
-    "SELECT * FROM fortune_ai_reports WHERE report_type = 'market_digest' ORDER BY generated_at DESC, id DESC LIMIT 1"
+    "SELECT * FROM fortune_ai_reports WHERE report_type = 'entertainment_digest' ORDER BY generated_at DESC, id DESC LIMIT 1"
   );
   return mapFortuneAiReport(row);
 }
@@ -933,9 +719,14 @@ async function getLatestReport() {
 async function getSummary() {
   await ensureDefaultSources();
   const [sourceCount, snapshotCount, latestSnapshot, latestReport] = await Promise.all([
-    db.queryOne('SELECT COUNT(*) AS total, SUM(is_active = 1) AS activeTotal FROM fortune_sources'),
-    db.queryOne('SELECT COUNT(*) AS total FROM fortune_snapshots'),
-    db.queryOne('SELECT observed_at FROM fortune_snapshots ORDER BY observed_at DESC, id DESC LIMIT 1'),
+    db.queryOne("SELECT COUNT(*) AS total, SUM(is_active = 1) AS activeTotal FROM fortune_sources WHERE provider = 'simulated'"),
+    db.queryOne(`SELECT COUNT(*) AS total FROM fortune_snapshots s
+      INNER JOIN fortune_sources source ON source.id = s.source_id AND source.provider = 'simulated'
+      WHERE JSON_EXTRACT(s.raw_json, '$.simulated') = true`),
+    db.queryOne(`SELECT s.observed_at FROM fortune_snapshots s
+      INNER JOIN fortune_sources source ON source.id = s.source_id AND source.provider = 'simulated'
+      WHERE JSON_EXTRACT(s.raw_json, '$.simulated') = true
+      ORDER BY s.observed_at DESC, s.id DESC LIMIT 1`),
     getLatestReport(),
   ]);
   return {
@@ -960,14 +751,10 @@ module.exports = {
   getLatestReport,
   getSummary,
   __private: {
+    generateSimulatedSnapshot,
+    fetchSourceSnapshot,
     buildHeuristicDigest,
     buildPublicOpportunities,
     detectTrend,
-    parseCoinGeckoJson,
-    parseCsvLine,
-    parseGenericJson,
-    parseRssText,
-    parseSinaQuoteText,
-    parseStooqCsv,
   },
 };

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminAuth = require('../../middleware/admin-auth');
 const announcementService = require('../../services/admin-announcement-service');
+const { logOperation } = require('../../middleware/operation-logger');
 const { success, fail } = require('../../utils/response');
 
 router.get('/', adminAuth, async (req, res) => {
@@ -19,6 +20,8 @@ router.get('/', adminAuth, async (req, res) => {
   }
 });
 
+// NOTE(announcements/:id, task 8): kept for API completeness; the admin UI
+// works off the list response and does not call this endpoint.
 router.get('/:id', adminAuth, async (req, res) => {
   try {
     const data = await announcementService.getAnnouncement(req.params.id);
@@ -36,6 +39,12 @@ router.post('/', adminAuth, async (req, res) => {
       req.body,
       req.admin.adminId
     );
+    await logOperation(req.admin, 'create', 'announcement', data.id, {
+      announcementId: data.id,
+      title: data.title,
+      type: data.type,
+      status: data.status,
+    }, req.ip);
     res.json(success(data, '创建成功'));
   } catch (err) {
     console.error('[Admin Create Announcement]', err);
@@ -50,6 +59,11 @@ router.put('/:id', adminAuth, async (req, res) => {
       req.body
     );
     if (!data) return res.status(404).json(fail('公告不存在', 404));
+    await logOperation(req.admin, 'update', 'announcement', req.params.id, {
+      announcementId: req.params.id,
+      title: data.title,
+      status: data.status,
+    }, req.ip);
     res.json(success(data, '更新成功'));
   } catch (err) {
     console.error('[Admin Update Announcement]', err);
@@ -61,6 +75,7 @@ router.delete('/:id', adminAuth, async (req, res) => {
   try {
     const deleted = await announcementService.deleteAnnouncement(req.params.id);
     if (!deleted) return res.status(404).json(fail('公告不存在', 404));
+    await logOperation(req.admin, 'delete', 'announcement', req.params.id, { announcementId: req.params.id }, req.ip);
     res.json(success(null, '删除成功'));
   } catch (err) {
     console.error('[Admin Delete Announcement]', err);
@@ -72,6 +87,10 @@ router.put('/:id/publish', adminAuth, async (req, res) => {
   try {
     const data = await announcementService.publishAnnouncement(req.params.id);
     if (!data) return res.status(404).json(fail('公告不存在', 404));
+    await logOperation(req.admin, 'publish', 'announcement', req.params.id, {
+      announcementId: req.params.id,
+      title: data.title,
+    }, req.ip);
     res.json(success(data, '发布成功'));
   } catch (err) {
     console.error('[Admin Publish Announcement]', err);
@@ -83,6 +102,10 @@ router.put('/:id/archive', adminAuth, async (req, res) => {
   try {
     const data = await announcementService.archiveAnnouncement(req.params.id);
     if (!data) return res.status(404).json(fail('公告不存在', 404));
+    await logOperation(req.admin, 'archive', 'announcement', req.params.id, {
+      announcementId: req.params.id,
+      title: data.title,
+    }, req.ip);
     res.json(success(data, '归档成功'));
   } catch (err) {
     console.error('[Admin Archive Announcement]', err);

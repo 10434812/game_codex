@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const fortuneService = require('../src/services/fortune-reality-service');
-const { stopFortuneRealityJob } = require('../src/jobs/fortune-reality-job');
 const db = require('../src/models/db');
 
 async function main() {
@@ -29,7 +28,6 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    stopFortuneRealityJob();
     if (db.pool && typeof db.pool.end === 'function') {
       await db.pool.end();
     }

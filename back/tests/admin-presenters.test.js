@@ -76,3 +76,13 @@ test('admin, config, and log presenters match UI contracts', () => {
   assert.equal(log.targetId, '7');
   assert.equal(log.ip, '127.0.0.1');
 });
+
+test('mapConfig 不向输出泄露敏感配置的原始 config_value 列（J-1 回归）', () => {
+  const { mapConfig } = require('../src/utils/admin-presenters');
+  const row = { id: 9, config_key: 'wechat.login_secret', config_value: 'REAL-APPSECRET', description: '', updated_by: 1, updated_at: null };
+  const out = mapConfig(row, { description: 'AppSecret', defaultValue: '', valueType: 'text', group: 'wechat', isPublic: false, isSensitive: true });
+  assert.equal(Object.prototype.hasOwnProperty.call(out, 'config_value'), false);
+  assert.equal(out.value, 'REAL-APPSECRET');
+  assert.equal(out.isSensitive, true);
+  assert.equal(JSON.stringify(out).includes('config_value'), false);
+});

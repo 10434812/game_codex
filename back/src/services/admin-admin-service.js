@@ -3,6 +3,33 @@ const db = require('../models/db');
 const { mapAdmin } = require('../utils/admin-presenters');
 
 const SALT_ROUNDS = 10;
+const ADMIN_ROLES = ['super', 'normal'];
+const MIN_PASSWORD_LENGTH = 8;
+
+function badRequest(message, statusCode = 400) {
+  return Object.assign(new Error(message), { statusCode });
+}
+
+function assertRole(role) {
+  if (!ADMIN_ROLES.includes(role)) throw badRequest('角色只支持 super / normal');
+}
+
+function assertPassword(password) {
+  if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+    throw badRequest(`密码至少 ${MIN_PASSWORD_LENGTH} 位`);
+  }
+}
+
+// 防止超管把自己降级/停用后，后台没有任何启用中的超级管理员而永久锁死。
+async function assertNotLastActiveSuper(id) {
+  const target = await db.queryOne('SELECT role, is_active FROM admins WHERE id = ?', [id]);
+  if (!target || target.role !== 'super' || !target.is_active) return;
+  const remaining = await db.queryOne(
+    "SELECT COUNT(*) AS total FROM admins WHERE role = 'super' AND is_active = 1 AND id <> ?",
+    [id]
+  );
+  if (!Number(remaining?.total)) throw badRequest('至少需要保留一名启用中的超级管理员', 409);
+}
 
 async function listAdmins(page = 1, limit = 20, keyword = '') {
   const offset = (page - 1) * limit;
@@ -31,6 +58,9 @@ async function getAdmin(id) {
 }
 
 async function createAdmin(username, password, role) {
+  const finalRole = role || 'normal';
+  assertRole(finalRole);
+  assertPassword(password);
   const existing = await db.queryOne('SELECT id FROM admins WHERE username = ?', [username]);
   if (existing) {
     throw new Error('用户名已存在');
@@ -39,7 +69,7 @@ async function createAdmin(username, password, role) {
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   const [result] = await db.execute(
     'INSERT INTO admins (username, password_hash, role) VALUES (?, ?, ?)',
-    [username, passwordHash, role || 'normal']
+    [username, passwordHash, finalRole]
   );
 
   const admin = await db.queryOne(
@@ -52,6 +82,15 @@ async function createAdmin(username, password, role) {
 async function updateAdmin(id, updates) {
   const setClauses = [];
   const params = [];
+  if (updates.role !== undefined) assertRole(updates.role);
+  if (updates.password) assertPassword(updates.password);
+  const nextActive = updates.isBanned !== undefined
+    ? !updates.isBanned
+    : (updates.is_active !== undefined ? updates.is_active : updates.isActive);
+  const demotes = updates.role !== undefined && updates.role !== 'super';
+  const deactivates = (updates.isBanned !== undefined || updates.is_active !== undefined || updates.isActive !== undefined)
+    && !nextActive;
+  if (demotes || deactivates) await assertNotLastActiveSuper(id);
 
   if (updates.username !== undefined) {
     const username = String(updates.username).trim();
@@ -66,9 +105,6 @@ async function updateAdmin(id, updates) {
     params.push(updates.role);
   }
   if (updates.is_active !== undefined || updates.isActive !== undefined || updates.isBanned !== undefined) {
-    const nextActive = updates.isBanned !== undefined
-      ? !updates.isBanned
-      : (updates.is_active !== undefined ? updates.is_active : updates.isActive);
     setClauses.push('is_active = ?');
     params.push(nextActive ? 1 : 0);
   }
@@ -90,11 +126,13 @@ async function updateAdmin(id, updates) {
 }
 
 async function deleteAdmin(id) {
+  await assertNotLastActiveSuper(id);
   await db.execute('UPDATE admins SET is_active = 0 WHERE id = ?', [id]);
   return { deleted: true };
 }
 
 async function resetPassword(id, newPassword) {
+  assertPassword(newPassword);
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
   await db.execute('UPDATE admins SET password_hash = ? WHERE id = ?', [passwordHash, id]);
   return { reset: true };

@@ -1,8 +1,46 @@
 const db = require('../models/db');
 
-async function getOverview(from, to) {
-  const start = from || '1970-01-01';
-  const end = to ? `${to} 23:59:59` : '2099-12-31 23:59:59';
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Resolve the query date range. When `limit` is given (and no explicit
+ * from/to), the range is exactly the last `limit` calendar days ending today
+ * (true "近 N 日"), so the Dashboard no longer plots all history.
+ */
+function resolveRange(from, to, limit) {
+  if (from || to) {
+    return { start: from || '1970-01-01', end: to ? `${to} 23:59:59` : '2099-12-31 23:59:59' };
+  }
+  const days = Math.min(Math.max(Number(limit) || 0, 1), 366);
+  const endDate = new Date();
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - (days - 1));
+  return {
+    start: formatDate(startDate),
+    end: `${formatDate(endDate)} 23:59:59`,
+    dateKeys: Array.from({ length: days }, (_, index) => {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + index);
+      return formatDate(date);
+    }),
+  };
+}
+
+/** Fill missing calendar days with zeroes so charts always have one point per day. */
+function fillMissingDates(rows, keyField, valueField, dateKeys) {
+  if (!dateKeys) return rows;
+  const map = new Map(rows.map((row) => [row.date, Number(row[keyField] || 0)]));
+  return dateKeys.map((date) => ({ date, [valueField]: map.get(date) || 0 }));
+}
+
+async function getOverview(from, to, limit) {
+  const range = resolveRange(from, to, limit);
+  const { start, end, dateKeys } = range;
   const [dau, games, revenue] = await Promise.all([
     db.queryAll(
       `SELECT DATE(gs.started_at) as date, COUNT(DISTINCT gp.user_id) as count
@@ -30,11 +68,15 @@ async function getOverview(from, to) {
       [start, end]
     ),
   ]);
-  return { dau, games, revenue };
+  return {
+    dau: fillMissingDates(dau, 'count', 'count', dateKeys),
+    games: fillMissingDates(games, 'count', 'count', dateKeys),
+    revenue: fillMissingDates(revenue, 'amount', 'amount', dateKeys),
+  };
 }
 
 async function getTopPlayers(limit = 50) {
-  return db.queryAll('SELECT id, nick_name, avatar_url, level, total_income, total_exp, game_count, win_count, coins FROM users ORDER BY total_income DESC LIMIT ?', [String(limit)]);
+  return db.queryAll('SELECT id, nick_name, avatar_url, level, total_income, total_exp, game_count, win_count, coins FROM users WHERE deleted_at IS NULL ORDER BY total_income DESC LIMIT ?', [String(limit)]);
 }
 
 module.exports = { getOverview, getTopPlayers };

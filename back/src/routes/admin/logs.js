@@ -35,6 +35,9 @@ router.get('/', adminAuth, async (req, res) => {
   }
 });
 
+// NOTE(logs/:id, task 8): kept for API completeness; OperationLogs.vue
+// renders the full row (with expandable detail) from the list response and
+// does not call this endpoint.
 router.get('/:id', adminAuth, async (req, res) => {
   try {
     const data = await logService.getLog(req.params.id);

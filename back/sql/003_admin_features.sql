@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS shop_items (
 -- 种子数据: 系统默认配置
 -- ============================================================
 INSERT INTO system_configs (config_key, config_value, description) VALUES
-('game.round_duration', '180', '每局游戏时长(秒)'),
+('game.round_duration', '120', '每局游戏时长(秒)'),
 ('game.min_players', '4', '最少开局人数'),
 ('game.max_players', '10', '最多玩家数'),
 ('game.team_size', '2', '每队人数'),
@@ -84,28 +84,20 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
 ('game.daily_signin_coins', '200', '每日签到金币奖励'),
 ('shop.refresh_interval', '86400', '商城刷新间隔(秒)'),
 ('wechat.login_enabled', 'true', '是否开启微信登录'),
-('wechat.login_app_id', 'wx742cfddc2b05ccd4', '小程序 AppID（服务端登录校验使用）'),
+('wechat.login_app_id', 'wxd7f500f3f21f15dd', '小程序 AppID（服务端登录校验使用）'),
 ('wechat.login_secret', '', '小程序 AppSecret（仅后台保存，不对前端公开）'),
 ('wechat.login_token_ttl', '604800', '登录态默认有效期（秒）'),
 ('wechat.login_agreement_url', '', '用户协议链接'),
 ('wechat.login_privacy_url', '', '隐私政策链接'),
 ('wechat.share_enabled', 'true', '是否开启分享给好友 / 朋友圈'),
 ('wechat.share_title', '锦鲤前程邀你一起组队闯世界', '发送给好友默认标题'),
-('wechat.share_desc', '选景区、组战队、拼手气，一起冲上好运榜。', '发送给好友默认描述'),
+('wechat.share_desc', '选景区、组战队、拼运气，一起冲上好运榜。', '发送给好友默认描述'),
 ('wechat.share_path', '/pages/home/index', '发送给好友默认落地页路径'),
 ('wechat.share_query', 'from=admin_share', '发送给好友附加参数（不含 ?）'),
 ('wechat.share_image_url', 'https://xcx.ukb88.com/assets/bg/screen.png', '分享卡片图片 URL'),
 ('wechat.share_timeline_title', '锦鲤前程开启好运局，来和我一起冲榜', '分享到朋友圈标题'),
 ('wechat.share_timeline_image_url', 'https://xcx.ukb88.com/assets/bg/screen.png', '分享到朋友圈图片 URL'),
-('wechat.pay_enabled', 'false', '是否开启微信支付能力'),
-('wechat.pay_mch_id', '', '微信支付商户号 MchId'),
-('wechat.pay_api_v3_key', '', '微信支付 APIv3 Key'),
-('wechat.pay_cert_serial_no', '', '微信支付商户证书序列号'),
-('wechat.pay_notify_url', '', '微信支付异步通知地址'),
-('wechat.pay_success_path', '/pages/shop/index', '支付成功后的小程序回跳页面'),
-('wechat.pay_currency', 'CNY', '支付默认币种'),
-('wechat.pay_goods_desc', '锦鲤前程幸运金币充值', '微信支付下单默认商品描述'),
-('wechat.pay_sandbox_mode', 'true', '是否启用微信支付沙箱模式'),
+
 ('system.maintenance_mode', '0', '维护模式(0=关闭,1=开启)'),
 ('system.maintenance_message', '', '维护提示消息')
 ON DUPLICATE KEY UPDATE config_value = config_value;
