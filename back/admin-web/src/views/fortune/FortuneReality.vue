@@ -3,8 +3,8 @@
     <section class="page-hero fortune-hero">
       <div class="hero-copy">
         <span class="hero-kicker">FORTUNE REALITY FEED</span>
-        <h1>福袋现实数据</h1>
-        <p>把中国股票、中国房产、比特币等现实行情抓入数据库，默认优先展示中国市场，同时保留美股与美国房产代理源。</p>
+        <h1>福袋题材数据</h1>
+        <p>仅保留内部模拟生成的虚构题材数据，不连接股票、加密货币、房产或其他外部金融数据。</p>
       </div>
       <div class="hero-actions">
         <el-button @click="fetchAll" :loading="loading">刷新页面</el-button>
@@ -83,7 +83,7 @@
           <div class="table-tools">
             <el-select v-model="categoryFilter" clearable placeholder="全部类别" style="width: 150px" @change="fetchSnapshots">
               <el-option label="股票" value="stock" />
-              <el-option label="比特币" value="crypto" />
+              <el-option label="秘境" value="crypto" />
               <el-option label="房产" value="real_estate" />
               <el-option label="宏观" value="macro" />
               <el-option label="资讯" value="news" />
@@ -109,7 +109,7 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="sourceDialogVisible" title="编辑福袋现实数据源" width="720px">
+    <el-dialog v-model="sourceDialogVisible" title="编辑福袋题材数据源" width="720px">
       <el-form :model="sourceForm" label-width="110px">
         <el-form-item label="名称">
           <el-input v-model="sourceForm.name" />
@@ -117,25 +117,17 @@
         <el-form-item label="类别">
           <el-select v-model="sourceForm.category" style="width: 100%">
             <el-option label="股票" value="stock" />
-            <el-option label="比特币" value="crypto" />
+            <el-option label="秘境" value="crypto" />
             <el-option label="房产" value="real_estate" />
             <el-option label="宏观" value="macro" />
             <el-option label="资讯" value="news" />
           </el-select>
         </el-form-item>
-        <el-form-item label="解析方式">
-          <el-select v-model="sourceForm.provider" style="width: 100%">
-            <el-option label="CoinGecko" value="coingecko" />
-            <el-option label="Stooq CSV" value="stooq" />
-            <el-option label="新浪行情" value="sina_quote" />
-            <el-option label="通用 JSON" value="json" />
-            <el-option label="通用 CSV" value="csv" />
-            <el-option label="RSS" value="rss" />
-            <el-option label="手动" value="manual" />
-          </el-select>
+        <el-form-item label="数据方式">
+          <el-input v-model="sourceForm.provider" disabled />
         </el-form-item>
-        <el-form-item label="抓取地址">
-          <el-input v-model="sourceForm.endpointUrl" />
+        <el-form-item label="数据地址">
+          <el-input v-model="sourceForm.endpointUrl" disabled placeholder="仅使用内部模拟数据" />
         </el-form-item>
         <el-form-item label="刷新间隔">
           <el-input-number v-model="sourceForm.refreshIntervalSeconds" :min="60" :step="60" controls-position="right" />
@@ -176,7 +168,7 @@ const editingSourceId = ref(null)
 const sourceForm = reactive({
   name: '',
   category: 'stock',
-  provider: 'stooq',
+  provider: 'simulated',
   endpointUrl: '',
   refreshIntervalSeconds: 900,
   isActive: true,
@@ -196,7 +188,7 @@ const statusCards = computed(() => {
     {
       title: '入库快照',
       value: String(summary.value?.totalSnapshots || snapshots.value.length || 0),
-      note: '每次抓取都会写入一条现实数据快照',
+      note: '每次抓取都会写入一条题材数据快照',
       tag: 'DB',
       type: 'warning'
     },
@@ -220,7 +212,7 @@ const statusCards = computed(() => {
 function categoryText(value) {
   const map = {
     stock: '股票',
-    crypto: '比特币',
+    crypto: '秘境',
     real_estate: '房产',
     macro: '宏观',
     news: '资讯'
@@ -287,8 +279,10 @@ async function fetchSources() {
 
 async function fetchSnapshots() {
   const res = await request.get('/api/admin/fortune/snapshots', {
-    limit: 80,
-    category: categoryFilter.value || undefined
+    params: {
+      limit: 80,
+      category: categoryFilter.value || undefined
+    }
   })
   if (res.data.code === 0) {
     snapshots.value = res.data.data || []
@@ -307,7 +301,7 @@ async function fetchAll() {
   try {
     await Promise.all([fetchSummary(), fetchSources(), fetchSnapshots(), fetchReport()])
   } catch (_err) {
-    ElMessage.error('获取福袋现实数据失败')
+    ElMessage.error('获取福袋题材数据失败')
   } finally {
     loading.value = false
   }
@@ -322,12 +316,12 @@ async function refreshSources() {
       if (failed.length) {
         ElMessage.warning(`抓取完成，但 ${failed.length} 个数据源失败`)
       } else {
-        ElMessage.success('福袋现实数据已刷新')
+        ElMessage.success('福袋题材数据已刷新')
       }
       await fetchAll()
     }
   } catch (_err) {
-    ElMessage.error('刷新福袋现实数据失败')
+    ElMessage.error('刷新福袋题材数据失败')
   } finally {
     refreshing.value = false
   }
@@ -358,7 +352,8 @@ async function refreshSingle(row) {
 async function generateReport() {
   generatingReport.value = true
   try {
-    const res = await request.post('/api/admin/fortune/report/generate')
+    // 报告生成内部串行调用大模型，单次可能超过默认 15s，单独放宽超时（M-11）
+    const res = await request.post('/api/admin/fortune/report/generate', null, { timeout: 90000 })
     if (res.data.code === 0) {
       report.value = res.data.data || null
       ElMessage.success('福袋摘要已生成')
@@ -375,7 +370,7 @@ function openSourceDialog(row) {
   Object.assign(sourceForm, {
     name: row.name || '',
     category: row.category || 'stock',
-    provider: row.provider || 'stooq',
+    provider: row.provider || 'simulated',
     endpointUrl: row.endpointUrl || row.endpoint_url || '',
     refreshIntervalSeconds: Number(row.refreshIntervalSeconds || 900),
     isActive: !!row.isActive,

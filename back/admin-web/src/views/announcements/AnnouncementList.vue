@@ -12,7 +12,7 @@
       </template>
 
       <div class="filter-bar">
-        <el-radio-group v-model="statusFilter" @change="fetchAnnouncements">
+        <el-radio-group v-model="statusFilter" @change="onFilterChange">
           <el-radio-button label="">全部</el-radio-button>
           <el-radio-button label="draft">草稿</el-radio-button>
           <el-radio-button label="published">已发布</el-radio-button>
@@ -24,7 +24,7 @@
           placeholder="公告类型"
           clearable
           style="width: 160px"
-          @change="fetchAnnouncements"
+          @change="onFilterChange"
         >
           <el-option label="全部类型" value="" />
           <el-option label="系统公告" value="system" />
@@ -225,6 +225,11 @@ function statusLabel(status) {
   return map[status] || status
 }
 
+function onFilterChange() {
+  page.value = 1
+  fetchAnnouncements()
+}
+
 async function fetchAnnouncements() {
   loading.value = true
   try {
@@ -258,7 +263,8 @@ function openCreateDialog() {
 function openEditDialog(row) {
   isEdit.value = true
   editingId.value = row.id
-  publishMode.value = false
+  // 保留原状态：编辑已发布公告时默认仍为发布，避免静默改回草稿（M-1）
+  publishMode.value = row.status === 'published'
   form.title = row.title
   form.type = row.type
   form.priority = row.priority || 'normal'

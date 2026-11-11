@@ -27,11 +27,26 @@
           </template>
         </el-table-column>
         <el-table-column prop="theme" label="主题" width="120" />
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip />
+        <el-table-column label="状态" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.isActive ? 'success' : 'info'" size="small">
+              {{ row.isActive ? '已上架' : '已下架' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openEditDialog(row)">
               编辑
+            </el-button>
+            <el-button
+              link
+              :type="row.isActive ? 'warning' : 'success'"
+              size="small"
+              @click="handleToggle(row)"
+            >
+              {{ row.isActive ? '下架' : '上架' }}
             </el-button>
             <el-popconfirm
               title="确定删除该道具吗？"
@@ -203,6 +218,17 @@ async function handleDelete(row) {
     fetchItems()
   } catch (err) {
     ElMessage.error('删除失败')
+  }
+}
+
+async function handleToggle(row) {
+  const action = row.isActive ? '下架' : '上架'
+  try {
+    await request.put(`/api/admin/items/${row.id}/toggle`)
+    ElMessage.success(`${action}成功`)
+    fetchItems()
+  } catch (err) {
+    ElMessage.error(`${action}失败`)
   }
 }
 

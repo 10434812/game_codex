@@ -4,7 +4,7 @@
       <div class="hero-copy">
         <span class="hero-kicker">SYSTEM CONFIGURATION</span>
         <h1>系统配置中心</h1>
-        <p>把微信登录、分享、支付和业务参数统一管理。修改后可直接保存到服务端配置中心，适合运营与开发共用。</p>
+        <p>把微信登录、分享和业务参数统一管理。修改后可直接保存到服务端配置中心，适合运营与开发共用。</p>
       </div>
       <div class="hero-actions">
         <div class="hero-summary">
@@ -14,7 +14,7 @@
         <el-button @click="fetchConfigs" :loading="loading">刷新配置</el-button>
         <el-button
           type="primary"
-          :disabled="!hasDirty"
+          :disabled="!authStore.isSuper || !hasDirty"
           :loading="batchSaving"
           @click="handleBatchSave"
         >
@@ -135,6 +135,7 @@
                 <el-tag v-if="cfg.isRequired" size="small" type="danger" effect="plain">必填</el-tag>
                 <el-tag v-if="cfg.isPublic" size="small" type="success">前端可见</el-tag>
                 <el-tag v-if="cfg.isSensitive" size="small" type="warning">敏感</el-tag>
+                <el-tag v-if="cfg.restartRequired" size="small" type="info">需重启生效</el-tag>
                 <el-tag v-if="cfg.isDirty" size="small" type="danger">待保存</el-tag>
               </div>
             </div>
@@ -188,7 +189,7 @@
               <div class="field-actions">
                 <el-button
                   size="small"
-                  :disabled="!cfg.isDirty"
+                  :disabled="!authStore.isSuper || !cfg.isDirty"
                   @click="handleReset(cfg)"
                 >
                   重置
@@ -197,7 +198,7 @@
                   type="primary"
                   size="small"
                   :loading="cfg.saving"
-                  :disabled="!cfg.isDirty"
+                  :disabled="!authStore.isSuper || !cfg.isDirty"
                   @click="handleSaveSingle(cfg)"
                 >
                   保存
@@ -212,8 +213,10 @@
 </template>
 
 <script setup>
+const authStore = useAuthStore()
 import { computed, onMounted, ref } from 'vue'
 import request from '@/utils/request'
+import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
 
 const configs = ref([])
@@ -225,39 +228,30 @@ const capabilitySummary = ref(null)
 const originalValuesMap = new Map()
 const fallbackConfigRecords = [
   { key: 'wechat.login_enabled', value: 'true', defaultValue: 'true', description: '是否开启微信登录', valueType: 'boolean', isPublic: true },
-  { key: 'wechat.login_app_id', value: 'wx742cfddc2b05ccd4', defaultValue: 'wx742cfddc2b05ccd4', description: '小程序 AppID（服务端登录校验使用）', valueType: 'text', isPublic: false },
+  { key: 'wechat.login_app_id', value: 'wxd7f500f3f21f15dd', defaultValue: 'wxd7f500f3f21f15dd', description: '小程序 AppID（服务端登录校验使用）', valueType: 'text', isPublic: false },
   { key: 'wechat.login_secret', value: '', defaultValue: '', description: '小程序 AppSecret（仅后台保存，不对前端公开）', valueType: 'password', isPublic: false, isSensitive: true },
   { key: 'wechat.login_token_ttl', value: '604800', defaultValue: '604800', description: '登录态默认有效期（秒）', valueType: 'number', isPublic: false },
   { key: 'wechat.login_agreement_url', value: '', defaultValue: '', description: '用户协议链接', valueType: 'url', isPublic: true },
   { key: 'wechat.login_privacy_url', value: '', defaultValue: '', description: '隐私政策链接', valueType: 'url', isPublic: true },
   { key: 'wechat.share_enabled', value: 'true', defaultValue: 'true', description: '是否开启分享给好友 / 朋友圈', valueType: 'boolean', isPublic: true },
   { key: 'wechat.share_title', value: '锦鲤前程邀你一起组队闯世界', defaultValue: '锦鲤前程邀你一起组队闯世界', description: '发送给好友默认标题', valueType: 'text', isPublic: true },
-  { key: 'wechat.share_desc', value: '选景区、组战队、拼手气，一起冲上好运榜。', defaultValue: '选景区、组战队、拼手气，一起冲上好运榜。', description: '发送给好友默认描述', valueType: 'textarea', isPublic: true },
+  { key: 'wechat.share_desc', value: '选景区、组战队、拼运气，一起冲上好运榜。', defaultValue: '选景区、组战队、拼运气，一起冲上好运榜。', description: '发送给好友默认描述', valueType: 'textarea', isPublic: true },
   { key: 'wechat.share_path', value: '/pages/home/index', defaultValue: '/pages/home/index', description: '发送给好友默认落地页路径', valueType: 'text', isPublic: true },
   { key: 'wechat.share_query', value: 'from=admin_share', defaultValue: 'from=admin_share', description: '发送给好友附加参数（不含 ?）', valueType: 'text', isPublic: true },
   { key: 'wechat.share_image_url', value: 'https://xcx.ukb88.com/assets/bg/screen.png', defaultValue: 'https://xcx.ukb88.com/assets/bg/screen.png', description: '分享卡片图片 URL', valueType: 'url', isPublic: true },
   { key: 'wechat.share_timeline_title', value: '锦鲤前程开启好运局，来和我一起冲榜', defaultValue: '锦鲤前程开启好运局，来和我一起冲榜', description: '分享到朋友圈标题', valueType: 'text', isPublic: true },
   { key: 'wechat.share_timeline_image_url', value: 'https://xcx.ukb88.com/assets/bg/screen.png', defaultValue: 'https://xcx.ukb88.com/assets/bg/screen.png', description: '分享到朋友圈图片 URL', valueType: 'url', isPublic: true },
-  { key: 'wechat.pay_enabled', value: 'false', defaultValue: 'false', description: '是否开启微信支付能力', valueType: 'boolean', isPublic: true },
-  { key: 'wechat.pay_mch_id', value: '', defaultValue: '', description: '微信支付商户号 MchId', valueType: 'text', isPublic: false },
-  { key: 'wechat.pay_api_v3_key', value: '', defaultValue: '', description: '微信支付 APIv3 Key', valueType: 'password', isPublic: false, isSensitive: true },
-  { key: 'wechat.pay_cert_serial_no', value: '', defaultValue: '', description: '微信支付商户证书序列号', valueType: 'text', isPublic: false },
-  { key: 'wechat.pay_notify_url', value: '', defaultValue: '', description: '微信支付异步通知地址', valueType: 'url', isPublic: false },
-  { key: 'wechat.pay_success_path', value: '/pages/shop/index', defaultValue: '/pages/shop/index', description: '支付成功后的小程序回跳页面', valueType: 'text', isPublic: true },
-  { key: 'wechat.pay_currency', value: 'CNY', defaultValue: 'CNY', description: '支付默认币种', valueType: 'text', isPublic: true },
-  { key: 'wechat.pay_goods_desc', value: '锦鲤前程幸运金币充值', defaultValue: '锦鲤前程幸运金币充值', description: '微信支付下单默认商品描述', valueType: 'text', isPublic: false },
-  { key: 'wechat.pay_sandbox_mode', value: 'true', defaultValue: 'true', description: '是否启用微信支付沙箱模式', valueType: 'boolean', isPublic: false },
-  { key: 'game.round_duration', value: '180', defaultValue: '180', description: '每局游戏时长(秒)', valueType: 'number', isPublic: true },
+  { key: 'game.round_duration', value: '120', defaultValue: '120', description: '每局游戏时长(秒)', valueType: 'number', isPublic: true },
   { key: 'game.min_players', value: '4', defaultValue: '4', description: '最少开局人数', valueType: 'number', isPublic: true },
   { key: 'game.max_players', value: '10', defaultValue: '10', description: '最多玩家数', valueType: 'number', isPublic: true },
   { key: 'game.team_size', value: '2', defaultValue: '2', description: '每队人数', valueType: 'number', isPublic: true },
   { key: 'game.initial_coins', value: '8820', defaultValue: '8820', description: '新用户初始金币', valueType: 'number', isPublic: false },
   { key: 'game.daily_signin_coins', value: '200', defaultValue: '200', description: '每日签到金币奖励', valueType: 'number', isPublic: false },
   { key: 'shop.refresh_interval', value: '86400', defaultValue: '86400', description: '商城刷新间隔(秒)', valueType: 'number', isPublic: true },
-  { key: 'fortune.reality_enabled', value: 'true', defaultValue: 'true', description: '是否启用福袋现实数据联动', valueType: 'boolean', isPublic: true },
-  { key: 'fortune.refresh_interval_seconds', value: '900', defaultValue: '900', description: '福袋现实数据默认刷新间隔(秒)', valueType: 'number', isPublic: false },
+  { key: 'fortune.reality_enabled', value: 'false', defaultValue: 'false', description: '是否启用福袋题材数据联动', valueType: 'boolean', isPublic: true },
+  { key: 'fortune.refresh_interval_seconds', value: '900', defaultValue: '900', description: '福袋题材数据默认刷新间隔(秒)', valueType: 'number', isPublic: false },
   { key: 'fortune.public_signal_limit', value: '6', defaultValue: '6', description: '小程序可读取的福袋现实机会数量', valueType: 'number', isPublic: true },
-  { key: 'fortune.ai_digest_enabled', value: 'false', defaultValue: 'false', description: '是否启用大模型生成福袋行情摘要', valueType: 'boolean', isPublic: false },
+  { key: 'fortune.ai_digest_enabled', value: 'false', defaultValue: 'false', description: '是否启用大模型生成福袋事件摘要', valueType: 'boolean', isPublic: false },
   { key: 'ai.provider', value: 'opencodego', defaultValue: 'opencodego', description: '大模型服务商标识', valueType: 'text', isPublic: false },
   { key: 'ai.base_url', value: '', defaultValue: '', description: 'OpenAI 兼容接口 Base URL（例如 https://example.com/v1）', valueType: 'url', isPublic: false },
   { key: 'ai.api_key', value: '', defaultValue: '', description: '大模型 API Key（仅服务端保存，不对前端公开）', valueType: 'password', isPublic: false, isSensitive: true },
@@ -271,8 +265,8 @@ const groupedPrefixes = [
   {
     prefix: 'wechat',
     label: '微信能力配置',
-    description: '集中维护微信登录、分享、支付与外部回调相关参数。',
-    tip: '敏感字段只会保存在服务端配置中心，前端不会直接拿到登录密钥或支付密钥。'
+    description: '集中维护微信登录、分享与安全相关参数。',
+    tip: '敏感字段只会保存在服务端配置中心，前端不会直接拿到登录密钥。'
   },
   {
     prefix: 'game',
@@ -283,14 +277,14 @@ const groupedPrefixes = [
   {
     prefix: 'shop',
     label: '商城配置',
-    description: '控制商城刷新节奏、支付后落地和商品体验。',
+    description: '控制商城刷新节奏和商品体验。',
     tip: ''
   },
   {
     prefix: 'fortune',
-    label: '福袋现实数据',
-    description: '控制福袋现实行情联动、刷新节奏和小程序可见机会数量。',
-    tip: '数据源本身在“福袋现实数据”页面维护，这里只管理全局开关和摘要策略。'
+    label: '福袋题材数据',
+    description: '控制福袋题材数据联动、刷新节奏和小程序可见机会数量。',
+    tip: '数据源本身在“福袋题材数据”页面维护，这里只管理全局开关和摘要策略。'
   },
   {
     prefix: 'ai',
@@ -391,83 +385,29 @@ const fieldMetaMap = {
     sectionLabel: '分享配置',
     sectionDescription: '朋友圈卡片专用图片，建议突出活动主题。'
   },
-  'wechat.pay_enabled': {
-    label: '微信支付开关',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '控制前端是否展示微信支付相关入口。'
-  },
-  'wechat.pay_mch_id': {
-    label: '商户号 MchId',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '微信支付商户平台分配的商户号。'
-  },
-  'wechat.pay_api_v3_key': {
-    label: 'APIv3 Key',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '用于解密支付回调报文，属于敏感信息。'
-  },
-  'wechat.pay_cert_serial_no': {
-    label: '商户证书序列号',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '用于签名校验和支付下单。'
-  },
-  'wechat.pay_notify_url': {
-    label: '支付回调通知地址',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '微信支付异步通知会回调到这里。'
-  },
-  'wechat.pay_success_path': {
-    label: '支付成功回跳页',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '支付完成后小程序展示结果的默认页面。'
-  },
-  'wechat.pay_currency': {
-    label: '支付货币',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '默认币种，建议保持 `CNY`。'
-  },
-  'wechat.pay_goods_desc': {
-    label: '订单商品描述',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '发起统一下单时默认的商品说明。'
-  },
-  'wechat.pay_sandbox_mode': {
-    label: '支付沙箱模式',
-    section: 'payment',
-    sectionLabel: '支付配置',
-    sectionDescription: '联调阶段建议开启，上线前记得关闭。'
-  },
   'fortune.reality_enabled': {
     label: '现实联动开关',
     section: 'reality',
-    sectionLabel: '福袋现实数据',
-    sectionDescription: '控制小程序福袋是否优先使用后端现实数据机会。'
+    sectionLabel: '福袋题材数据',
+    sectionDescription: '控制小程序福袋是否优先使用后端题材数据机会。'
   },
   'fortune.refresh_interval_seconds': {
     label: '默认刷新间隔（秒）',
     section: 'reality',
-    sectionLabel: '福袋现实数据',
+    sectionLabel: '福袋题材数据',
     sectionDescription: '后台定时任务和默认数据源使用的基础刷新节奏。'
   },
   'fortune.public_signal_limit': {
     label: '前端机会数量',
     section: 'reality',
-    sectionLabel: '福袋现实数据',
+    sectionLabel: '福袋题材数据',
     sectionDescription: '限制小程序每次读取的现实福袋机会数量。'
   },
   'fortune.ai_digest_enabled': {
     label: '启用大模型摘要',
     section: 'digest',
     sectionLabel: '福袋摘要',
-    sectionDescription: '开启后刷新现实数据时会优先调用大模型生成运营摘要。'
+    sectionDescription: '开启后刷新题材数据时会优先调用大模型生成运营摘要。'
   },
   'ai.provider': {
     label: '模型服务商',
@@ -491,7 +431,7 @@ const fieldMetaMap = {
     label: '默认模型',
     section: 'llm',
     sectionLabel: '大模型接口',
-    sectionDescription: '用于生成福袋行情摘要的模型名称。'
+    sectionDescription: '用于生成福袋事件摘要的模型名称。'
   },
   'ai.timeout_ms': {
     label: '请求超时（毫秒）',
@@ -510,10 +450,6 @@ const requiredFields = new Set([
   'wechat.share_path',
   'wechat.share_image_url',
   'wechat.share_timeline_title',
-  'wechat.pay_mch_id',
-  'wechat.pay_api_v3_key',
-  'wechat.pay_notify_url',
-  'wechat.pay_goods_desc',
   'ai.base_url',
   'ai.api_key',
   'ai.model'
@@ -576,6 +512,7 @@ function initConfigs(rawList) {
       valueType,
       isPublic: !!raw.isPublic,
       isSensitive: !!raw.isSensitive,
+      restartRequired: !!raw.restartRequired,
       isDirty: false,
       saving: false,
       prefix: raw.key.split('.')[0],
@@ -652,13 +589,6 @@ const statusCards = computed(() => {
         type: 'warning'
       },
       {
-        title: '微信支付',
-        value: '待连接',
-        note: '支付参数读取失败，请优先恢复 `/api/admin/configs`。',
-        tag: '异常',
-        type: 'warning'
-      },
-      {
         title: '待保存修改',
         value: dirtyCount.value ? `${dirtyCount.value} 项` : '0 项',
         note: '当前为兜底视图，可继续编辑但建议先恢复后端配置接口。',
@@ -670,7 +600,6 @@ const statusCards = computed(() => {
 
   const loginEnabled = hasFilledValue('wechat.login_enabled')
   const shareEnabled = hasFilledValue('wechat.share_enabled')
-  const payEnabled = hasFilledValue('wechat.pay_enabled')
 
   return [
     {
@@ -686,13 +615,6 @@ const statusCards = computed(() => {
       note: '控制转发、活动裂变和朋友圈传播',
       tag: shareEnabled ? '可投放' : '关闭',
       type: shareEnabled ? 'success' : 'info'
-    },
-    {
-      title: '微信支付',
-      value: payEnabled ? '已开启' : '未启用',
-      note: '仅配置参数，实际下单回调仍需后端业务接口联调',
-      tag: payEnabled ? '待联调' : '关闭',
-      type: payEnabled ? 'warning' : 'info'
     },
     {
       title: '待保存修改',
@@ -729,17 +651,6 @@ const capabilityCards = computed(() => {
         type: 'warning',
         tip: '建议先恢复后台配置接口，再判断是否真的缺少分享参数。'
       },
-      {
-        key: 'payment',
-        title: '微信支付能力',
-        description: '商户参数、支付回调和联调准备',
-        readyCount: 0,
-        requiredCount: 4,
-        percent: 0,
-        status: '待连接',
-        type: 'warning',
-        tip: '支付参数现在拿不到实时值，页面不会再误导成“已经关闭”。'
-      }
     ]
   }
 
@@ -747,10 +658,9 @@ const capabilityCards = computed(() => {
     const capabilityMetaMap = {
       login: '账号接入、登录态和协议配置',
       share: '裂变传播、活动转发和素材管理',
-      payment: '商户参数、支付回调和联调准备'
     }
 
-    return ['login', 'share', 'payment'].map((key) => {
+    return ['login', 'share'].map((key) => {
       const item = capabilitySummary.value.capabilities[key]
       const enabled = !!item.enabled
       const missingKeys = Array.isArray(item.missingKeys) ? item.missingKeys : []
@@ -760,7 +670,7 @@ const capabilityCards = computed(() => {
 
       return {
         key,
-        title: key === 'login' ? '微信登录能力' : key === 'share' ? '微信分享能力' : '微信支付能力',
+        title: key === 'login' ? '微信登录能力' : '微信分享能力',
         description: capabilityMetaMap[key],
         enabled,
         readyCount,
@@ -792,13 +702,6 @@ const capabilityCards = computed(() => {
       keys: ['wechat.share_title', 'wechat.share_path', 'wechat.share_image_url', 'wechat.share_timeline_title'],
       enabledKey: 'wechat.share_enabled'
     },
-    {
-      key: 'payment',
-      title: '微信支付能力',
-      description: '商户参数、支付回调和联调准备',
-      keys: ['wechat.pay_mch_id', 'wechat.pay_api_v3_key', 'wechat.pay_notify_url', 'wechat.pay_goods_desc'],
-      enabledKey: 'wechat.pay_enabled'
-    }
   ]
 
   return capabilityDefs.map((item) => {

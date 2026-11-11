@@ -10,8 +10,8 @@
               placeholder="搜索用户名"
               clearable
               style="width: 200px"
-              @clear="fetchAdmins"
-              @keyup.enter="fetchAdmins"
+              @clear="onFilterChange"
+              @keyup.enter="onFilterChange"
             >
               <template #append>
                 <el-button @click="fetchAdmins">
@@ -156,6 +156,11 @@ const resetPwdSaving = ref(false)
 const resetPwdAdminId = ref(null)
 const resetPwdForm = reactive({ password: '' })
 
+function onFilterChange() {
+  page.value = 1
+  fetchAdmins()
+}
+
 async function fetchAdmins() {
   loading.value = true
   try {
@@ -206,7 +211,11 @@ async function handleSave() {
       await request.put(`/api/admin/admins/${editingId.value}`, data)
       ElMessage.success('管理员更新成功')
     } else {
-      data.password = form.password || '123456'
+      if (!form.password || form.password.length < 8) {
+        ElMessage.error('新建管理员需设置至少 8 位密码')
+        return
+      }
+      data.password = form.password
       await request.post('/api/admin/admins', data)
       ElMessage.success('管理员添加成功')
     }

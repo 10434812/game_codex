@@ -21,7 +21,7 @@
           <span>操作日志</span>
         </div>
         <div class="filter-bar">
-          <el-select v-model="actionFilter" placeholder="操作类型" clearable style="width: 140px" @change="fetchLogs">
+          <el-select v-model="actionFilter" placeholder="操作类型" clearable style="width: 140px" @change="onFilterChange">
             <el-option label="全部操作" value="" />
             <el-option label="创建" value="create" />
             <el-option label="更新" value="update" />
@@ -30,7 +30,7 @@
             <el-option label="封禁" value="ban" />
             <el-option label="解封" value="unban" />
           </el-select>
-          <el-select v-model="targetTypeFilter" placeholder="目标类型" clearable style="width: 140px" @change="fetchLogs">
+          <el-select v-model="targetTypeFilter" placeholder="目标类型" clearable style="width: 140px" @change="onFilterChange">
             <el-option label="全部类型" value="" />
             <el-option label="用户" value="user" />
             <el-option label="管理" value="admin" />
@@ -46,15 +46,15 @@
             end-placeholder="结束日期"
             value-format="YYYY-MM-DD"
             style="width: 260px"
-            @change="fetchLogs"
+            @change="onFilterChange"
           />
           <el-input
             v-model="adminSearch"
             placeholder="搜索管理员"
             clearable
             style="width: 160px"
-            @clear="fetchLogs"
-            @keyup.enter="fetchLogs"
+            @clear="onFilterChange"
+            @keyup.enter="onFilterChange"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -200,6 +200,11 @@ async function fetchStats() {
   }
 }
 
+function onFilterChange() {
+  page.value = 1
+  fetchLogs()
+}
+
 async function fetchLogs() {
   loading.value = true
   try {
@@ -210,7 +215,7 @@ async function fetchLogs() {
       targetType: targetTypeFilter.value || undefined,
       adminId: adminSearch.value || undefined,
       dateFrom: dateRange.value ? dateRange.value[0] : undefined,
-      dateTo: dateRange.value ? dateRange.value[1] : undefined
+      dateTo: dateRange.value ? `${dateRange.value[1]} 23:59:59` : undefined
     }
     const res = await request.get('/api/admin/logs', { params })
     if (res.data.code === 0) {

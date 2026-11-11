@@ -5,7 +5,7 @@
         <div class="card-header">
           <span>对局监控</span>
           <div class="header-actions">
-            <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 140px" @change="fetchGames">
+            <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 140px" @change="onFilterChange">
               <el-option label="全部" value="" />
               <el-option label="进行中" value="playing" />
               <el-option label="已结束" value="finished" />
@@ -79,6 +79,11 @@ function statusTagType(status) {
 function statusLabel(status) {
   const map = { playing: '进行中', finished: '已结束', waiting: '等待中' }
   return map[status] || status
+}
+
+function onFilterChange() {
+  page.value = 1
+  fetchGames()
 }
 
 async function fetchGames() {

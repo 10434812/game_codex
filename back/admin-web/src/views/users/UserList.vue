@@ -9,8 +9,8 @@
             placeholder="搜索昵称或ID"
             clearable
             style="width: 240px"
-            @clear="fetchUsers"
-            @keyup.enter="fetchUsers"
+            @clear="onFilterChange"
+            @keyup.enter="onFilterChange"
           >
             <template #append>
               <el-button @click="fetchUsers">
@@ -18,6 +18,10 @@
               </el-button>
             </template>
           </el-input>
+          <el-button type="primary" plain :loading="exporting" @click="handleExportCsv">
+            <el-icon><Download /></el-icon>
+            导出 CSV
+          </el-button>
         </div>
       </template>
 
@@ -54,7 +58,7 @@
             >
               {{ row.isBanned ? '解封' : '封禁' }}
             </el-button>
-            <el-button link type="primary" size="small" @click="openCoinDialog(row)">
+            <el-button v-if="authStore.isSuper" link type="primary" size="small" @click="openCoinDialog(row)">
               调整金币
             </el-button>
           </template>
@@ -94,10 +98,13 @@
 </template>
 
 <script setup>
+const authStore = useAuthStore()
 import { ref, reactive, onMounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { Search, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { useAuthStore } from '@/stores/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { downloadCsv } from '@/utils/csv'
 
 const users = ref([])
 const loading = ref(false)
@@ -110,6 +117,12 @@ const coinDialogVisible = ref(false)
 const coinSaving = ref(false)
 const currentUser = ref(null)
 const coinForm = reactive({ amount: 0, reason: '' })
+const exporting = ref(false)
+
+function onFilterChange() {
+  page.value = 1
+  fetchUsers()
+}
 
 async function fetchUsers() {
   loading.value = true
@@ -156,17 +169,54 @@ function openCoinDialog(row) {
 async function handleCoinAdjust() {
   coinSaving.value = true
   try {
-    await request.put(`/api/admin/users/${currentUser.value.uid}/coins`, {
+    const res = await request.put(`/api/admin/users/${currentUser.value.uid}/coins`, {
       amount: coinForm.amount,
       reason: coinForm.reason
     })
     ElMessage.success('金币调整成功')
     coinDialogVisible.value = false
-    currentUser.value.coins += coinForm.amount
+    // 使用服务端返回的真实余额（服务端会下限截断为 0），而非本地累加（M-4）
+    const newCoins = res.data?.data?.coins
+    if (typeof newCoins === 'number') currentUser.value.coins = newCoins
   } catch (err) {
     ElMessage.error('金币调整失败')
   } finally {
     coinSaving.value = false
+  }
+}
+
+async function handleExportCsv() {
+  exporting.value = true
+  try {
+    // Simple implementation: export up to 5000 users matching the current keyword.
+    const res = await request.get('/api/admin/users', {
+      params: { page: 1, limit: 5000, keyword: keyword.value || undefined }
+    })
+    if (res.data.code !== 0) {
+      ElMessage.error('导出失败')
+      return
+    }
+    const records = res.data.data.records || []
+    const headers = ['ID', '昵称', '金币', '等级', '总局数', '胜场', '累计收益', '累计经验', '状态', '封禁原因', '注册时间']
+    const rows = records.map((row) => [
+      row.uid,
+      row.nickname,
+      row.coins,
+      row.level,
+      row.totalGames,
+      row.totalWins,
+      row.totalIncome,
+      row.totalExp,
+      row.isBanned ? '已封禁' : '正常',
+      row.bannedReason || '',
+      row.createdAt
+    ])
+    downloadCsv(`users-${Date.now()}.csv`, headers, rows)
+    ElMessage.success(`已导出 ${records.length} 名用户`)
+  } catch (err) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
   }
 }
 

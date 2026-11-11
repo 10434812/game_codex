@@ -131,7 +131,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const drawerVisible = ref(false)
 
-const menuItems = [
+const allMenuItems = [
   { index: '/dashboard', label: '控制台', icon: DataAnalysis },
   { index: '/users', label: '用户管理', icon: User },
   { index: '/items', label: '道具管理', icon: Goods },
@@ -140,10 +140,13 @@ const menuItems = [
   { index: '/announcements', label: '公告管理', icon: Bell },
   { index: '/admins', label: '管理员管理', icon: Setting },
   { index: '/rooms', label: '房间管理', icon: Coin },
-  { index: '/fortune', label: '福袋现实数据', icon: MagicStick },
+  { index: '/fortune', label: '福袋题材数据', icon: MagicStick },
   { index: '/logs', label: '操作日志', icon: Document },
   { index: '/configs', label: '系统配置', icon: Tools }
 ]
+
+// 服务端 /admins 仅 super 可访问；前端仅做体验层隐藏，权限以后端为准
+const menuItems = computed(() => allMenuItems.filter((item) => item.index !== '/admins' || authStore.isSuper))
 
 const titleMap = {
   Dashboard: '控制台总览',
@@ -155,7 +158,7 @@ const titleMap = {
   StatsOverview: '数据统计',
   AdminList: '管理员管理',
   RoomList: '房间管理',
-  FortuneReality: '福袋现实数据',
+  FortuneReality: '福袋题材数据',
   OperationLogs: '操作日志',
   AnnouncementList: '公告管理',
   SystemConfig: '系统配置'

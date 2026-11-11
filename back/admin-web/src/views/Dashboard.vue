@@ -100,7 +100,7 @@
         <template #header>
           <div class="card-header">
             <span>微信能力就绪度</span>
-            <span class="muted-text">登录 / 分享 / 支付配置检查</span>
+            <span class="muted-text">登录 / 分享配置检查</span>
           </div>
         </template>
         <div class="capability-list">
@@ -184,7 +184,7 @@ const dashboardData = ref({
 const configs = ref([])
 const fallbackConfigs = [
   { key: 'wechat.login_enabled', value: 'true' },
-  { key: 'wechat.login_app_id', value: 'wx742cfddc2b05ccd4' },
+  { key: 'wechat.login_app_id', value: 'wxd7f500f3f21f15dd' },
   { key: 'wechat.login_secret', value: '' },
   { key: 'wechat.login_agreement_url', value: '' },
   { key: 'wechat.login_privacy_url', value: '' },
@@ -192,11 +192,7 @@ const fallbackConfigs = [
   { key: 'wechat.share_title', value: '锦鲤前程邀你一起组队闯世界' },
   { key: 'wechat.share_path', value: '/pages/home/index' },
   { key: 'wechat.share_image_url', value: 'https://xcx.ukb88.com/assets/bg/screen.png' },
-  { key: 'wechat.share_timeline_title', value: '锦鲤前程开启好运局，来和我一起冲榜' },
-  { key: 'wechat.pay_enabled', value: 'false' },
-  { key: 'wechat.pay_mch_id', value: '' },
-  { key: 'wechat.pay_api_v3_key', value: '' },
-  { key: 'wechat.pay_notify_url', value: '' }
+  { key: 'wechat.share_timeline_title', value: '锦鲤前程开启好运局，来和我一起冲榜' }
 ]
 
 function formatNumber(value) {
@@ -522,23 +518,15 @@ const capabilityCards = computed(() => {
         status: '待连接',
         type: 'warning',
         note: '分享能力状态暂未从服务端拉到，建议优先检查 `/api/admin/configs`。'
-      },
-      {
-        title: '微信支付',
-        status: '待连接',
-        type: 'warning',
-        note: '支付配置当前没有真实回传，页面不会再错误显示成已关闭。'
       }
     ]
   }
 
   const loginEnabled = getConfigValue('wechat.login_enabled', 'true') === 'true'
   const shareEnabled = getConfigValue('wechat.share_enabled', 'true') === 'true'
-  const payEnabled = getConfigValue('wechat.pay_enabled', 'false') === 'true'
 
   const loginReady = !!getConfigValue('wechat.login_app_id') && !!getConfigValue('wechat.login_secret')
   const shareReady = !!getConfigValue('wechat.share_title') && !!getConfigValue('wechat.share_path') && !!getConfigValue('wechat.share_image_url')
-  const payReady = !!getConfigValue('wechat.pay_mch_id') && !!getConfigValue('wechat.pay_api_v3_key') && !!getConfigValue('wechat.pay_notify_url')
 
   return [
     {
@@ -552,12 +540,6 @@ const capabilityCards = computed(() => {
       status: shareEnabled ? (shareReady ? '可投放' : '待优化') : '已关闭',
       type: shareEnabled ? (shareReady ? 'success' : 'warning') : 'info',
       note: shareEnabled ? (shareReady ? '标题、落地页和分享图完整，可直接用于活动传播。' : '建议补齐分享标题、落地路径和卡片素材。') : '分享能力关闭，裂变传播入口当前不可用。'
-    },
-    {
-      title: '微信支付',
-      status: payEnabled ? (payReady ? '待联调' : '缺参数') : '未启用',
-      type: payEnabled ? (payReady ? 'success' : 'danger') : 'info',
-      note: payEnabled ? (payReady ? '商户号与回调参数已经具备，下一步可联调下单回调。' : '支付已经打开，但商户参数未完整配置，建议先补齐。') : '支付未启用，商城仅能做展示和非支付兑换。'
     }
   ]
 })

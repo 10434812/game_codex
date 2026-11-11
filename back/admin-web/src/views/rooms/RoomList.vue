@@ -36,7 +36,7 @@
         <div class="card-header">
           <span>房间管理</span>
           <div class="header-actions">
-            <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 140px" @change="fetchRooms">
+            <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 140px" @change="onFilterChange">
               <el-option label="全部" value="" />
               <el-option label="等待中" value="waiting" />
               <el-option label="进行中" value="playing" />
@@ -187,6 +187,11 @@ async function fetchStats() {
   } catch (err) {
     // Silently fail for stats
   }
+}
+
+function onFilterChange() {
+  page.value = 1
+  fetchRooms()
 }
 
 async function fetchRooms() {
