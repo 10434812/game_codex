@@ -1,5 +1,6 @@
 <template>
   <div class="stats-page">
+    <RetentionPanel />
     <!-- Date Range Filter -->
     <el-card shadow="never" class="filter-card">
       <div class="filter-row">
@@ -36,7 +37,7 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>日活跃用户（DAU）</span>
+              <span>每日参与对局账号数</span>
               <el-tag size="small" type="warning">趋势</el-tag>
             </div>
           </template>
@@ -61,8 +62,8 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>每日收入</span>
-              <el-tag size="small" type="danger">金币</el-tag>
+              <span>每日金币入账</span>
+              <span class="muted-text">虚拟金币 · 正向流水</span>
             </div>
           </template>
           <v-chart :option="revenueOption" style="height: 300px" autoresize />
@@ -121,6 +122,7 @@ import {
   LegendComponent,
   GridComponent
 } from 'echarts/components'
+import RetentionPanel from './RetentionPanel.vue'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
 
@@ -139,9 +141,9 @@ const summaryStats = computed(() => {
   const totalRevenue = revenue.reduce((sum, d) => sum + (d.amount || 0), 0)
   const avgDau = dau.length > 0 ? Math.round(totalDau / dau.length) : 0
   return [
-    { key: 'avgDau', label: '日均DAU', value: avgDau, color: '#e57c1f' },
+    { key: 'avgDau', label: '日均对局账号', value: avgDau, color: '#e57c1f' },
     { key: 'totalGames', label: '总对局数', value: totalGames, color: '#2bbf9f' },
-    { key: 'totalRevenue', label: '总收入', value: totalRevenue.toLocaleString(), color: '#f0ad4e' },
+    { key: 'totalRevenue', label: '金币入账合计', value: totalRevenue.toLocaleString(), color: '#f0ad4e' },
     { key: 'avgDauRatio', label: '数据天数', value: dau.length + ' 天', color: '#409eff' }
   ]
 })
@@ -208,9 +210,9 @@ const e57c1f = 'rgb(229,124,31)'
 const brandSuccess = 'rgb(43,191,159)'
 const brandWarning = 'rgb(240,173,78)'
 
-const dauOption = computed(() => makeChartOption(statsData.value.dau || [], { name: 'DAU', type: 'line', color: e57c1f, dataKey: 'count' }))
+const dauOption = computed(() => makeChartOption(statsData.value.dau || [], { name: '参与对局账号', type: 'line', color: e57c1f, dataKey: 'count' }))
 const gamesOption = computed(() => makeChartOption(statsData.value.games || [], { name: '对局数', type: 'bar', color: brandSuccess }))
-const revenueOption = computed(() => makeChartOption(statsData.value.revenue || [], { name: '收入', type: 'line', color: brandWarning, dataKey: 'amount' }))
+const revenueOption = computed(() => makeChartOption(statsData.value.revenue || [], { name: '金币入账', type: 'line', color: brandWarning, dataKey: 'amount' }))
 
 async function fetchStats() {
   try {

@@ -33,12 +33,13 @@
               class="menu-toggle"
               circle
               plain
+              aria-label="打开后台导航"
               @click="drawerVisible = true"
             >
               <el-icon><Operation /></el-icon>
             </el-button>
             <h2 class="header-title">{{ pageTitle }}</h2>
-            <el-tag size="small" effect="plain" type="warning">{{ dateLabel }}</el-tag>
+            <el-tag class="header-date" size="small" effect="plain" type="warning">{{ dateLabel }}</el-tag>
           </div>
           <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/dashboard' }">后台首页</el-breadcrumb-item>
@@ -60,8 +61,8 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="router.push({ name: 'AdminList' })">管理员管理</el-dropdown-item>
-                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                <el-dropdown-item v-if="authStore.isSuper" @click="router.push({ name: 'AdminList' })">管理员管理</el-dropdown-item>
+                <el-dropdown-item :divided="authStore.isSuper" @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -243,10 +244,24 @@ function handleLogout() {
 
   .menu-toggle {
     display: inline-flex;
+    flex-shrink: 0;
   }
 
   .header-actions {
     display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-date {
+    display: none;
+  }
+
+  .header-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 17px;
   }
 }
 </style>

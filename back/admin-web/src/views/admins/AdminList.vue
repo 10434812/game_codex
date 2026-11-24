@@ -14,7 +14,7 @@
               @keyup.enter="onFilterChange"
             >
               <template #append>
-                <el-button @click="fetchAdmins">
+                <el-button @click="onFilterChange">
                   <el-icon><Search /></el-icon>
                 </el-button>
               </template>
@@ -54,13 +54,23 @@
             <el-button link type="primary" size="small" @click="openResetPasswordDialog(row)">
               重置密码
             </el-button>
+            <el-button
+              v-if="row.isBanned"
+              link
+              type="success"
+              size="small"
+              @click="handleToggleActive(row, true)"
+            >
+              重新启用
+            </el-button>
             <el-popconfirm
-              title="确定删除该管理员吗？"
-              confirm-button-text="删除"
+              v-else
+              title="确定禁用该管理员吗？"
+              confirm-button-text="禁用"
               @confirm="handleDelete(row)"
             >
               <template #reference>
-                <el-button link type="danger" size="small">删除</el-button>
+                <el-button link type="danger" size="small">禁用</el-button>
               </template>
             </el-popconfirm>
           </template>
@@ -204,6 +214,10 @@ async function handleSave() {
   try {
     const data = { username: form.username, role: form.role }
     if (form.password) {
+      if (form.password.length < 8) {
+        ElMessage.error('密码长度至少 8 位')
+        return
+      }
       data.password = form.password
     }
 
@@ -222,7 +236,7 @@ async function handleSave() {
     dialogVisible.value = false
     fetchAdmins()
   } catch (err) {
-    ElMessage.error(isEdit.value ? '管理员更新失败' : '管理员添加失败')
+    ElMessage.error(err?.response?.data?.message || (isEdit.value ? '管理员更新失败' : '管理员添加失败'))
   } finally {
     saving.value = false
   }
@@ -231,10 +245,20 @@ async function handleSave() {
 async function handleDelete(row) {
   try {
     await request.delete(`/api/admin/admins/${row.id}`)
-    ElMessage.success('管理员删除成功')
+    ElMessage.success('管理员已禁用')
     fetchAdmins()
   } catch (err) {
-    ElMessage.error('管理员删除失败')
+    ElMessage.error(err?.response?.data?.message || '管理员禁用失败')
+  }
+}
+
+async function handleToggleActive(row, active) {
+  try {
+    await request.put(`/api/admin/admins/${row.id}`, { isActive: active })
+    ElMessage.success(active ? '管理员已重新启用' : '管理员已禁用')
+    fetchAdmins()
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || '更新管理员状态失败')
   }
 }
 
@@ -249,6 +273,10 @@ async function handleResetPassword() {
     ElMessage.warning('请输入新密码')
     return
   }
+  if (resetPwdForm.password.length < 8) {
+    ElMessage.error('新密码长度至少 8 位')
+    return
+  }
   resetPwdSaving.value = true
   try {
     await request.put(`/api/admin/admins/${resetPwdAdminId.value}/password`, {
@@ -257,7 +285,7 @@ async function handleResetPassword() {
     ElMessage.success('密码重置成功')
     resetPwdDialogVisible.value = false
   } catch (err) {
-    ElMessage.error('密码重置失败')
+    ElMessage.error(err?.response?.data?.message || '密码重置失败')
   } finally {
     resetPwdSaving.value = false
   }

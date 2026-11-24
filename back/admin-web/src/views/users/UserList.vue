@@ -13,7 +13,7 @@
             @keyup.enter="onFilterChange"
           >
             <template #append>
-              <el-button @click="fetchUsers">
+              <el-button @click="onFilterChange">
                 <el-icon><Search /></el-icon>
               </el-button>
             </template>

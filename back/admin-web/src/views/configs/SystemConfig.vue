@@ -230,6 +230,8 @@ const fallbackConfigRecords = [
   { key: 'wechat.login_enabled', value: 'true', defaultValue: 'true', description: '是否开启微信登录', valueType: 'boolean', isPublic: true },
   { key: 'wechat.login_app_id', value: 'wxd7f500f3f21f15dd', defaultValue: 'wxd7f500f3f21f15dd', description: '小程序 AppID（服务端登录校验使用）', valueType: 'text', isPublic: false },
   { key: 'wechat.login_secret', value: '', defaultValue: '', description: '小程序 AppSecret（仅后台保存，不对前端公开）', valueType: 'password', isPublic: false, isSensitive: true },
+  { key: 'wechat.minigame_app_id', value: 'wx3a1d54efeadbace9', defaultValue: 'wx3a1d54efeadbace9', description: '小游戏 AppID（独立登录校验）', valueType: 'text', isPublic: false },
+  { key: 'wechat.minigame_secret', value: '', defaultValue: '', description: '小游戏 AppSecret（仅后台保存）', valueType: 'password', isPublic: false, isSensitive: true },
   { key: 'wechat.login_token_ttl', value: '604800', defaultValue: '604800', description: '登录态默认有效期（秒）', valueType: 'number', isPublic: false },
   { key: 'wechat.login_agreement_url', value: '', defaultValue: '', description: '用户协议链接', valueType: 'url', isPublic: true },
   { key: 'wechat.login_privacy_url', value: '', defaultValue: '', description: '隐私政策链接', valueType: 'url', isPublic: true },
@@ -266,7 +268,7 @@ const groupedPrefixes = [
     prefix: 'wechat',
     label: '微信能力配置',
     description: '集中维护微信登录、分享与安全相关参数。',
-    tip: '敏感字段只会保存在服务端配置中心，前端不会直接拿到登录密钥。'
+    tip: '密钥仅限授权管理员查看与修改，不会通过游戏公共配置下发。'
   },
   {
     prefix: 'game',
@@ -318,6 +320,14 @@ const fieldMetaMap = {
     section: 'login',
     sectionLabel: '登录配置',
     sectionDescription: '微信登录核心密钥，仅服务端保存。'
+  },
+  'wechat.minigame_app_id': {
+    label: '小游戏 AppID', section: 'minigameLogin', sectionLabel: '小游戏登录配置',
+    sectionDescription: '小游戏使用独立AppID和AppSecret，与小程序配置分开。'
+  },
+  'wechat.minigame_secret': {
+    label: '小游戏 AppSecret', section: 'minigameLogin', sectionLabel: '小游戏登录配置',
+    sectionDescription: '密钥仅服务端保存；缺失时小游戏无法登录，不使用小程序密钥。'
   },
   'wechat.login_token_ttl': {
     label: '登录态有效期（秒）',
@@ -444,6 +454,8 @@ const fieldMetaMap = {
 const requiredFields = new Set([
   'wechat.login_app_id',
   'wechat.login_secret',
+  'wechat.minigame_app_id',
+  'wechat.minigame_secret',
   'wechat.login_agreement_url',
   'wechat.login_privacy_url',
   'wechat.share_title',
@@ -605,15 +617,15 @@ const statusCards = computed(() => {
     {
       title: '微信登录',
       value: loginEnabled ? '已开启' : '已关闭',
-      note: '决定用户能否通过微信授权进入小游戏',
-      tag: loginEnabled ? '运行中' : '关闭',
+      note: '两端登录总开关；具体配置就绪状态见下方',
+      tag: loginEnabled ? '开关已开启' : '关闭',
       type: loginEnabled ? 'success' : 'info'
     },
     {
       title: '微信分享',
       value: shareEnabled ? '已开启' : '已关闭',
-      note: '控制转发、活动裂变和朋友圈传播',
-      tag: shareEnabled ? '可投放' : '关闭',
+      note: '控制分享入口；实际发送与接收效果仍需验收',
+      tag: shareEnabled ? '开关已开启' : '关闭',
       type: shareEnabled ? 'success' : 'info'
     },
     {
@@ -631,7 +643,7 @@ const capabilityCards = computed(() => {
     return [
       {
         key: 'login',
-        title: '微信登录能力',
+        title: '小程序登录能力',
         description: '账号接入、登录态和协议配置',
         readyCount: 0,
         requiredCount: 4,
@@ -656,12 +668,13 @@ const capabilityCards = computed(() => {
 
   if (capabilitySummary.value && capabilitySummary.value.capabilities) {
     const capabilityMetaMap = {
-      login: '账号接入、登录态和协议配置',
+      login: '小程序账号接入、登录态和协议配置',
+      minigameLogin: '小游戏独立账号接入与密钥配置',
       share: '裂变传播、活动转发和素材管理',
     }
 
-    return ['login', 'share'].map((key) => {
-      const item = capabilitySummary.value.capabilities[key]
+    return ['login', 'minigameLogin', 'share'].map((key) => {
+      const item = capabilitySummary.value.capabilities[key] || {missingKeys: ['请先升级服务端以检查独立登录配置']}
       const enabled = !!item.enabled
       const missingKeys = Array.isArray(item.missingKeys) ? item.missingKeys : []
       const readyCount = Number(item.readyCount || 0)
@@ -670,27 +683,32 @@ const capabilityCards = computed(() => {
 
       return {
         key,
-        title: key === 'login' ? '微信登录能力' : '微信分享能力',
+        title: key === 'login' ? '小程序登录能力' : key === 'minigameLogin' ? '小游戏登录能力' : '微信分享能力',
         description: capabilityMetaMap[key],
         enabled,
         readyCount,
         requiredCount,
         percent: requiredCount > 0 ? Math.round((readyCount / requiredCount) * 100) : 0,
-        status: !enabled ? '已关闭' : isReady ? '已就绪' : '待补齐',
+        status: !capabilitySummary.value.capabilities[key] ? '待升级' : !enabled ? '已关闭' : isReady ? '已就绪' : '待补齐',
         type: !enabled ? 'info' : isReady ? 'success' : 'warning',
         tip: !enabled
-          ? '当前能力已关闭，不影响其他模块。'
+          ? (capabilitySummary.value.capabilities[key] ? '当前能力已关闭，不影响其他模块。' : '服务端尚未提供小游戏独立登录检查，请先升级服务端。')
           : missingKeys.length
             ? `还缺 ${missingKeys.length} 项关键配置：${missingKeys.join('、')}`
-            : '关键参数完整，可以进入业务联调或投放阶段。'
+            : '关键参数完整，可以进入真实登录与分享验收；配置完整不代表平台验收通过。'
       }
     })
   }
 
   const capabilityDefs = [
     {
+      key: 'minigameLogin', title: '小游戏登录能力', description: '小游戏独立账号接入与密钥配置',
+      keys: ['wechat.minigame_app_id', 'wechat.minigame_secret', 'wechat.login_agreement_url', 'wechat.login_privacy_url'],
+      enabledKey: 'wechat.login_enabled'
+    },
+    {
       key: 'login',
-      title: '微信登录能力',
+      title: '小程序登录能力',
       description: '账号接入、登录态和协议配置',
       keys: ['wechat.login_app_id', 'wechat.login_secret', 'wechat.login_agreement_url', 'wechat.login_privacy_url'],
       enabledKey: 'wechat.login_enabled'
@@ -722,7 +740,7 @@ const capabilityCards = computed(() => {
       tip: !enabled
         ? '当前能力已关闭，不影响其他模块。'
         : isReady
-          ? '关键参数完整，可以进入业务联调或投放阶段。'
+          ? '关键参数完整，可以进入真实登录与分享验收；配置完整不代表平台验收通过。'
           : '建议先补齐必填项，再交给开发或运营上线。'
     }
   })

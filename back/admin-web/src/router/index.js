@@ -1,19 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import Login from '@/views/Login.vue'
-import Dashboard from '@/views/Dashboard.vue'
-import UserList from '@/views/users/UserList.vue'
-import UserDetail from '@/views/users/UserDetail.vue'
-import ItemList from '@/views/items/ItemList.vue'
-import GameList from '@/views/games/GameList.vue'
-import GameDetail from '@/views/games/GameDetail.vue'
-import StatsOverview from '@/views/stats/StatsOverview.vue'
-import AnnouncementList from '@/views/announcements/AnnouncementList.vue'
-import SystemConfig from '@/views/configs/SystemConfig.vue'
-import AdminList from '@/views/admins/AdminList.vue'
-import RoomList from '@/views/rooms/RoomList.vue'
-import OperationLogs from '@/views/logs/OperationLogs.vue'
-import FortuneReality from '@/views/fortune/FortuneReality.vue'
+const Login = () => import('@/views/Login.vue')
+const Dashboard = () => import('@/views/Dashboard.vue')
+const UserList = () => import('@/views/users/UserList.vue')
+const UserDetail = () => import('@/views/users/UserDetail.vue')
+const ItemList = () => import('@/views/items/ItemList.vue')
+const GameList = () => import('@/views/games/GameList.vue')
+const GameDetail = () => import('@/views/games/GameDetail.vue')
+const StatsOverview = () => import('@/views/stats/StatsOverview.vue')
+const AnnouncementList = () => import('@/views/announcements/AnnouncementList.vue')
+const SystemConfig = () => import('@/views/configs/SystemConfig.vue')
+const AdminList = () => import('@/views/admins/AdminList.vue')
+const RoomList = () => import('@/views/rooms/RoomList.vue')
+const OperationLogs = () => import('@/views/logs/OperationLogs.vue')
+const FortuneReality = () => import('@/views/fortune/FortuneReality.vue')
 
 const routes = [
   {
@@ -80,7 +80,7 @@ const routes = [
     path: '/admins',
     name: 'AdminList',
     component: AdminList,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresSuper: true }
   },
   {
     path: '/rooms',
@@ -103,6 +103,10 @@ const routes = [
   {
     path: '/',
     redirect: '/dashboard'
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/dashboard'
   }
 ]
 
@@ -119,6 +123,10 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   if (!authStore.isLoggedIn) {
     return next({ name: 'Login' })
+  }
+
+  if (to.meta.requiresSuper && !authStore.isSuper) {
+    return next({ name: 'Dashboard' })
   }
 
   next()

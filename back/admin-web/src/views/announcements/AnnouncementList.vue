@@ -260,10 +260,13 @@ function openCreateDialog() {
   dialogVisible.value = true
 }
 
+const editingStatus = ref('draft')
+
 function openEditDialog(row) {
   isEdit.value = true
   editingId.value = row.id
-  // 保留原状态：编辑已发布公告时默认仍为发布，避免静默改回草稿（M-1）
+  editingStatus.value = row.status || 'draft'
+  // 保留原状态：编辑已发布/已归档公告时不静默改回草稿（M-1）
   publishMode.value = row.status === 'published'
   form.title = row.title
   form.type = row.type
@@ -284,7 +287,7 @@ async function handleSave() {
       type: form.type,
       priority: form.priority,
       content: form.content,
-      status: publishMode.value ? 'published' : 'draft'
+      status: publishMode.value ? 'published' : (isEdit.value && editingStatus.value === 'archived' ? 'archived' : 'draft')
     }
     if (isEdit.value) {
       await request.put(`/api/admin/announcements/${editingId.value}`, payload)
