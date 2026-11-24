@@ -59,6 +59,7 @@ Open the repository root in WeChat DevTools for the mini-program; import `miniga
 ### Shared and Generated Code
 
 - Edit `minigame/src/core/RunArena.ts`, then run `npm --prefix minigame run codegen` to generate `utils/run-arena.js` and `back/src/game-engine/run-arena.js`. The same generator produces `utils/arena-effects.js` and `utils/run-arena-renderer.js` from mini-game render TypeScript. Do not hand-edit generated outputs.
+- `minigame/src/core/PlayFlow.ts` and `GrowthGoal.ts` supply generated `utils/play-flow.js` and `utils/growth-goal.js`; use the same codegen command to keep both clients aligned.
 - `utils/shop-store.js` supplies generated `minigame/src/core/ShopCatalog.ts`; `utils/legal-config.js` supplies generated `LegalContent.ts`. Backend shop catalog changes still require separate synchronization.
 - Changes to `utils/game-engine.js`, `board-layout.js`, `team-link.js`, `constants.js`, `investment.js` or `emote.js` require updating the corresponding TS port and running mini-game parity tests. Synchronize affected backend rule copies and run both JS suites too.
 - Mini-game `codegen` rewrites generated shared files and copies packaged assets; `npm test` in `minigame/` only checks them (`generate-run-arena.mjs --check`) and does not overwrite them. `minigame/dist/` and admin `dist/` are generated artifacts. `assets-pkg/` is hand-maintained packaged media (no source in `assets/`), tracked in git; its effect/item images are not on the CDN, so they must stay at `/assets-pkg/`.

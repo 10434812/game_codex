@@ -1,105 +1,52 @@
 # 锦鲤前程
 
-一个纯前端微信小程序对战 Demo，包含完整的单局流程：
+微信账号联机的景区主题跑动接物游戏，包含原生小程序、Canvas2D 小游戏、Node.js 服务端和 Vue 管理后台。对局固定 **120 秒**，积分和账号资产由服务端确认。真人不足四人时由机器人补位；不提供设备体验入口。
 
-- 首页选景区 -> 房间组人 -> 对局结算 -> 战绩展示
-- 房间支持 4-10 人（不足自动补机器人）
-- 对局固定 180 秒，按 2 人一队进行分数联动
-- 本地商城（皮肤/宠物）与装备回显（仅作用于“我”的节点）
-- 当前为 `本地模拟` 模式：对手行为与组队握手均为前端模拟，不依赖实时多人后端
-
-## 技术栈
-
-- 微信小程序原生（`wxml` / `wxss` / `js`）
-- Node.js 内置测试框架（`node:test`）
-- 本地存储：`wx.setStorageSync` / `wx.getStorageSync`
-
-## 页面路由
-
-- `pages/home/index`：首页与景区选择
-- `pages/room/index`：房间组队与邀请
-- `pages/arena/index`：对局主战场
-- `pages/result/index`：结算与排行
-- `pages/profile/index`：头像昵称资料
-- `pages/shop/index`：装备商城
+首页选景区 → 快速匹配或创建/加入好友房 → 准备与开局 → 跑动接物、互选碰面组队 → 服务端结算 → 原房再来一局。当前规则、品牌与平台约束以 [PRODUCT.md](PRODUCT.md) 为准。
 
 ## 本地开发
 
-1. 使用微信开发者工具打开项目根目录：
-   - `/Users/hh/Desktop/game_codex`
-2. 小程序 AppID 使用你自己的测试号或现有配置。
-3. 编译后从首页进入完整流程。
+使用 Node.js 24 和 npm。根目录、服务端、后台和小游戏分别安装/运行，不是 npm workspace。
 
-## 测试
-
-安装依赖后执行：
-
-```bash
+```sh
 npm test
+npm --prefix back ci
+npm --prefix back test
+npm --prefix back/admin-web ci
+npm --prefix back/admin-web run build
+npm --prefix minigame ci
+npm --prefix minigame test
+npm --prefix minigame run smoke
 ```
 
-当前仓库测试覆盖：
+后端配置参考 `back/.env.example`，不将实际密钥放进源码。准备 MySQL 后运行 `npm --prefix back run migrate -- --dry-run` 检查迁移计划。`release:check -- --database`会只读核对所选客户端登录配置、120秒配置、玩法/奖励字段与唯一索引；`--url`会核对新版接口能力。
 
-- `tests/game-engine.test.js`
-- `tests/game-store.test.js`
-- `tests/shop-store.test.js`
+已有数据库须先独立核实已执行的 SQL，再使用 `--baseline <已执行的最后一个文件名>`；不要对已有库重跑建表种子文件。
 
-## 目录结构
+`npm --prefix back run test:integration` 创建并清理隔离 MySQL 8.4 容器，验证真实 HTTP/WebSocket、结算与资产、后台统计与配置审计、埋点、留存查询和迁移。需要 Docker 正在运行。
 
-```text
-.
-├─ pages/                 # 各业务页面
-├─ utils/                 # 游戏规则、状态管理、导航、音频、用户资料
-├─ assets/                # 图片/音频等静态资源
-├─ tests/                 # Node 单测
-├─ docs/superpowers/      # 设计与实现文档
-├─ app.json               # 小程序全局配置
-├─ app.js                 # 小程序入口
-└─ app.wxss               # 全局样式
-```
+## 管理后台升级
 
-## 核心模块说明
+启动新版后端前运行 `npm --prefix back run migrate`，应用 `019_admin_session_version.sql`。升级后管理员需重新登录。重置或编辑管理员密码成功后，该账号的旧后台令牌立即失效。
 
-- `utils/constants.js`：规则常量（人数、时长、积分范围、景区、头像池等）
-- `utils/game-engine.js`：纯规则层（创建玩家、补机器人、组队、回合结算、排行计算）
-- `utils/game-store.js`：全局状态层（创建房间、开局、tick、结算、重开）
-- `utils/shop-store.js`：商城状态与商品逻辑（购买、装备、持久化）
-- `utils/user-profile.js`：用户资料缓存与更新
-- `utils/nav.js`：状态栏/胶囊布局安全区计算
+配置审计只记录管理员和修改的配置键。后台日志列表和详情已隐藏历史配置值。若此前通过管理后台修改过小游戏 AppSecret，需轮换密钥，并按运维流程处理数据库历史日志及备份中的旧值。
 
-## 页面布局硬规则（必须遵守）
+## 留存与双端登录
 
-任何页面修改都必须确保主内容不进入头部安全区，不与状态栏/胶囊重叠。
+任务页提供七日循环签到、四项永久成长奖励与全服经验榜。每日任务按北京时间重置，成长进度不每日清空；奖励由服务端锁定账号、写领取凭据与流水并同事务入账，重复请求不重复发奖。需先执行 `018_retention_rewards.sql`。
 
-每个页面根节点固定顺序：
+后台微信配置分别保存小程序的 `wechat.login_app_id` / `wechat.login_secret` 和小游戏的 `wechat.minigame_app_id` / `wechat.minigame_secret`。小游戏登录传 `client: 'minigame'`，未传默认小程序；后台分别显示两端配置就绪，开关开启不等于配置齐全。小游戏密钥缺失时拒绝登录，不使用另一端密钥。JWT携带客户端标识，跨端续期拒绝；两端 OpenID 不自动合并成同一账号。
 
-1. `global-bg-image`
-2. `app-header`（必须带 `padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;`）
-3. `page-content`（所有业务主内容必须在这里）
+结算页可主动分享本人战绩卡；卡片只使用服务器确认的名次、得分和锦鲤币，导出失败回退通用分享。真实微信登录、卡片发送与接收展示仍需平台配置和双设备验收。
 
-示例：
+## 微信工程与构建
 
-```xml
-<view class="paper-bg xxx-page">
-  <image class="global-bg-image" ... />
-  <view
-    class="app-header"
-    style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;"
-  >
-    ...
-  </view>
-  <view class="page-content">...</view>
-</view>
-```
+小程序在微信开发者工具中打开仓库根目录，小游戏单独打开 `minigame/`。小游戏 `npm run build` 生成压缩的 `dist/main.js`；规则模拟与测试代码保留在源码和验收目录，不进入发布脚本。`npm run smoke` 同时检查压缩包首帧、120 秒规则、菜单与玩法弹层；截图使用测试数据，不能代替双设备验收。
 
-禁止事项：
+服务端提供 `back/Dockerfile`，包含后台生产构建。生产使用 `NODE_ENV=production` 并配置 `.env.example` 中的必填项；受邀体验账号限制与公开发布门禁分别执行。发版收到 SIGTERM 后阻止新开局，优先等待已有对局结算，再关闭连接。
 
-- 删除 `app-header` 后直接放主内容
-- 主标题使用负 `margin-top` 或绝对定位顶到最上方
-- 把第一块业务内容放在 `app-header` 之前
+## 统计与隐私
 
-提交前自检：
+客户端在隐私确认前只缓存统计事件，确认后批量发送。后台“数据统计”展示活跃、新增、1/3/7 日留存、首次体验漏斗与客户端完局率。原始事件保留 90 天，账号注销删除关联事件；统计接入前的留存不能回填成真实数据。
 
-- iPhone 刘海屏下主标题不与状态栏/胶囊重叠
-- `app-header` 存在且可见
-- 主内容都在 `page-content` 容器内
+编码、页面安全区、规则生成和测试约定见 [AGENTS.md](AGENTS.md) 与 [docs/agents/](docs/agents/)。本轮实现及待办见 [实施记录](docs/release/审查改进实施记录-2026-11-14.md)。本地通过、服务端部署、体验版上传、正式发布和真机验收分别记录。
