@@ -1,17 +1,16 @@
+const analytics = require('../../utils/analytics');
 const {getNavLayout} = require('../../utils/nav')
 const {
   buildStageThemeStyle,
   DEFAULT_AVATAR,
   DEFAULT_STAGE,
-  MATCH_MODE_TEXT,
   NAV_TABS,
   resolveStage,
   ROOM_UI_LIMIT,
   WAITING_SLOT_NAME,
 } = require('../../utils/constants')
-const gameStore = require('../../utils/game-store')
 const {playCue, playVoice, playVibrate} = require('../../utils/audio')
-const {getCachedProfile} = require('../../utils/user-profile')
+const {getCachedProfile, ensureLogin} = require('../../utils/user-profile')
 const api = require('../../utils/api-client')
 const runtimeConfig = require('../../utils/runtime-config')
 const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../../utils/share-config')
@@ -31,24 +30,25 @@ function buildEmptySlot() {
   }
 }
 
-function mapRoomSlots(players) {
-  const filledSlots = (players || []).slice(0, ROOM_UI_LIMIT).map((player) => ({
-    name: player.name,
-    state: player.state || (player.isSelf ? '房主' : '已就绪'),
-    filled: true,
-    star: !!player.isSelf,
-    avatar: player.avatar,
-  }))
-
-  if (filledSlots.length < ROOM_UI_LIMIT) {
-    filledSlots.push(buildEmptySlot())
-  }
-
-  return filledSlots
-}
-
 function getRoomIdFromOptions(options = {}) {
   return String(options.backendRoomId || options.roomId || '').trim()
+}
+
+function beginRoomAction(page) {
+  if (page.roomActionRequest || page.roomUnloaded) return null
+  const request = {
+    epoch: page.pageEpoch || 0,
+    token: api.getToken(),
+    roomId: page.data.backendRoomId,
+  }
+  page.roomActionRequest = request
+  return {
+    roomId: encodeURIComponent(request.roomId),
+    isCurrent: () => page.roomActionRequest === request && !page.roomUnloaded &&
+      request.epoch === (page.pageEpoch || 0) && request.roomId === page.data.backendRoomId &&
+      (request.token === api.getToken() || api.isRecoveredToken(request.token, api.getToken())),
+    finish: () => {if (page.roomActionRequest === request) page.roomActionRequest = null},
+  }
 }
 
 Page({
@@ -58,7 +58,7 @@ Page({
       navHeight: 64,
       capsuleSpace: 120,
     },
-    activeTab: 'social',
+    activeTab: 'social', navExpanded: false,
     slots: [buildEmptySlot()],
     stageName: DEFAULT_STAGE.name,
     stageImage: DEFAULT_STAGE.image,
@@ -66,8 +66,10 @@ Page({
     stageThemeKey: DEFAULT_STAGE.theme.key,
     stageThemeStyle: buildStageThemeStyle(DEFAULT_STAGE),
     roomId: '----',
+    matchmaking: false, matchCancelPending: false,
     backendRoomId: '',
     activePercent: 0,
+    readyCountText: '',
     selfReady: true,
     isHost: true,
     starting: false,
@@ -75,6 +77,11 @@ Page({
     roomHintText: '准备好后，点击开始游戏',
     unreadyNames: [],
     creatingOnlineRoom: false,
+    loginError: '',
+    joinLoginRequired: false,
+    roomConnectionError: '',
+    roomUnavailable: false,
+    roomRetrying: false,
     shareEnabled: runtimeConfig.getBoolean('wechat.share_enabled', true),
     userProfile: getCachedProfile(),
     defaultAvatar: DEFAULT_AVATAR,
@@ -88,7 +95,7 @@ Page({
       this.setData({
         nav: getNavLayout(),
         tabs: NAV_TABS,
-        modeText: MATCH_MODE_TEXT,
+        modeText: ONLINE_MODE_TEXT,
       })
     } catch (error) {}
     if (!privacy.canEnter()) return
@@ -96,7 +103,7 @@ Page({
       this.setData({shareEnabled: runtimeConfig.getBoolean('wechat.share_enabled', true)})
       enableShareMenu()
     })
-    if (!this.inviteRoomId) this.refreshRoom()
+    this.entryStage = resolveStage({id: Number(options.stageId) || DEFAULT_STAGE.id})
   },
   onShow() {
     if (!privacy.canEnter()) return
@@ -108,66 +115,29 @@ Page({
       this.roomCreatedVoicePlayed = true
     }
     this.unsubscribeStore()
-    if (!this.inviteRoomId && !this.data.backendRoomId) {
-      this.unsubscribe = gameStore.subscribe((state) => this.observeState(state))
-      // 上一局的结算状态不是本次进入的房间：开新房间，避免底部导航被弹回结算页（I-1）
-      const entry = gameStore.getState()
-      this.observeState(entry.status === 'finished' ? gameStore.ensureRoom(entry.stage || DEFAULT_STAGE) : entry)
-    }
     this.initRoom()
     this.syncGuide()
   },
   onHide() {
     pageHelpers.pauseBackdropVideo(this);
     this.pageEpoch = (this.pageEpoch || 0) + 1
+    this.roomActionRequest = null
+    this.roomInitRequest = null
+    this.roomInitPending = false
+    this.setData({creatingOnlineRoom: false, roomRetrying: false})
     this.clearStartCountdown()
     this.clearPollTimer()
     this.unsubscribeStore()
   },
   onUnload() {
+    this.roomUnloaded = true
     this.pageEpoch = (this.pageEpoch || 0) + 1
+    this.roomActionRequest = null
+    this.roomInitRequest = null
+    this.roomInitPending = false
     this.clearStartCountdown()
     this.clearPollTimer()
     this.unsubscribeStore()
-  },
-  observeState(state) {
-    if (!state) {
-      return
-    }
-    if (state.status === 'idle') {
-      const ensured = gameStore.ensureRoom(state.stage || DEFAULT_STAGE)
-      this.observeState(ensured)
-      return
-    }
-    if (state.status === 'playing') {
-      this.clearStartCountdown()
-      wx.redirectTo({url: '/pages/arena/index'})
-      return
-    }
-    if (state.status === 'finished') {
-      this.clearStartCountdown()
-      wx.redirectTo({url: '/pages/result/index'})
-      return
-    }
-
-    const activePercent = Math.round((state.players.length / ROOM_UI_LIMIT) * 100)
-    const selfPlayer = state.players.find((player) => player.isSelf) || state.players[0]
-    const selfReady = !selfPlayer || selfPlayer.ready !== false
-    const stage = resolveStage(state.stage || DEFAULT_STAGE)
-    const theme = saveStageTheme(stage)
-    this.setData({
-      slots: mapRoomSlots(state.players),
-      stageName: stage.name,
-      stageImage: theme.stageImage,
-      stageVideo: theme.stageVideo,
-      stageThemeKey: theme.stageThemeKey,
-      stageThemeStyle: theme.stageThemeStyle,
-      roomId: state.roomId,
-      activePercent,
-      selfReady,
-      roomHintText: '准备好后，点击开始游戏',
-      modeText: state.modeText || MATCH_MODE_TEXT,
-    })
   },
   async inviteFriend() {
     if (this.data.starting || this.data.creatingOnlineRoom) {
@@ -191,28 +161,34 @@ Page({
     }
   },
   async toggleReady() {
-    if (this.data.starting) {
+    if (this.data.starting || this.data.roomConnectionError || this.data.roomUnavailable) {
       return
     }
     playCue('tap', {volume: 0.75})
     playVibrate('medium')
-    // 后端房间的准备状态以服务器为准；本地 gameStore 只在本地房间使用
+    // 准备状态始终以服务端为准。
     if (this.data.backendRoomId) {
+      const action = beginRoomAction(this)
+      if (!action) return
       try {
-        const roomId = encodeURIComponent(this.data.backendRoomId)
-        await api.post(`/rooms/${roomId}/ready`)
-        const room = await api.get(`/rooms/${roomId}`)
+        await api.post(`/rooms/${action.roomId}/ready`)
+        if (!action.isCurrent()) return
+        const room = await api.get(`/rooms/${action.roomId}`)
+        if (!action.isCurrent()) return
         this.renderBackendRoom(room)
       } catch (err) {
-        wx.showToast({title: (err && err.message) || '准备失败，请重试', icon: 'none'})
-      }
+        if (action.isCurrent()) wx.showToast({title: (err && err.message) || '准备失败，请重试', icon: 'none'})
+      } finally {action.finish()}
       return
     }
-    const state = gameStore.setSelfReady(!this.data.selfReady)
-    this.observeState(state)
+    wx.showToast({title: '请先连接好友房间', icon: 'none'})
   },
   start() {
-    if (this.data.starting) {
+    if (this.data.starting || this.roomActionRequest) {
+      return
+    }
+    if (this.data.roomConnectionError || this.data.roomUnavailable) {
+      wx.showToast({title: '请先恢复房间连接或返回首页', icon: 'none'})
       return
     }
     if (this.roomInitPending || (this.inviteRoomId && !this.data.backendRoomId)) {
@@ -228,13 +204,7 @@ Page({
       wx.showToast({title: `等待 ${this.data.unreadyNames.join('、')} 准备`, icon: 'none'})
       return
     }
-    // 后端房间由服务端校验准备状态（房主无需准备），本地房间沿用本地校验
-    if (!this.data.backendRoomId && !this.data.selfReady) {
-      playCue('actionFail', {volume: 0.7})
-      playVoice('roomNeedReady')
-      wx.showToast({title: '请先完成准备', icon: 'none'})
-      return
-    }
+    if (!this.data.backendRoomId) { this.createOnlineRoom(); return }
     if (guideStore.shouldShowStep(guideStore.GUIDE_STEPS.ROOM)) {
       guideStore.advanceTo(guideStore.GUIDE_STEPS.ARENA_TEAM)
       this.setData({guideVisible: false})
@@ -270,11 +240,7 @@ Page({
       })
     }, 1000)
   },
-  syncGuide() {
-    this.setData({
-      guideVisible: guideStore.shouldShowStep(guideStore.GUIDE_STEPS.ROOM),
-    })
-  },
+  syncGuide() { this.setData({guideVisible: false}) },
   onGuidePrimary() {
     this.start()
   },
@@ -284,21 +250,32 @@ Page({
   syncStageMusic() {
     pageHelpers.syncStageMusic(this)
   },
-  refreshRoom() {
-    const snapshot = gameStore.getState()
-    this.observeState(snapshot)
-  },
   async createOnlineRoom() {
     if (this.data.creatingOnlineRoom || this.data.starting) return
     if (this.roomInitPending) {
       wx.showToast({title: '房间正在连接，请稍候', icon: 'none'})
       return
     }
-    this.setData({creatingOnlineRoom: true})
-    await this.initRoom(true)
-    this.setData({creatingOnlineRoom: false})
+    const epoch = this.pageEpoch || 0
+    this.setData({creatingOnlineRoom: true, loginError: ''})
+    try {
+      await ensureLogin()
+      if (epoch !== (this.pageEpoch || 0)) return
+      this.setData({joinLoginRequired: false})
+      this.syncUserProfile()
+      await this.initRoom(true)
+    } catch (error) {
+      if (epoch === (this.pageEpoch || 0)) {
+        const message = error.message || '微信登录失败，请再次点击邀请重试'
+        this.setData({loginError: message})
+        wx.showToast({title: message, icon: 'none'})
+      }
+    } finally {
+      if (!this.roomUnloaded && epoch === (this.pageEpoch || 0)) this.setData({creatingOnlineRoom: false})
+    }
   },
   async initRoom(forceOnline = false) {
+    if (this.roomInitPending || this.roomUnloaded) return
     if (this.roomInitialized && !forceOnline) {
       // 已初始化但 onHide 清掉了轮询：切回前台时恢复，否则房间会卡在旧状态
       // （看不到新加入的玩家 / 房主开局跳转）。
@@ -307,21 +284,20 @@ Page({
       }
       return
     }
-    this.roomInitialized = true
+    this.roomInitialized = false
     this.roomInitPending = true
     // 页面离开（onHide/onUnload）后，await 返回的结果不得再启动轮询，否则定时器无人清理
     const epoch = this.pageEpoch || 0
-    const isStale = () => epoch !== (this.pageEpoch || 0)
+    const request = {token: api.getToken()}
+    this.roomInitRequest = request
+    const isStale = (allowExpiredLogin = false) => this.roomInitRequest !== request || epoch !== (this.pageEpoch || 0) ||
+      (request.token !== api.getToken() && !api.isRecoveredToken(request.token, api.getToken()) &&
+        !(allowExpiredLogin && !api.getToken()))
     try {
-      if (this.inviteRoomId || forceOnline || runtimeConfig.getBoolean('room.backend_enabled', false)) {
-        await runtimeConfig.fetchRemoteConfig()
-        if (!runtimeConfig.isApiSupported('onlineArena')) {
-          this.roomInitialized = false
-          this.setData({roomHintText: '联机服务升级中，可返回首页体验本地对局'})
-          if (forceOnline || this.inviteRoomId) wx.showToast({title: '联机服务升级中，请先体验本地对局', icon: 'none'})
-          return
-        }
-      }
+      await runtimeConfig.fetchRemoteConfig()
+      if (isStale()) return
+      if (!runtimeConfig.isApiSupported('onlineArena')) throw Object.assign(new Error('对战服务暂时不可用，请稍后重试'), {code: 'ONLINE_SERVICE_UNAVAILABLE'})
+      if (!api.isLoggedIn()) throw Object.assign(new Error('微信登录后即可进入好友房间'), {statusCode: 401})
       if (this.inviteRoomId) {
         // 契约修正：数字房间 ID 走 /rooms/:id/join；分享拿到的是房间码时走 /rooms/code/:code/join，
         // 避免把房间码当数值 id 传给 MySQL 隐式转换（可能 404 或进错房间）
@@ -329,12 +305,10 @@ Page({
           ? `/rooms/${encodeURIComponent(this.inviteBackendRoomId)}/join`
           : `/rooms/code/${encodeURIComponent(this.inviteRoomId)}/join`
         const result = await api.post(joinPath)
-        if (isStale()) {
-          this.roomInitialized = false
-          return
-        }
+        if (isStale()) return
         const room = result && result.room ? result.room : {}
         const roomId = room && room.id ? room.id : this.inviteRoomId
+        analytics.track('room_join', {roomId: String(roomId)})
         const roomCode = room && (room.roomCode || room.room_code) ? (room.roomCode || room.room_code) : ''
         this.setData({
           backendRoomId: String(roomId),
@@ -342,22 +316,13 @@ Page({
         })
         this.unsubscribeStore()
         this.renderBackendRoom(result)
+        this.roomInitialized = true
         this.pollRoom(roomId)
         return
       }
-      const snapshot = gameStore.getState()
-      // 自建房默认留在本地流程。之前这里无条件建后端房间并每 2s 轮询，
-      // 轮询回来的玩家（只有自己）会把本地补的机器人覆盖掉，
-      // 和 gameStore 订阅互相打架，房间人数与 modeText 每两秒跳一次。
-      if (!forceOnline && !runtimeConfig.getBoolean('room.backend_enabled', false)) {
-        return
-      }
-      const stageId = snapshot.stage && snapshot.stage.id ? snapshot.stage.id : DEFAULT_STAGE.id
+      const stageId = (this.entryStage || DEFAULT_STAGE).id
       const result = await api.post('/rooms', {stageId})
-      if (isStale()) {
-        this.roomInitialized = false
-        return
-      }
+      if (isStale()) return
       const room = result && result.room ? result.room : result
       const roomId = room && room.id ? room.id : ''
       const roomCode = room && (room.roomCode || room.room_code) ? (room.roomCode || room.room_code) : ''
@@ -368,46 +333,63 @@ Page({
         backendRoomId: String(roomId),
         roomId: roomCode || String(roomId),
       })
+      analytics.track('room_create', {roomId: String(roomId), stageId})
       // 后端房间以轮询数据为准，停止本地 store 订阅，避免本地机器人反复覆盖真人列表
       this.unsubscribeStore()
       this.renderBackendRoom(result)
+      this.roomInitialized = true
       this.pollRoom(roomId)
     } catch (err) {
+      if (isStale(err.statusCode === 401)) return
       console.warn('[room] initRoom error:', err)
       this.roomInitialized = false
+      this.showRoomError(err)
+      if (!api.isLoggedIn() && err.statusCode === 401) {
+        this.setData({joinLoginRequired: true, roomHintText: '微信登录后即可加入这个好友房间'})
+      }
       if (forceOnline || this.inviteRoomId) wx.showToast({title: (err && err.message) || '联网房间连接失败，请重试', icon: 'none'})
     } finally {
-      this.roomInitPending = false
+      if (this.roomInitRequest === request) {
+        this.roomInitRequest = null
+        this.roomInitPending = false
+      }
     }
   },
   renderBackendRoom(roomPayload) {
     const room = roomPayload && roomPayload.room ? roomPayload.room : {}
     const stage = resolveStage({id: room.stage_id || DEFAULT_STAGE.id})
     const theme = saveStageTheme(stage)
-    const players = (roomPayload && roomPayload.players || []).slice(0, ROOM_UI_LIMIT).map(p => ({
+    const roomLimit = room.match_due_at ? 4 : ROOM_UI_LIMIT
+    const players = (roomPayload && roomPayload.players || []).slice(0, roomLimit).map(p => ({
       name: p.nick_name || p.name,
-      state: p.is_ready ? '已就绪' : '未准备',
+      state: p.is_host ? '房主' : p.is_ready ? '已准备' : '未准备',
+      ready: !!(p.is_host || p.is_ready),
       filled: true,
       star: !!p.is_host,
       avatar: p.avatar_url || '',
     }))
-    if (players.length < ROOM_UI_LIMIT) {
+    if (players.length < roomLimit) {
       players.push(buildEmptySlot())
     }
     const roomPlayers = roomPayload && roomPayload.players || []
     const selfPlayer = roomPlayers.find((p) => p.is_self)
     const unreadyNames = roomPlayers.filter((p) => !p.is_host && !p.is_ready).map((p) => p.nick_name || p.name || '玩家')
     const patch = {
+      matchmaking: !!room.match_due_at,
+      roomConnectionError: '',
+      roomUnavailable: false,
       slots: players,
-      activePercent: Math.round((roomPlayers.length / ROOM_UI_LIMIT) * 100),
+      activePercent: Math.round((roomPlayers.length / roomLimit) * 100),
+      readyCountText: `已准备 ${roomPlayers.filter((p) => p.is_ready).length}/${roomPlayers.length} 人`,
       isHost: selfPlayer ? !!selfPlayer.is_host : this.data.isHost,
       selfReady: selfPlayer ? !!selfPlayer.is_ready : this.data.selfReady,
       unreadyNames,
       roomHintText: (selfPlayer ? !!selfPlayer.is_host : this.data.isHost)
         ? (unreadyNames.length ? `等待 ${unreadyNames.join('、')} 准备` : '玩家已准备，房主可以开始游戏')
-        : '准备好后，等待房主开始游戏',
+        : (selfPlayer?.is_ready ? '你已准备，等待房主开始游戏' : '点击「准备」，房主才能开始游戏'),
       modeText: ONLINE_MODE_TEXT,
     }
+    if (room.match_due_at) patch.roomHintText = '正在匹配真人，满4人立即开局；约8秒后不足4人由机器人补位'
     patch.stageName = stage.name
     patch.stageImage = theme.stageImage
     patch.stageVideo = theme.stageVideo
@@ -417,48 +399,113 @@ Page({
     if (room.id) patch.backendRoomId = String(room.id)
     this.setData(patch)
   },
-  pollRoom(roomId) {
+  showRoomError(error, autoRetry = false) {
+    this.clearStartCountdown()
+    const unavailable = error.statusCode === 404 || error.statusCode === 410
+    if (unavailable || error.statusCode === 401 || error.statusCode === 403) {
+      analytics.playFlow.cancel(String(this.data.backendRoomId || ''), unavailable ? 'room_unavailable' : 'login_expired')
+    }
+    this.setData({
+      roomUnavailable: unavailable,
+      guideVisible: false,
+      roomConnectionError: error.code === 'ONLINE_SERVICE_UNAVAILABLE' ? error.message
+        : unavailable ? '房间已失效，请返回首页重新建房或索取新邀请。'
+        : error.statusCode === 401 ? '登录已失效，请点击重新连接恢复登录。'
+          : error.statusCode === 403 ? (error.message || '当前账号无法进入房间，请返回首页。')
+            : autoRetry ? '房间连接中断，正在重试；也可点击重新连接。' : '房间连接失败，请点击重新连接。',
+    })
+  },
+  async retryRoomConnection() {
+    if (this.data.roomRetrying || this.data.roomUnavailable) return
+    const epoch = this.pageEpoch || 0
     this.clearPollTimer()
-    this._pollSeq = (this._pollSeq || 0) + 1;
-    const currentSeq = this._pollSeq;
-
-    this.pollTimer = setInterval(async () => {
+    this.setData({roomRetrying: true})
+    try {
+      await ensureLogin()
+      if (epoch !== (this.pageEpoch || 0)) return
+      if (this.data.backendRoomId) await this.pollRoom(this.data.backendRoomId, true)
+      else { this.roomInitialized = false; await this.initRoom(true) }
+    } catch (error) {
+      if (epoch === (this.pageEpoch || 0)) this.showRoomError(error)
+    } finally {
+      if (!this.roomUnloaded && epoch === (this.pageEpoch || 0)) this.setData({roomRetrying: false})
+    }
+  },
+  leaveUnavailableRoom() {
+    this.clearPollTimer()
+    wx.reLaunch({url: '/pages/home/index'})
+  },
+  pollRoom(roomId, immediate = false) {
+    this.clearPollTimer()
+    const currentSeq = this._pollSeq
+    let failures = 0
+    const poll = async () => {
+      this.pollTimer = null
+      const token = api.getToken()
       try {
         const room = await api.get(`/rooms/${roomId}`)
-        // Ignore stale responses if poll was restarted
-        if (currentSeq !== this._pollSeq) return;
-
+        if (currentSeq !== this._pollSeq) return
+        if (token !== api.getToken() && !api.isRecoveredToken(token, api.getToken())) {
+          this.clearPollTimer()
+          this.showRoomError({statusCode: 401})
+          return
+        }
+        if (!room || !room.room) throw new Error('房间信息未确认')
+        failures = 0
         if (room.sessionId) {
           this.clearPollTimer()
-          wx.redirectTo({url: `/pages/arena/index?sessionId=${room.sessionId}`})
+          wx.redirectTo({url: `/pages/arena/index?sessionId=${encodeURIComponent(room.sessionId)}`})
           return
         }
-
-        const currentSlots = this.data.slots || []
-        const beforeSlots = JSON.stringify(currentSlots)
+        if (room.room.status && room.room.status !== 'waiting') {
+          throw Object.assign(new Error('房间已结束'), {statusCode: 410})
+        }
         this.renderBackendRoom(room)
-        if (JSON.stringify(this.data.slots || []) === beforeSlots) {
+      } catch (error) {
+        if (currentSeq !== this._pollSeq) return
+        // 换号后旧请求的失败也不能覆盖新会话。
+        if (token !== api.getToken() && api.getToken() && !api.isRecoveredToken(token, api.getToken())) {
+          this.clearPollTimer()
           return
         }
-      } catch (err) { /* ignore polling errors */ }
-    }, 2000)
+        failures++
+        this.showRoomError(error, true)
+        if (error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 429) {
+          this.clearPollTimer()
+          return
+        }
+      } finally {
+        if (currentSeq === this._pollSeq) {
+          this.pollTimer = setTimeout(poll, Math.min(10000, 2000 * 2 ** Math.min(failures, 3)))
+        }
+      }
+    }
+    if (immediate) return poll()
+    this.pollTimer = setTimeout(poll, 2000)
   },
   async onStartGame() {
-    // 本地房直接开局，不做一次注定要失败的后端请求（那次等待会让倒计时结束后卡住一拍）
     if (!this.data.backendRoomId) {
-      gameStore.startGame({autoStartTimer: false})
-      wx.redirectTo({url: '/pages/arena/index'})
+      await this.createOnlineRoom()
       return
     }
+    const action = beginRoomAction(this)
+    if (!action) return
+    this.setData({starting: true, startButtonText: '正在开始…'})
     try {
-      const result = await api.post(`/rooms/${this.data.backendRoomId}/start`)
-      wx.redirectTo({url: `/pages/arena/index?sessionId=${result.sessionId}`})
+      const result = await api.post(`/rooms/${action.roomId}/start`)
+      if (!action.isCurrent()) return
+      if (!result || !result.sessionId) throw new Error('对局尚未确认，请重试')
+      wx.redirectTo({url: `/pages/arena/index?sessionId=${encodeURIComponent(result.sessionId)}`})
     } catch (err) {
-      wx.showToast({title: (err && err.message) || '暂时无法开始对局', icon: 'none'})
+      if (action.isCurrent()) wx.showToast({title: (err && err.message) || '暂时无法开始对局', icon: 'none'})
+    } finally {
+      if (action.isCurrent()) this.setData({starting: false, startButtonText: '开始游戏'})
+      action.finish()
     }
   },
   onShareAppMessage() {
-    if (!this.data.backendRoomId || !runtimeConfig.getBoolean('wechat.share_enabled', true)) return buildShareAppMessage('default')
+    analytics.track('share_click');
+    if (this.data.roomUnavailable || !this.data.backendRoomId || !runtimeConfig.getBoolean('wechat.share_enabled', true)) return buildShareAppMessage('default')
     const query = [
         `roomId=${encodeURIComponent(this.data.roomId || '')}`,
         `backendRoomId=${encodeURIComponent(this.data.backendRoomId)}`,
@@ -468,7 +515,7 @@ Page({
     return {...buildShareAppMessage('room'), path: `/pages/room/index?${query}`}
   },
   onShareTimeline() {
-    if (!this.data.backendRoomId) return buildShareTimeline('default')
+    if (this.data.roomUnavailable || !this.data.backendRoomId) return buildShareTimeline('default')
     return buildShareTimeline('room', {
       extraQuery: [
         `roomId=${encodeURIComponent(this.data.roomId || '')}`,
@@ -477,8 +524,9 @@ Page({
     })
   },
   clearPollTimer() {
+    this._pollSeq = (this._pollSeq || 0) + 1
     if (this.pollTimer) {
-      clearInterval(this.pollTimer)
+      clearTimeout(this.pollTimer)
       this.pollTimer = null
     }
   },
@@ -500,26 +548,44 @@ Page({
       this.unsubscribe = null
     }
   },
-  switchTab(e) {
+  async cancelMatch() {
+    if (this.data.matchCancelPending) return
+    const epoch = this.pageEpoch || 0, token = api.getToken()
+    this.setData({matchCancelPending: true})
+    try {
+      await api.post(`/rooms/${this.data.backendRoomId}/leave`)
+      if (epoch !== (this.pageEpoch || 0) || (token !== api.getToken() && !api.isRecoveredToken(token, api.getToken()))) return
+      analytics.playFlow.cancel(String(this.data.backendRoomId || ''), 'user_cancel')
+      this.clearPollTimer()
+      wx.redirectTo({url: '/pages/home/index'})
+    } catch (error) {if (epoch === (this.pageEpoch || 0)) this.showRoomError(error)}
+    finally {if (epoch === (this.pageEpoch || 0)) this.setData({matchCancelPending: false})}
+  },
+  toggleNav() {
+    playVibrate('light')
+    this.setData({navExpanded: !this.data.navExpanded})
+  },
+  async switchTab(e) {
     playCue('tap', {volume: 0.75})
     playVibrate('light')
     const page = e.currentTarget.dataset.page
+    if (this.data.matchmaking && page && page !== '/pages/room/index') {await this.cancelMatch(); return}
     if (!page || page === '/pages/room/index') {
       return
     }
     if (page === '/pages/result/index') {
-      const snapshot = gameStore.getState()
-      if (snapshot.status !== 'finished' || !snapshot.result) {
-        wx.showToast({title: '暂无历史结算', icon: 'none'})
-        return
-      }
+      try { wx.redirectTo({url: await require('../../utils/online-navigation').latestResultUrl()}) }
+      catch (error) { wx.showToast({title: error.message || '记录加载失败', icon: 'none'}) }
+      return
     }
     if (page === '/pages/arena/index') {
-      const snapshot = gameStore.getState()
-      if (snapshot.status !== 'playing') {
-        wx.showToast({title: '请先开启对局', icon: 'none'})
-        return
-      }
+      if (!this.data.backendRoomId) { await this.createOnlineRoom(); return }
+      try {
+        const room = await api.get(`/rooms/${this.data.backendRoomId}`)
+        if (room.sessionId) wx.redirectTo({url: `/pages/arena/index?sessionId=${encodeURIComponent(room.sessionId)}`})
+        else wx.showToast({title: '请先在房间开始游戏', icon: 'none'})
+      } catch (error) { this.showRoomError(error) }
+      return
     }
     wx.redirectTo({url: page})
   },

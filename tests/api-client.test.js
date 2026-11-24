@@ -35,7 +35,7 @@ const privacy = require('../utils/privacy-consent');
 const runtimeConfig = require('../utils/runtime-config');
 const originalAssertAllowed = privacy.assertAllowed;
 
-test('开发预览使用游客资产并保持存储中的账号凭证独立，受保护请求在发送前终止', async () => {
+test('开发版无法开启预览绕过授权，已有凭证也不能跳过隐私门禁', async () => {
   const originalAccountInfo = wx.getAccountInfoSync;
   const profile = require('../utils/user-profile');
   wx.getAccountInfoSync = () => ({miniProgram: {envVersion: 'develop'}});
@@ -43,10 +43,9 @@ test('开发预览使用游客资产并保持存储中的账号凭证独立，�
   storage.set('wx_user_profile_v1', {nickName: '账号昵称', avatarUrl: 'account-avatar'});
   privacy.assertAllowed = originalAssertAllowed;
   try {
-    privacy.beginDevelopmentPreview();
-    assert.equal(api.getToken(), '');
-    assert.equal(api.isLoggedIn(), false);
-    assert.equal(profile.getCachedProfile().nickName, '微信用户');
+    assert.throws(() => privacy.beginDevelopmentPreview());
+    assert.equal(api.getToken(), 'existing-account');
+    assert.equal(profile.getCachedProfile().nickName, '账号昵称');
     await assert.rejects(api.get('/user/profile'), {code: 'PRIVACY_CONSENT_REQUIRED'});
     await assert.rejects(api.post('/auth/login', {code: 'preview'}), {code: 'PRIVACY_CONSENT_REQUIRED'});
     await assert.rejects(api.uploadFile('/user/avatar', '/tmp/preview.png'), {code: 'PRIVACY_CONSENT_REQUIRED'});

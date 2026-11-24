@@ -38,8 +38,9 @@ test('统计累计实际拾取与联动，退出换队保留记录，源快照�
   }
   run.selectRunTarget(world, 'a', null);
   const stats = run.runPerformanceMap(world);
-  assert.deepEqual(stats.a, {bags: 1, gifts: 1, bombs: 1, contributed: 15, received: 0, causedLoss: 5, complete: true});
-  assert.equal(stats.b.received, 15);
+  // 福袋 10 → 联动 5；礼物连击 20+2 → 联动 11；雷 −10 → 联动 −5。
+  assert.deepEqual(stats.a, {bags: 1, gifts: 1, bombs: 1, contributed: 16, received: 0, causedLoss: 5, complete: true});
+  assert.equal(stats.b.received, 16);
   stats.a.bags = 999; assert.equal(world.runners[0].stats.bags, 1);
   const restored = run.restoreRunWorld(world, players, [], 100);
   assert.deepEqual(restored.runners[0].stats, world.runners[0].stats);

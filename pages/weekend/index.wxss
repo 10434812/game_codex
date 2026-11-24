@@ -1,0 +1,6 @@
+.weekend-content { padding: 32rpx 36rpx; color: #56391e; }
+.weekend-title { font-size: 46rpx; font-weight: bold; margin-bottom: 12rpx; }
+.weekend-back { margin: 0; min-height: 88rpx; background: transparent; color: #56391e; }
+.weekend-image { width: 100%; height: 300rpx; border-radius: 16rpx; margin-top: 24rpx; }
+.weekend-stage { font-size: 36rpx; font-weight: bold; margin: 12rpx 0; }
+.weekend-stamp { display: inline-block; border: 2rpx solid #92382e; color: #92382e; padding: 14rpx 20rpx; margin-top: 28rpx; }

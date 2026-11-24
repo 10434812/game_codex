@@ -1,4 +1,4 @@
-const {pickupEffect} = require('./arena-effects');
+const {pickupEffect, pickupText} = require('./arena-effects');
 const signed = (value) => `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value)}`;
 
 function sprintFeedback(state, self) {
@@ -11,13 +11,11 @@ function sprintFeedback(state, self) {
 function scoreBursts(world, selfId) {
   return world.effects.filter((e) => world.elapsedMs >= e.at && world.elapsedMs - e.at < 1000).flatMap((e) => {
     if (e.type === 'team') return [{id: `team-${e.id}`, x: e.x, y: e.y, team: true, loss: false, text: '组队成功'}];
-    const label = e.kind === 'bomb' ? '踩雷' : e.kind === 'gift' ? '礼物' : '福袋';
-    const delta = e.appliedDelta ?? e.delta;
     const own = {id: `pickup-${e.id}`, x: e.x, y: e.y, kind: e.kind, team: false, loss: e.delta < 0,
       effect: pickupEffect(e.kind, world.elapsedMs - e.at),
-      text: `${e.actorId === selfId ? '自己' : label} ${signed(delta)}`};
+      text: pickupText(e, e.actorId === selfId ? '自己' : '')};
     const mate = world.runners.find((r) => r.id === e.teammateId);
-    if (!mate) return [own];
+    if (!mate || !e.linkedDelta) return [own];
     const linked = e.appliedLinkedDelta ?? e.linkedDelta;
     return [own, {id: `linked-${e.id}`, x: mate.x, y: mate.y - 75, kind: 'linked', team: false, loss: e.linkedDelta < 0, text: `联动 ${signed(linked)}`}];
   });

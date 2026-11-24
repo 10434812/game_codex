@@ -117,10 +117,12 @@ function recordSettlement(payload = {}) {
 }
 
 async function fetchSummary() {
+  const token = api.getToken();
+  if (!token) return getSummary();
   try {
-    if (!api.isLoggedIn()) return getSummary();
     const data = await api.get('/stats/summary');
-    if (data) {
+    if (token !== api.getToken() && !api.isRecoveredToken(token, api.getToken())) return null;
+    if (data && Number.isFinite(Number(data.totalExp)) && Number(data.totalExp) >= 0) {
       return {
         totalIncome: data.totalIncome || 0,
         totalExp: data.totalExp || 0,
@@ -130,7 +132,7 @@ async function fetchSummary() {
   } catch (err) {
     console.warn('[player-stats] fetchSummary error:', err);
   }
-  return getSummary();
+  return null;
 }
 
 async function fetchHistory(page = 1, limit = 20) {

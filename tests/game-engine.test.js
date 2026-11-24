@@ -11,6 +11,15 @@ function createRandom(...values) {
   };
 }
 
+test('真人与机器人均以100分公平开局，显式测试分数仍可注入', () => {
+  for (const random of [() => 0, () => .5, () => .999]) {
+    const players = engine.createInitialPlayers({count: 10, random});
+    assert.ok(players.every((p) => p.score === 100));
+    assert.equal(engine.createSelfPlayer({}, {random}).score, 100);
+    assert.equal(engine.createRobotPlayer({}, {random}).score, 100);
+  }
+  assert.equal(engine.createSelfPlayer({score: 200}).score, 200);
+});
 test('ensureMinimumPlayers 会补机器人到至少 4 人', () => {
   const players = [engine.createSelfPlayer()];
   const next = engine.ensureMinimumPlayers(players, {random: createRandom(0.1, 0.2, 0.3, 0.4)});

@@ -7,14 +7,15 @@ const {ARENA_EFFECT_ASSETS, ARENA_DROP_ASSETS} = require('../utils/arena-effects
 const privacy = require('../utils/privacy-consent');
 const fs = require('node:fs');
 const path = require('node:path');
-const {applyViewPatch} = require('./helpers/arena-view-fixture');
+const {applyViewPatch, attachRuleSimulation} = require('./helpers/arena-view-fixture');
 
 test('跑动页沿用场景、装饰头像、消息与导航，人物和弹层共享原生视图层', () => {
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/arena/index.wxml'), 'utf8');
   for (const name of ['scene-backdrop', 'arena-scene-mask', 'avatar-shell', 'avatar-ring-overlay', 'pet-follower', 'message-reply-card', 'bottom-nav', 'rules-overlay']) assert.ok(wxml.includes(name), name);
   assert.doesNotMatch(wxml, /<canvas\b/);
   assert.ok(wxml.indexOf('player-name-layer') > wxml.indexOf('class="player-node'));
-  assert.match(wxml, /wx:if="{{stageVideo && !rulesVisible}}"/);
+  assert.match(wxml, /class="scene-backdrop-image" src="{{stageImage}}"/);
+  assert.doesNotMatch(wxml, /<video\b/);
 });
 
 function pageFixture(t) {
@@ -29,7 +30,7 @@ function pageFixture(t) {
   let definition; global.Page = (value) => {definition = value;}; require(path);
   if (audio) require.cache[audioPath] = audio; else delete require.cache[audioPath];
   const page = {...definition, data: JSON.parse(JSON.stringify(definition.data)), setData(patch, callback) {applyViewPatch(this.data, patch); callback?.();}};
-  store.__resetForTests(); store.startGame({autoStartTimer: false, random: () => .2}); page.onLoad(); page.onShow();
+  store.__resetForTests(); store.startGame({autoStartTimer: false, random: () => .2}); attachRuleSimulation(page); page.onLoad(); page.onShow();
   t.after(() => {page.onUnload(); store.__resetForTests(); privacy.canEnter = originalCanEnter;});
   return {page, calls, storage, audioCalls};
 }
@@ -157,9 +158,9 @@ test('三个掉落物在真实页面与 Canvas 中使用新的独立贴图，分
   state.runWorld.drops = ['bomb', 'bag', 'gift'].map((kind, i) => ({id: kind, kind, value: [-10, 10, 20][i],
     x: 250 + i * 200, y: 500, speed: 0, warningUntil: 0}));
   page.acceptState(state);
-  assert.deepEqual(page.data.drops.map((drop) => drop.asset), Object.values(ARENA_DROP_ASSETS));
+  assert.deepEqual(page.data.drops.map((drop) => drop.asset), ['bomb', 'bag', 'gift'].map((kind) => ARENA_DROP_ASSETS[kind]));
   assert.deepEqual(page.data.drops.map((drop) => drop.label), ['−10', '+10', '+20']);
-  const images = Object.fromEntries(Object.values(ARENA_DROP_ASSETS).map((asset) => [asset, {width: 256, height: 256}]));
+  const images = Object.fromEntries(Object.values(ARENA_DROP_ASSETS).filter(Boolean).map((asset) => [asset, {width: 256, height: 256}]));
   const {ctx, operations} = drawingContext();
   renderRunArena(ctx, state.runWorld, state.players, {x: 0, y: 0, width: 360, height: 600}, {images});
   for (const sprite of Object.values(images)) assert.ok(operations.some((op) => op[0] === 'drawImage' && op[1] === sprite));

@@ -1,3 +1,4 @@
+const analytics = require('../../utils/analytics');
 const {getNavLayout} = require('../../utils/nav');
 const api = require('../../utils/api-client');
 const gameStore = require('../../utils/game-store');
@@ -78,6 +79,8 @@ Page({
     syncFailed: false,
     syncing: false,
     actionPending: false,
+    loginRequired: !api.isLoggedIn(),
+    loginPending: false,
     avatarUrl: '',
     defaultAvatar: DEFAULT_AVATAR,
     stageName: DEFAULT_STAGE_THEME_DATA.stageName,
@@ -109,13 +112,14 @@ Page({
     const profile = userProfile.getCachedProfile();
     const activeCategory = this.data.activeCategory || 'skin';
     this.setData({
-      coins: state.coins,
-      balanceText: state.assetSource === 'server' && state.syncStatus !== 'ready'
+      coins: api.isLoggedIn() ? state.coins : 0,
+      loginRequired: !api.isLoggedIn(),
+      balanceText: !api.isLoggedIn() || state.assetSource === 'server' && state.syncStatus !== 'ready'
         ? '--' : formatCoinAmount(state.coins),
-      goods: buildGoods(activeCategory, this.data.actionPending ||
+      goods: buildGoods(activeCategory, !api.isLoggedIn() || this.data.actionPending ||
         (state.assetSource === 'server' && state.syncStatus !== 'ready')),
       assetMessage: state.assetSource !== 'server'
-        ? '游客本地体验，资产不会转入登录账号'
+        ? '微信登录后查看锦鲤币和装备'
         : state.syncStatus === 'ready' ? '账号资产已与服务器同步'
           : state.syncStatus === 'error' ? '账号资产同步失败，确认最新余额和库存前暂停操作'
             : '正在同步账号资产…',
@@ -127,6 +131,19 @@ Page({
       stageThemeKey: theme.stageThemeKey,
       stageThemeStyle: theme.stageThemeStyle,
     });
+  },
+  async loginForShop() {
+    if (this.data.loginPending) return;
+    this.setData({loginPending: true});
+    try {
+      await userProfile.ensureLogin();
+      await this.refreshAccountAssets();
+    } catch (error) {
+      wx.showToast({title: error.message || '微信登录失败，请重试', icon: 'none'});
+    } finally {
+      this.setData({loginPending: false});
+      this.syncPage();
+    }
   },
   async refreshAccountAssets() {
     if (!api.isLoggedIn() || this.data.syncing) return;
@@ -151,7 +168,7 @@ Page({
     playVibrate('light');
     this.setData({
       activeCategory: category,
-      goods: buildGoods(category, this.data.actionPending ||
+      goods: buildGoods(category, !api.isLoggedIn() || this.data.actionPending ||
         (shopStore.getStoreState().assetSource === 'server' && shopStore.getStoreState().syncStatus !== 'ready')),
     });
   },
@@ -164,6 +181,7 @@ Page({
       return;
     }
     const hasApiSession = api.isLoggedIn();
+    if (!hasApiSession) { await this.loginForShop(); return; }
     if (hasApiSession && shopStore.getStoreState().syncStatus !== 'ready') {
       wx.showToast({title: '请先重新同步账号资产', icon: 'none'});
       return;
@@ -172,9 +190,7 @@ Page({
     this.syncPage();
     let result;
     try {
-      result = hasApiSession
-        ? await (action === 'buy' ? shopStore.buyViaApi(itemId) : shopStore.equipViaApi(itemId, category))
-        : (action === 'buy' ? shopStore.purchaseItem(category, itemId) : shopStore.equipItem(category, itemId));
+      result = await (action === 'buy' ? shopStore.buyViaApi(itemId) : shopStore.equipViaApi(itemId, category));
     } finally {
       this.setData({actionPending: false});
       this.syncPage();
@@ -186,6 +202,7 @@ Page({
     }
 
     if (action === 'buy') {
+      analytics.track('shop_buy', {itemId});
       playCue('pairSelf', {volume: 0.8});
       playVibrate('medium');
     } else {

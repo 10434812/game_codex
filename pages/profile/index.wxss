@@ -97,6 +97,14 @@
   max-width: 600rpx;
 }
 
+.profile-login-title {
+  color: var(--stage-ink, #4f321b);
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .nickname-input {
   width: 100%;
   height: 86rpx;
@@ -160,3 +168,6 @@
   color: #c96a10;
   font-size: 24rpx;
 }
+
+.audio-settings { margin:24rpx 0; padding:0 24rpx; border:1rpx solid var(--border-color,#d2bb96); border-radius:16rpx; }
+.audio-setting-row { display:flex; align-items:center; justify-content:space-between; min-height:96rpx; color:var(--text-primary,#51361e); font-size:28rpx; gap:24rpx; }

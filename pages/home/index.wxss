@@ -18,7 +18,7 @@
 .home-page .theme-page-backdrop .scene-backdrop-mask {
   background:
     radial-gradient(circle at 50% 32%, var(--stage-glow, rgba(245, 188, 96, 0.28)) 0%, transparent 30%),
-    linear-gradient(180deg, rgba(8, 13, 26, 0.72) 0%, rgba(13, 18, 30, 0.48) 42%, rgba(47, 31, 16, 0.5) 72%, rgba(246, 235, 209, 0.88) 100%);
+    linear-gradient(180deg, rgba(8, 13, 26, 0.72) 0%, rgba(13, 18, 30, 0.48) 42%, rgba(47, 31, 16, 0.5) 72%, rgba(24, 17, 10, 0.72) 100%);
 }
 
 .topbar-spacer {
@@ -901,8 +901,9 @@
 }
 
 .announcement-modal-close {
-  width: 52rpx;
-  height: 52rpx;
+  width: 88rpx;
+  height: 88rpx;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1020,3 +1021,46 @@
     transform: translateY(0) scale(1);
   }
 }
+.summary-retry {
+  margin: 12rpx 0 0;
+  padding: 12rpx 16rpx;
+  min-height: 88rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: var(--stage-ink, #4a2f17);
+  background: var(--stage-panel-solid, #fff8ea);
+}
+
+.home-entry-actions { position:fixed; left:48rpx; right:48rpx; bottom:calc(166rpx + env(safe-area-inset-bottom)); z-index:18; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16rpx; }
+.home-entry-actions .start-btn { position:relative; left:auto; right:auto; bottom:auto; min-width:0; width:100%; }
+.home-entry-actions.single-entry { grid-template-columns:1fr; }
+/* 底部导航收起后按钮下移，只给右下角箭头留位置 */
+.home-entry-actions.nav-collapsed { bottom:calc(128rpx + env(safe-area-inset-bottom)); }
+.guide-home .guide-action-panel {
+  /* 与首页入口按钮同位同布局，引导按钮正好"替换"真实按钮 */
+  bottom: calc(128rpx + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+.guide-home .guide-action-panel.single-entry { grid-template-columns: 1fr; }
+/* 导航展开时与入口按钮一样抬到导航上方 */
+.guide-home .guide-action-panel.nav-open { bottom: calc(166rpx + env(safe-area-inset-bottom)); }
+.friend-room-btn {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0;
+  height: 88rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid #8d541d;
+  border-radius: 999rpx;
+  color: #573013;
+  background: #fff5de;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+.friend-room-btn::after { border: 0; }

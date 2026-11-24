@@ -354,7 +354,7 @@ test('登录与退出账号不会串用游客资产或上一账号资料', async
   assert.deepEqual(shopStore.getStoreState(), guest);
 });
 
-test('账号流水请求失败不把游客流水显示成账号记录', async () => {
+test('账号流水请求失败仍显示已确认的账号余额，且不混入游客流水', async () => {
   shopStore.addCoins(200);
   api.setToken('account-ledger');
   api.get = async (path) => {
@@ -363,7 +363,7 @@ test('账号流水请求失败不把游客流水显示成账号记录', async ()
   };
   const page = loadPage('../pages/income/index.js');
   await page.syncRecords();
-  assert.equal(page.data.balanceAmountText, '--');
+  assert.equal(page.data.balanceAmountText, '0');
   assert.deepEqual(page.data.records, []);
   assert.match(page.data.recordsStatusText, /同步失败/);
 });
@@ -497,7 +497,8 @@ test('登录后打开既有游客结算不展示为账号锦鲤币奖励', async
   const amounts = {};
   page.animateNumber = (amount, formatter, field) => { amounts[field] = amount; };
   await page.refreshResult();
-  assert.equal(amounts.incomeAmountText, 0);
+  assert.equal(amounts.incomeAmountText, undefined);
+  assert.equal(page.data.interrupted, true);
   gameStore.__resetForTests();
 });
 

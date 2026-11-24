@@ -25,16 +25,16 @@ function harness(options = {}) {
   };
   const module = {exports: {}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../utils/privacy-consent.js'), 'utf8'), {
-    module, wx, require: () => legal,
+    module, wx, require: (name) => name === './analytics' ? {discard() {}} : legal,
   });
   return {privacy: module.exports, legal, calls, storage};
 }
 
-test('开发预览只开放页面与本地玩法，账号授权独立校验', () => {
+test('开发版也不提供绕过授权的预览入口', () => {
   const h = harness({ready: false, envVersion: 'develop'});
   assert.equal(h.privacy.canEnter(), false);
-  h.privacy.beginDevelopmentPreview();
-  assert.equal(h.privacy.canEnter(), true);
+  assert.throws(() => h.privacy.beginDevelopmentPreview());
+  assert.equal(h.privacy.canEnter(), false);
   assert.equal(h.privacy.isAllowed(), false);
   assert.throws(() => h.privacy.assertAllowed(), {code: 'PRIVACY_CONSENT_REQUIRED'});
   h.privacy.revoke();

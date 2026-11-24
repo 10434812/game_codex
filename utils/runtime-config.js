@@ -24,7 +24,7 @@ const DEFAULT_CONFIG = {
 
 let cachedConfig = { ...DEFAULT_CONFIG };
 let cachedFeatures = {};
-let lastFetchTime = 0;
+let lastFetchTime = null;
 let pendingPromise = null;
 
 // 开发版本地覆盖：仅 develop 环境生效，用于把 API 指向本地后端、临时打开联机开关。
@@ -77,7 +77,7 @@ function getBoolean(key, fallback = false) {
 
 async function fetchRemoteConfig(force = false) {
   const now = Date.now();
-  if (!force && now - lastFetchTime < 60 * 1000) {
+  if (!force && lastFetchTime !== null && now - lastFetchTime < 60 * 1000) {
     return getConfigMap();
   }
   if (pendingPromise) {
@@ -101,7 +101,7 @@ async function fetchRemoteConfig(force = false) {
     })
     .catch((error) => {
       console.warn('[runtime-config] fetchRemoteConfig error:', error);
-      lastFetchTime = Date.now();
+      // Failed attempts must not suppress the next recovery request for 60s.
       return getConfigMap();
     })
     .finally(() => {

@@ -44,3 +44,20 @@ function makeArenaFrames(count = 240) {
   return frames;
 }
 module.exports = {loadArenaPage, makeArenaFrames, applyViewPatch};
+
+// 只供规则与视图单测连接内存引擎；正式页面入口只接受服务端 sessionId。
+function attachRuleSimulation(page) {
+  const store = require('../../utils/game-store');
+  const shop = require('../../utils/shop-store');
+  page.onShow = function () {
+    this.active = true;
+    this.generation = (this.generation || 0) + 1;
+    this.direction = {dx: 0, dy: 0};
+    this.appearance = {...shop.getEquippedDisplay(), images: {}, emotes: {}};
+    this.unsubscribe = store.subscribe((state) => this.acceptState(state));
+    this.acceptState(store.getState());
+    if (this.data.rulesFirstRun) store.pauseGame(); else store.resumeGame();
+  };
+  return page;
+}
+module.exports.attachRuleSimulation = attachRuleSimulation;

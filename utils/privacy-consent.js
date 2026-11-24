@@ -3,26 +3,11 @@ const legal = require('./legal-config');
 const CONSENT_KEY = 'legal-consent-version';
 let confirmedVersion = '';
 let revision = 0;
-let developmentPreview = false;
-
-function isDevelopmentPreviewAvailable() {
-  try { return wx.getAccountInfoSync().miniProgram.envVersion === 'develop'; }
-  catch (_error) { return false; }
-}
-
-function isDevelopmentPreview() {
-  return developmentPreview && isDevelopmentPreviewAvailable();
-}
-
-function canEnter() {
-  return isAllowed() || isDevelopmentPreview();
-}
-
-function beginDevelopmentPreview() {
-  if (!isDevelopmentPreviewAvailable()) throw new Error('开发预览仅适用于开发版');
-  revoke();
-  developmentPreview = true;
-}
+// 兼容现有客户端调用；不再提供绕过授权的预览模式。
+function isDevelopmentPreviewAvailable() { return false; }
+function isDevelopmentPreview() { return false; }
+function canEnter() { return isAllowed(); }
+function beginDevelopmentPreview() { throw new Error('请先完成微信授权后使用'); }
 
 function version() {
   return `${legal.legalConfig.privacyVersion}:${legal.legalConfig.agreementVersion}`;
@@ -38,9 +23,7 @@ function isAllowed() {
 
 function assertAllowed() {
   if (!isAllowed()) {
-    const error = new Error(isDevelopmentPreview()
-      ? '当前为本地开发预览，账号登录与联机功能需完成正式协议和微信授权'
-      : '请先阅读当前协议并完成微信隐私确认');
+    const error = new Error('请先阅读当前协议并完成微信隐私确认');
     error.code = 'PRIVACY_CONSENT_REQUIRED';
     error.statusCode = 403;
     throw error;
@@ -64,7 +47,6 @@ async function checkPlatformConsent() {
 }
 
 async function authorize() {
-  developmentPreview = false;
   confirmedVersion = '';
   const operation = ++revision;
   if (!legal.isReady()) throw new Error('正式法律文档尚未配置或生效，当前不可授权。');
@@ -78,9 +60,9 @@ async function authorize() {
 }
 
 function revoke() {
-  developmentPreview = false;
   confirmedVersion = '';
   revision++;
+  require('./analytics').discard();
   // 持久化撤回：下次启动必须重新主动确认，而不是读取旧的授权版本直接放行
   try { wx.removeStorageSync(CONSENT_KEY); } catch (_error) { /* 存储不可用时仅保留内存撤回 */ }
 }

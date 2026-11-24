@@ -15,24 +15,8 @@
   </view>
 
   <view class="page-content">
-    <view class="scene-backdrop" wx:if="{{stageImage || stageVideo}}">
-      <image wx:if="{{stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
-      <video
-        wx:if="{{stageVideo && !rulesVisible}}"
-        id="scene-backdrop-video"
-        class="scene-backdrop-video"
-        src="{{stageVideo}}"
-        poster="{{stageImage}}"
-        autoplay
-        muted
-        loop
-        controls="{{false}}"
-        show-center-play-btn="{{false}}"
-        show-play-btn="{{false}}"
-        show-fullscreen-btn="{{false}}"
-        enable-progress-gesture="{{false}}"
-        object-fit="cover"
-      ></video>
+    <view class="scene-backdrop" wx:if="{{stageImage}}">
+      <image class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
       <view class="scene-template"></view>
       <view class="scene-backdrop-mask arena-scene-mask"></view>
     </view>
@@ -58,7 +42,7 @@
     <view class="run-action-error" wx:if="{{error}}">{{error}}</view>
     <view class="run-action-error" wx:if="{{connectionText}}">{{connectionText}}</view>
     <view class="run-tutorial" wx:if="{{tutorialStep && !rulesVisible && !waiting}}">
-      <text>{{tutorialStep === 1 ? '1/3 在场地拖动手指，让角色跑起来' : tutorialStep === 2 ? '2/3 接住福袋或礼物，注意躲开雷' : '3/3 点击其他玩家头像，邀请对方组队'}}</text>
+      <text>{{tutorialStep === 1 ? '拖动手指移动，松手停下' : tutorialStep === 2 ? '接福袋和礼物加分，绕开地雷' : '想组队时，点选其他玩家发出邀请'}}</text>
       <button bindtap="dismissTutorial">知道了</button>
     </view>
     <view class="board" id="run-field" style="--arena-move-time:{{motionDuration}}ms;" catchtouchstart="onRunTouchStart" catchtouchmove="onRunTouchMove" catchtouchend="onRunTouchEnd" catchtouchcancel="onRunTouchCancel">
@@ -69,7 +53,8 @@
       </view>
 
       <view class="run-drop {{item.warning ? 'run-drop-warning' : ''}} run-drop-{{item.kind}}" wx:for="{{drops}}" wx:key="id" style="transform:translate3d({{item.px}}px,{{item.py}}px,0) translate(-50%,-50%);">
-        <image class="run-drop-image" src="{{item.asset}}" mode="aspectFit" />
+        <image wx:if="{{item.asset}}" class="run-drop-image" src="{{item.asset}}" mode="aspectFit" />
+        <view wx:else class="run-drop-glyph">{{item.glyph}}</view>
         <text class="run-drop-label">{{item.label}}</text>
       </view>
       <view class="run-impact run-impact-{{item.kind}}" wx:for="{{bursts}}" wx:key="id" wx:if="{{item.effect}}" style="left:{{item.x}}%;top:{{item.y}}%;width:{{item.effect.size}}rpx;height:{{item.effect.size}}rpx;opacity:{{item.effect.opacity}};">
@@ -82,7 +67,7 @@
 
       <view class="runner-position {{item.isSelf ? 'self-runner-position' : ''}}" wx:for="{{ players }}" wx:key="id" style="transform:translate3d({{item.px}}px,{{item.py}}px,0);">
       <view class="player-node {{ item.isSelf ? 'self-node' : '' }}" data-player-id="{{ item.id }}" catchtouchstart="onRunTouchStart">
-        <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }} {{item.invited ? 'run-invited' : ''}} {{item.boosted ? 'run-boosted' : ''}}" hover-class="clickable-hover">
+        <view class="avatar-shell {{ item.isSelf ? 'self-avatar-shell' : '' }} {{ item.skinClass }} {{item.invited ? 'run-invited' : ''}} {{item.boosted ? 'run-boosted' : ''}} {{item.shield ? 'run-shielded' : ''}} {{item.magnet ? 'run-magnet' : ''}}" hover-class="clickable-hover">
           <view class="avatar-core">
             <image class="avatar" src="{{ item.skinImage || item.avatar || 'https://xcx.ukb88.com/assets/bg/avatars/avatar_01.png' }}" mode="aspectFill" lazy-load="{{true}}"></image>
           </view>
@@ -154,21 +139,25 @@
 
     <view class="quick-emote" style="bottom: calc({{ messageCardCollapsed ? 286 : 382 }}rpx + env(safe-area-inset-bottom));" bindtap="onToggleEmotePanel" hover-class="clickable-hover">☺</view>
 
-    <view class="bottom-nav">
-      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
-        <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
-        <text>{{ item.label }}</text>
-      </view>
+    <view class="bottom-nav {{navExpanded ? 'expanded' : 'collapsed'}}">
+      <block wx:if="{{navExpanded}}">
+        <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
+          <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
+          <text>{{ item.label }}</text>
+        </view>
+      </block>
+      <view class="nav-toggle" catchtap="toggleNav" hover-class="clickable-hover" aria-role="button" aria-label="{{navExpanded ? '收起导航' : '展开导航'}}"><view class="nav-toggle-arrow"></view></view>
     </view>
     </view>
 
     <view class="rules-overlay" wx:if="{{rulesVisible}}" catchtouchmove="noop">
       <view class="rules-panel">
         <view class="rules-title">120 秒，争夺积分第一！</view>
-        <view class="rules-summary">拖动跑动，松手停住。接住掉落的福袋和礼物，躲开雷，按个人积分排名。</view>
+        <view class="rules-summary">统一 100 分开局。拖动跑动，松手停住。接住福袋和礼物，躲开雷，按个人积分排名。</view>
         <view class="rules-item"><text class="rules-label">组队联动</text><text>双方互相点选同意，追上碰面后成队并闪爆。靠近队友双方加速。</text></view>
         <view class="rules-item"><text class="rules-label">保持独立</text><text>点击退出组队即可随时离队，恢复各自得分。</text></view>
-        <view class="rules-item"><text class="rules-label">争取高分</text><text>福袋 +10，礼物 +20，踩雷 −10。组队时队友同步一半，踩雷队友扣 5 分。</text></view>
+        <view class="rules-item"><text class="rules-label">道具护航</text><text>护盾挡一次雷；磁铁持续 6 秒，吸附附近好运。</text></view>
+        <view class="rules-item"><text class="rules-label">争取高分</text><text>福袋 +10，礼物 +20，雷 −10；连击加分最多 +10，最后 15 秒正向基础分翻倍。队友同步一半。</text></view>
         <view class="rules-note">{{rulesFirstRun ? '点击开始后计时；联机对局等待所有玩家确认。' : '本局继续计时，可随时回到对局调整策略。'}}</view>
         <button class="rules-primary" bindtap="onStartFromRules" loading="{{rulesStarting}}" disabled="{{rulesStarting}}" hover-class="btn-hover">{{rulesFirstRun ? '开始' : '返回对局'}}</button>
       </view>

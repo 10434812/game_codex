@@ -47,9 +47,10 @@
       <view class="summary-sub">{{accountLabel}}</view>
     </view>
 
-    <view class="list-head">完整资金明细</view>
+    <view class="list-head">资金明细</view>
 
-    <view wx:if="{{records.length}}" class="record-list">
+    <view wx:if="{{loading}}" class="empty-state">正在加载资金明细…</view>
+    <view wx:elif="{{records.length}}" class="record-list">
       <view wx:for="{{records}}" wx:key="id" class="record-item">
         <view class="record-row">
           <text class="record-stage">{{item.typeText}}</text>
@@ -66,8 +67,12 @@
       </view>
     </view>
 
-    <button wx:elif="{{recordsStatusText}}" class="empty-state" bindtap="syncRecords">{{recordsStatusText}}</button>
+    <button wx:elif="{{recordsStatusText && !recordsLoginRequired}}" class="empty-state" bindtap="syncRecords">{{recordsStatusText}}</button>
+    <view wx:elif="{{recordsLoginRequired}}" class="empty-state">{{recordsStatusText}}</view>
     <view wx:else class="empty-state">暂无资金记录</view>
+    <button wx:if="{{recordsLoginRequired}}" class="ledger-more" bindtap="loginAndSyncRecords" loading="{{loginPending}}" disabled="{{loginPending}}">微信登录并重新同步流水</button>
+    <button wx:elif="{{hasMore && !loading}}" class="ledger-more" bindtap="loadMoreRecords" loading="{{loadingMore}}" disabled="{{loadingMore}}">{{loadingMore ? '正在加载' : moreError || '加载更多流水'}}</button>
+    <view wx:elif="{{records.length && !loading}}" class="empty-state">已显示全部流水</view>
     </view>
   </view>
 </view>

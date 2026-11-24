@@ -1,37 +1,24 @@
-const {DEFAULT_STAGE, STAGES, NAV_TABS, AVATAR_POOL} = require('./constants');
-const {FORTUNE_BAG_ASSETS} = require('./investment');
-const {ARENA_EFFECT_ASSETS, ARENA_DROP_ASSETS} = require('./arena-effects');
+const {DEFAULT_STAGE, DEFAULT_AVATAR, NAV_TABS} = require('./constants');
 
 const LOCAL_BOOT_ASSETS = [
   'https://xcx.ukb88.com/assets/bg/bg.png',
-  'https://xcx.ukb88.com/assets/bg/bg2.png',
-  'https://xcx.ukb88.com/assets/bg/bg6.png',
-  'https://xcx.ukb88.com/assets/bg/gamebg-compressed.png',
-  ...Object.values(ARENA_EFFECT_ASSETS),
-  ...Object.values(ARENA_DROP_ASSETS),
 ];
 
-// 明确预加载清单：当前景区 image + 头像池 12 张 + 福袋图 + 底部导航图标
-// （不再用 !stage.video 过滤，避免景区全部带 video 时景区图零预加载）
+// Only resources needed by the first home screen compete with config/login.
+// Arena effects and other destinations load when their own surface is opened.
 function getRemoteBootAssets(stage) {
   const stageImages = stage && stage.image
     ? [stage.image]
-    : [DEFAULT_STAGE, ...STAGES]
-      .map((item) => item.image)
-      .filter(Boolean);
-  const avatarImages = (AVATAR_POOL || []).filter(Boolean);
-  const fortuneImages = Object.keys(FORTUNE_BAG_ASSETS || {})
-    .map((key) => FORTUNE_BAG_ASSETS[key])
-    .filter(Boolean);
+    : [DEFAULT_STAGE.image];
   const navIcons = NAV_TABS.reduce((list, tab) => {
     list.push(tab.icon, tab.iconActive);
     return list;
   }, []);
-  return [...stageImages, ...avatarImages, ...fortuneImages, ...navIcons];
+  return [...stageImages, DEFAULT_AVATAR, ...navIcons].filter(Boolean);
 }
 
 function getBootAssetQueue(stage) {
-  return [...LOCAL_BOOT_ASSETS, ...getRemoteBootAssets(stage)];
+  return [...new Set([...LOCAL_BOOT_ASSETS, ...getRemoteBootAssets(stage)])];
 }
 
 function createImagePreloadTask(src) {
@@ -67,6 +54,7 @@ function createImagePreloadTask(src) {
 function createBootLoader(tasks = [], onProgress = () => {}) {
   const safeTasks = Array.isArray(tasks) ? tasks : [];
   const total = safeTasks.length;
+  let cancelled = false;
 
   return {
     start() {
@@ -76,16 +64,20 @@ function createBootLoader(tasks = [], onProgress = () => {}) {
       }
 
       let completed = 0;
-      const promises = safeTasks.map((task) => {
-        return Promise.resolve(task()).catch(() => null).then(() => {
+      let next = 0;
+      const worker = async () => {
+        while (!cancelled && next < total) {
+          const task = safeTasks[next++];
+          try {await task();} catch (_) {}
+          if (cancelled) return;
           completed += 1;
           const percent = Math.round((completed / total) * 100);
           onProgress(percent, {completed, total});
-        });
-      });
-
-      return Promise.all(promises);
+        }
+      };
+      return Promise.all(Array.from({length: Math.min(4, total)}, worker));
     },
+    cancel() {cancelled = true;},
   };
 }
 

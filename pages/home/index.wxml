@@ -17,22 +17,6 @@
   <view class="page-content">
     <view class="scene-backdrop theme-page-backdrop home-scene-backdrop" wx:if="{{stageImage || stageVideo}}">
       <image wx:if="{{stageImage}}" class="scene-backdrop-image" src="{{stageImage}}" mode="aspectFill"></image>
-      <video
-        wx:if="{{stageVideo}}"
-        id="scene-backdrop-video"
-        class="scene-backdrop-video"
-        src="{{stageVideo}}"
-        poster="{{stageImage}}"
-        autoplay
-        muted
-        loop
-        controls="{{false}}"
-        show-center-play-btn="{{false}}"
-        show-play-btn="{{false}}"
-        show-fullscreen-btn="{{false}}"
-        enable-progress-gesture="{{false}}"
-        object-fit="cover"
-      ></video>
       <view class="scene-template"></view>
       <view class="scene-backdrop-mask"></view>
     </view>
@@ -71,6 +55,7 @@
             <view class="badge">旅行成长</view>
           </view>
           <view class="profile-meta">{{experienceText}}</view>
+        <button wx:if="{{summaryError}}" class="summary-retry" bindtap="syncServerSummary">{{summaryError}}</button>
         </view>
         <view class="exp-progress">
           <view class="exp-track">
@@ -111,7 +96,7 @@
             <view class="tag {{ item.hot ? 'tag-hot' : 'tag-choice' }}">{{ item.hot ? 'HOT' : '精选' }}</view>
             <image wx:if="{{item.image}}" class="stage-image" src="{{ item.image }}" mode="aspectFill" lazy-load="{{true}}"></image>
             <video
-              wx:if="{{ item.video && activeStage === stageIndex }}"
+              wx:if="{{ item.video && activeStage === stageIndex && pageVisible }}"
               id="stage-video-{{stageIndex}}"
               class="stage-video"
               data-stage-index="{{stageIndex}}"
@@ -145,13 +130,19 @@
       </view>
     </view>
 
-    <button class="primary-btn start-btn" bindtap="startGame" hover-class="btn-hover">{{activeSessionId ? '返回联机对局' : '本地体验 · 进入房间'}}</button>
+    <view wx:if="{{!guideVisible}}" class="home-entry-actions {{quickMatchAvailable && !activeSessionId ? '' : 'single-entry'}} {{navExpanded ? '' : 'nav-collapsed'}}">
+      <button class="primary-btn start-btn" bindtap="onPrimaryEntry" loading="{{entryRefreshing}}" disabled="{{entryRefreshing}}" hover-class="btn-hover">{{activeSessionId ? '返回联机对局' : quickMatchAvailable ? (challengePending ? '开始好友挑战' : '快速匹配') : onlineAvailable ? '创建房间' : '重新连接对战服务'}}</button>
+      <button wx:if="{{quickMatchAvailable && !activeSessionId}}" class="friend-room-btn" bindtap="startGame" hover-class="btn-hover">创建房间</button>
+    </view>
 
-    <view class="bottom-nav">
-      <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
-        <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
-        <text>{{ item.label }}</text>
-      </view>
+    <view class="bottom-nav {{navExpanded ? 'expanded' : 'collapsed'}}">
+      <block wx:if="{{navExpanded}}">
+        <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
+          <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
+          <text>{{ item.label }}</text>
+        </view>
+      </block>
+      <view class="nav-toggle" catchtap="toggleNav" hover-class="clickable-hover" aria-role="button" aria-label="{{navExpanded ? '收起导航' : '展开导航'}}"><view class="nav-toggle-arrow"></view></view>
     </view>
     </view>
 
@@ -187,10 +178,11 @@
       <view class="guide-mask"></view>
       <view class="guide-card guide-card-top">
         <view class="guide-kicker">新手引导 1/5</view>
-        <view class="guide-title">选好景区，进入本地体验房间；也可在房间内创建好友联机。</view>
+        <view class="guide-title">{{quickMatchAvailable && challengePending ? '在好友的景区匹配，比一比本局积分。' : quickMatchAvailable ? '选好景区，快速匹配对手。' : '选好景区，创建房间，邀请好友一起对战。'}}</view>
       </view>
-      <view class="guide-action-panel">
-        <button class="guide-primary" bindtap="onGuidePrimary" hover-class="btn-hover">进入体验房间</button>
+      <view class="guide-action-panel {{quickMatchAvailable ? '' : 'single-entry'}} {{navExpanded ? 'nav-open' : ''}}">
+        <button class="guide-primary" bindtap="onGuidePrimary" hover-class="btn-hover">{{quickMatchAvailable ? (challengePending ? '开始好友挑战' : '快速匹配') : '创建房间'}}</button>
+        <button wx:if="{{quickMatchAvailable}}" class="friend-room-btn" bindtap="startGame" hover-class="btn-hover">创建房间</button>
       </view>
     </view>
   </view>

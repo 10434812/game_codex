@@ -63,6 +63,7 @@
       </view>
       <view class="asset-sync-state">
         <text class="asset-sync-message">{{assetMessage}}</text>
+        <button wx:if="{{loginRequired}}" class="asset-sync-retry" bindtap="loginForShop" loading="{{loginPending}}" disabled="{{loginPending}}">微信登录</button>
         <button wx:if="{{syncFailed}}" class="asset-sync-retry" bindtap="refreshAccountAssets" disabled="{{syncing || actionPending}}" loading="{{syncing}}">重新同步</button>
       </view>
     </view>

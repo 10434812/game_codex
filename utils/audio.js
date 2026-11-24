@@ -1,3 +1,4 @@
+const {getSettings} = require('./audio-settings');
 const SOURCES = {
   tap: 'https://xcx.ukb88.com/assets/audio/battle/button-tap.wav',
   invite: 'https://xcx.ukb88.com/assets/audio/battle/remote-invite.wav',
@@ -79,6 +80,8 @@ let initialized = false;
 let sharedAudio = null;
 let bgmAudio = null;
 let voiceAudio = null;
+let voiceEndedHandler = null;
+let voiceErrorHandler = null;
 let currentBgmSrc = '';
 let currentBgmVolume = DEFAULT_BGM_VOLUME * BGM_VOLUME_SCALE;
 let voiceSerial = 0;
@@ -132,8 +135,15 @@ function createAudio() {
     } catch (error) { console.warn('[audio] destroy audio error:', error); }
     // 只重置出错的那个实例的引用：误置其它 context（如正在播放的 BGM）会导致 stopBgm 失效、重复播放
     if (sharedAudio === audio) sharedAudio = null;
-    if (bgmAudio === audio) bgmAudio = null;
-    if (voiceAudio === audio) voiceAudio = null;
+    if (bgmAudio === audio) {
+      bgmAudio = null;
+      currentBgmSrc = '';
+    }
+    if (voiceAudio === audio) {
+      voiceAudio = null;
+      voiceEndedHandler = null;
+      voiceErrorHandler = null;
+    }
     Object.keys(loopPool).forEach((name) => {
       if (loopPool[name] === audio) {
         delete loopPool[name];
@@ -185,6 +195,7 @@ function getStageVoiceName(stage) {
 }
 
 function playBgmSource(src, options = {}) {
+  if (!getSettings().music) return null;
   if (!src) {
     return null;
   }
@@ -234,6 +245,7 @@ function duckBgmForVoice(serial, duckVolume) {
 }
 
 function playCue(name, options = {}) {
+  if (!getSettings().sound) return null;
   initAudioOption();
   const src = SOURCES[name];
   if (!src) {
@@ -260,6 +272,7 @@ function playCue(name, options = {}) {
 }
 
 function playVoice(name, options = {}) {
+  if (!getSettings().voice) return null;
   initAudioOption();
   const src = VOICE_SOURCES[name];
   if (!src) {
@@ -293,11 +306,19 @@ function playVoice(name, options = {}) {
     audio.loop = false;
     audio.volume = typeof options.volume === 'number' ? options.volume : 1;
     duckBgmForVoice(serial, duckVolume);
+    if (voiceEndedHandler && typeof audio.offEnded === 'function') {
+      audio.offEnded(voiceEndedHandler);
+    }
+    if (voiceErrorHandler && typeof audio.offError === 'function') {
+      audio.offError(voiceErrorHandler);
+    }
+    voiceEndedHandler = () => restoreBgmVolume(serial, restoreVolume);
+    voiceErrorHandler = () => restoreBgmVolume(serial, restoreVolume);
     if (typeof audio.onEnded === 'function') {
-      audio.onEnded(() => restoreBgmVolume(serial, restoreVolume));
+      audio.onEnded(voiceEndedHandler);
     }
     if (typeof audio.onError === 'function') {
-      audio.onError(() => restoreBgmVolume(serial, restoreVolume));
+      audio.onError(voiceErrorHandler);
     }
     audio.play();
     return audio;
@@ -330,6 +351,7 @@ function stopBgm() {
 }
 
 function playVibrate(type = 'light') {
+  if (!getSettings().haptics) return null;
   try {
     if (!isRealDevicePlatform()) {
       return;
@@ -377,7 +399,26 @@ function destroy() {
   Object.keys(lastVoicePlayedAt).forEach(key => delete lastVoicePlayedAt[key]);
 }
 
+// Page-owned one-shot effects use the same preferences and resource catalog.
+function createEffectAudio(name, options = {}) {
+  if (!getSettings().sound || !SOURCES[name]) return null;
+  initAudioOption();
+  const audio = createAudio(); audio.autoplay = false; audio.loop = false;
+  audio.volume = typeof options.volume === 'number' ? options.volume : .8; audio.src = SOURCES[name];
+  return audio;
+}
+function applySettings() {
+  const settings = getSettings();
+  if (!settings.music) stopBgm();
+  if (!settings.voice) {voiceSerial++; try {voiceAudio?.stop();} catch (_) {}}
+  if (!settings.sound) {
+    try {sharedAudio?.stop();} catch (_) {}
+    for (const audio of Object.values(loopPool)) {try {audio.stop();} catch (_) {}}
+  }
+}
 module.exports = {
+  applySettings,
+  createEffectAudio,
   playCue,
   playVoice,
   playBgm,

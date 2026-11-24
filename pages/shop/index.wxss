@@ -17,7 +17,7 @@
 
 .asset-card {
   margin-top: 14rpx;
-  background: linear-gradient(145deg, var(--stage-panel-solid, #f7ecs0) 0%, var(--stage-panel, #f1e0bf) 100%);
+  background: linear-gradient(145deg, var(--stage-panel-solid, #f7ecc0) 0%, var(--stage-panel, #f1e0bf) 100%);
   border: 3rpx solid var(--stage-border, #e0c8a1);
   border-radius: 28rpx;
   padding: 30rpx 36rpx;

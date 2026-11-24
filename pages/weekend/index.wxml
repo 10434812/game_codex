@@ -1,0 +1,20 @@
+<view class="paper-bg weekend-page">
+  <image class="global-bg-image" src="https://xcx.ukb88.com/assets/bg/bg.png" mode="scaleToFill" />
+  <view class="app-header" style="padding-top: {{nav.statusBarHeight}}px; padding-right: {{nav.capsuleSpace}}px;">
+    <button class="weekend-back" bindtap="back">返回</button>
+  </view>
+  <view class="page-content weekend-content">
+    <view class="weekend-title">周末景区挑战</view>
+    <block wx:if="{{activity}}">
+      <view>{{activity.period}} 起 · 北京时间周六至周日</view>
+      <image class="weekend-image" src="{{activity.image}}" mode="aspectFill" />
+      <view class="weekend-stage">{{activity.stage}}</view>
+      <view>活动期间在该景区完成一场联机对局。</view>
+      <view class="weekend-stamp">{{activity.souvenir}} · {{activity.completed ? '已获得' : activity.active ? '待完成' : '已结束'}}</view>
+    </block>
+    <block wx:else>
+      <view wx:if="{{error}}">{{error}}</view>
+      <button class="primary-btn" bindtap="load" loading="{{loading}}" disabled="{{loading}}">查看挑战</button>
+    </block>
+  </view>
+</view>

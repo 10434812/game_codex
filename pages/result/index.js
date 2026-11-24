@@ -1,10 +1,13 @@
+const {prepareResultImage} = require('../../utils/result-share-image');
+const {resultCard, resultShareTitle} = require('../../utils/result-share-card');
+const analytics = require('../../utils/analytics');
 const {getNavLayout} = require('../../utils/nav');
 const api = require('../../utils/api-client');
 const privacyConsent = require('../../utils/privacy-consent');
 const {DEFAULT_AVATAR, DEFAULT_STAGE, MATCH_MODE_TEXT, NAV_TABS, resolveStage} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
 const playerStats = require('../../utils/player-stats');
-const {playCue, playVoice, stopBgm, playVibrate} = require('../../utils/audio');
+const {playCue, playVoice, stopBgm, playVibrate, createEffectAudio} = require('../../utils/audio');
 const {getCachedProfile, hasValidProfile} = require('../../utils/user-profile');
 const {buildExpProgress} = require('../../utils/progression');
 const {formatNumber} = require('../../utils/format');
@@ -14,6 +17,7 @@ const {enableShareMenu, buildShareAppMessage, buildShareTimeline} = require('../
 const {createStageThemeData, loadStageTheme, saveStageTheme} = require('../../utils/stage-theme');
 const guideStore = require('../../utils/guide-store');
 const {performanceFeedback} = require('../../utils/arena-feedback');
+const {selectGrowthGoal} = require('../../utils/growth-goal');
 
 // 烟花颜色配置
 const FIREWORK_COLORS = [
@@ -182,9 +186,9 @@ Page({
     },
     top3: createEmptyTop3(),
     rankList: [],
-    modeText: MATCH_MODE_TEXT,
+    modeText: '对局结算',
     tabs: NAV_TABS,
-    activeTab: 'history',
+    activeTab: 'history', navExpanded: false,
     stageName: DEFAULT_STAGE_THEME_DATA.stageName,
     stageImage: DEFAULT_STAGE_THEME_DATA.stageImage,
     stageVideo: DEFAULT_STAGE_THEME_DATA.stageVideo,
@@ -197,6 +201,12 @@ Page({
     resultReason: '',
     performance: null,
     replayPending: false,
+    replayError: '',
+    replayNewRoom: false,
+    matchmaking: false,
+    growthGoal: null,
+    passport: null,
+    expError: '',
     gainText: '0',
     incomeText: '🐟锦鲤币 0',
     incomeAmountText: '0',
@@ -232,6 +242,7 @@ Page({
     guideVisible: false,
   },
   onLoad(options = {}) {
+    this.pageActive = true;
     this.onlineSessionId = String(options.sessionId || '');
     try {
       this.setData({nav: getNavLayout()});
@@ -242,6 +253,8 @@ Page({
     });
   },
   async onShow() {
+    this.pageActive = true;
+    this.setData({replayPending: false});
     if (!privacyConsent.canEnter()) return;
     this.syncUserProfile();
     stopBgm();
@@ -254,25 +267,46 @@ Page({
       this.lastPlayedResultId = this.data.resultId;
     }
   },
+  onReady() {if (this.shareResult && this.shareResultOwner === api.getToken()) this.sharePreparation = prepareResultImage(this, this.shareResult, this.data.stageName);},
   onHide() {
+    this.shareRevision = (this.shareRevision || 0) + 1; this.shareCardPath = '';
+    this.pageActive = false;
+    this.replayGeneration = (this.replayGeneration || 0) + 1;
     this.stopResultFirework();
     this.closeKoiEffect({silent: true});
     this.clearResultVoiceTimer();
+    this.stopNumberAnimations();
   },
   onUnload() {
+    this.shareRevision = (this.shareRevision || 0) + 1; this.shareCardPath = '';
+    this.pageActive = false;
+    this.replayGeneration = (this.replayGeneration || 0) + 1;
+    this.resultRequestId = (this.resultRequestId || 0) + 1;
     this.stopResultFirework();
     this.closeKoiEffect({silent: true});
     this.clearResultVoiceTimer();
     this.stopNumberAnimations();
   },
   onShareAppMessage() {
-    return buildShareAppMessage('result', {
-      extraQuery: `resultId=${encodeURIComponent(this.data.resultId || '')}`,
-    });
+    analytics.track('share_click');
+    const payload = buildShareAppMessage('result');
+    const owner = api.getToken();
+    const card = this.shareResultOwner === owner ? resultCard(this.shareResult, this.data.stageName) : null;
+    const fallback = {...payload, path: '/pages/home/index?from=result_share'};
+    if (!card) return fallback;
+    const share = {...fallback, title: resultShareTitle(card)};
+    if (this.shareResult.challengeCode) share.path += `&challenge=${encodeURIComponent(this.shareResult.challengeCode)}`;
+    if (this.shareCardOwner === owner && this.shareCardPath) return {...share, imageUrl: this.shareCardPath};
+    if (!this.sharePreparation) return share;
+    const revision = this.shareRevision;
+    return {...share, promise: this.sharePreparation.then((path) => {
+      if (owner !== api.getToken() || revision !== this.shareRevision) return fallback;
+      return path ? {...share, imageUrl: path} : share;
+    })};
   },
   onShareTimeline() {
     return buildShareTimeline('result', {
-      extraQuery: `resultId=${encodeURIComponent(this.data.resultId || '')}`,
+      extraQuery: 'from=result_share',
     });
   },
   syncGuide() {
@@ -311,13 +345,9 @@ Page({
       this.resultWinAudio = null;
     }
 
-    const audio = wx.createInnerAudioContext();
-    audio.autoplay = false;
-    audio.loop = false;
-    audio.volume = 0.8;
-    audio.src = 'https://xcx.ukb88.com/assets/audio/result/yanhua.mp3';
+    const audio = createEffectAudio?.('resultWin', {volume: .8});
     this.fireworkAudioPlayCount = (this.fireworkAudioPlayCount || 0) + 1;
-    audio.onEnded(() => {
+    const ended = () => {
       if (!this.resultFireworkActive) {
         return;
       }
@@ -330,7 +360,13 @@ Page({
       });
       playVibrate('medium');
       this.playResultWinAudio();
-    });
+    };
+    if (!audio) {
+      // Keep the celebration visible when effects are muted.
+      this.silentFireworkTimer = setTimeout(ended, 1800);
+      return;
+    }
+    audio.onEnded(ended);
     audio.onError(() => {
       if (this.resultWinAudio === audio) {
         this.resultWinAudio = null;
@@ -398,6 +434,7 @@ Page({
     }
   },
   stopResultFirework() {
+    clearTimeout(this.silentFireworkTimer); this.silentFireworkTimer = null;
     this.resultFireworkActive = false;
     this.fireworkAudioPlayCount = 0;
     if (this.resultWinAudio) {
@@ -453,6 +490,10 @@ Page({
     }
   },
   async refreshResult() {
+    this.setData({growthGoal: null, passport: null});
+    this.setData({challengeComparison: null, canShareChallenge: false});
+    this.shareRevision = (this.shareRevision || 0) + 1;
+    this.shareResult = null; this.shareResultOwner = ''; this.shareCardPath = ''; this.shareCardOwner = ''; this.sharePreparation = null;
     const requestId = (this.resultRequestId || 0) + 1;
     this.resultRequestId = requestId;
     const pages = getCurrentPages();
@@ -464,16 +505,26 @@ Page({
         if (!token) throw new Error('请重新登录后查看服务器结算');
         const result = await api.get(`/games/${sessionId}/result`);
         if (requestId !== this.resultRequestId) return;
-        if (token !== api.getToken()) throw new Error('登录账号已变更，请重新查看结算');
+        if (token !== api.getToken() && !api.isRecoveredToken(token, api.getToken())) throw new Error('登录账号已变更，请重新查看结算');
         if (result) {
+          if (this.trackedFinishedSession !== String(sessionId) && result.title !== '对局已中断') {
+            const self = result.ranking?.find((p) => p.isSelf);
+            analytics.track('game_finish', {sessionId: String(sessionId), rank: self?.rank || result.selfRank || 0, score: self?.score || 0});
+            this.trackedFinishedSession = String(sessionId);
+          }
+          this.shareResult = result; this.shareResultOwner = api.getToken();
+          this.sharePreparation = prepareResultImage(this, result, getStageFromResult(result)?.name || this.data.stageName);
           this.resultPerformanceMap = result.performanceMap || {};
           this.resultBreakdownMap = result.scoreBreakdownMap || {};
           this.onlineSessionId = String(sessionId);
+          this.onlineRoomId = result.roomId ? String(result.roomId) : '';
           this.replayStage = getStageFromResult(result);
           const achievementMedal = createResultMedal(result);
           const themePatch = buildSavedThemePatch(getStageFromResult(result));
+          const comparison = result.challengeComparison;
           this.stopNumberAnimations();
           this.setData({
+            matchmaking: !!result.matchmaking,
             top3: result.top3 || this.data.top3,
             rankList: result.ranking || [],
             gainText: '0',
@@ -483,18 +534,23 @@ Page({
             achievementMedal,
             modeText: result.modeText || this.data.modeText,
             resultId: result.resultId || '',
+            canShareChallenge: !!result.challengeCode,
+            challengeComparison: comparison ? {...comparison, outcome: comparison.selfScore === comparison.friendScore ? '平局' : comparison.selfScore > comparison.friendScore ? '挑战成功' : '好友领先'} : null,
             interrupted: !!result.interrupted,
             resultTitle: result.interrupted ? (result.title || '对局已中断') : '本局结算',
             selfRank: result.interrupted ? 0 : findSelfRank(result),
             resultReason: result.interrupted ? (result.reason || '本局未完成，未发放奖励，可重新开局') : '',
             performance: result.interrupted ? null : performanceFeedback(result),
             totalText: `总计 ${(result.ranking || []).length} 玩家`,
-            expProgress: buildExpProgress(playerStats.getSummary().totalExp),
+            expProgress: null,
+            expError: '',
             isKoiWinner: !result.interrupted && findSelfRank(result) === 1,
             ...themePatch,
           });
           this.gainAnimTimer = this.animateNumber(result.gain || 0, formatNumber, 'gainText', 1200);
           this.incomeAnimTimer = this.animateNumber(result.coins || 0, formatNumber, 'incomeAmountText', 1500);
+          if (!result.interrupted) void this.loadGrowthGoal(requestId, token);
+          await this.syncResultExperience();
           return;
         }
         throw new Error('服务器结算尚未确认，请稍后重试');
@@ -508,83 +564,101 @@ Page({
       return;
     }
 
-    // Fall back to local gameStore
-    const state = gameStore.getState();
-    if (state.status !== 'finished' || !state.result) {
-      wx.reLaunch({url: '/pages/home/index'});
-      return;
+    try {
+      const url = await require('../../utils/online-navigation').latestResultUrl();
+      wx.redirectTo({url});
+    } catch (error) {
+      this.setData({interrupted: true, resultTitle: '暂无对局记录', resultReason: error.message || '完成一局后可查看结算', incomeAmountText: '--', gainText: '--'});
     }
-
-    this.stopNumberAnimations();
-    this.resultPerformanceMap = state.result.performanceMap || {};
-    this.resultBreakdownMap = state.result.scoreBreakdownMap || {};
-    const achievementMedal = createResultMedal(state.result);
-    const themePatch = buildSavedThemePatch(state.stage || getStageFromResult(state.result));
-
+  },
+  async syncResultExperience() {
+    const requestId = this.resultRequestId;
+    const token = api.getToken();
+    if (!token) return;
+    const summary = await playerStats.fetchSummary();
+    if (requestId !== this.resultRequestId || (token !== api.getToken() && !api.isRecoveredToken(token, api.getToken()))) return;
     this.setData({
-      top3: state.result.top3,
-      rankList: state.result.rest,
-      gainText: '0',
-      incomeText: '🐟锦鲤币 0',
-      incomeAmountText: '0',
-      achievementText: state.result.achievement || achievementMedal.achievement,
-      achievementMedal,
-      modeText: state.modeText || MATCH_MODE_TEXT,
-      resultId: state.result.resultId || '',
-      interrupted: false,
-      resultTitle: '本局结算',
-      selfRank: findSelfRank(state.result),
-      resultReason: '',
-      performance: performanceFeedback(state.result),
-      totalText: `总计 ${state.result.ranking.length} 玩家`,
-      expProgress: buildExpProgress(playerStats.getSummary().totalExp),
-      isKoiWinner: findSelfRank(state.result) === 1,
-      ...themePatch,
+      expProgress: summary ? buildExpProgress(summary.totalExp) : null,
+      expError: summary ? '' : '账号经验同步失败，点击重试',
     });
-    if (state.result.rewardNotice) {
-      wx.showToast({title: state.result.rewardNotice, icon: 'none'});
-    }
-
-    // 播放数字滚动动画
-    this.gainAnimTimer = this.animateNumber(state.result.gain, formatNumber, 'gainText', 1200);
-    // 游客已完成的本地结算也不能在登录后展示为账号入账。
-    const localCoins = token ? 0 : state.result.coins;
-    this.incomeAnimTimer = this.animateNumber(localCoins, formatNumber, 'incomeAmountText', 1500);
+  },
+  async loadGrowthGoal(requestId = this.resultRequestId, token = api.getToken()) {
+    if (!token || !runtimeConfig.isApiSupported('retention')) return;
+    try {
+      const summary = await api.get('/retention', {sessionId: this.onlineSessionId});
+      if (this.pageActive === false || requestId !== this.resultRequestId ||
+        (token !== api.getToken() && !api.isRecoveredToken(token, api.getToken()))) return;
+      this.setData({growthGoal: selectGrowthGoal(summary), passport: summary?.passport || null});
+    } catch (_) { /* Optional progress never blocks confirmed results or replay. */ }
+  },
+  openGrowthGoal() {
+    wx.navigateTo({url: '/pages/tasks/index'});
   },
   async replay() {
     if (this.data.replayPending) return;
+    const stageId = resolveStage(this.replayStage || {name: this.data.stageName}).id;
+    const attempt = analytics.playFlow.begin(stageId, this.data.matchmaking, String(this.onlineSessionId || ''));
+    const generation = this.replayGeneration || 0;
+    const current = () => this.pageActive !== false && generation === (this.replayGeneration || 0);
     playCue('tap', {volume: 0.75});
     playVibrate('medium');
-    if (this.onlineSessionId) {
-      this.setData({replayPending: true});
+    {
+      this.setData({replayPending: true, replayError: ''});
       try {
-        await runtimeConfig.fetchRemoteConfig();
-        if (!runtimeConfig.isApiSupported('onlineArena')) {
-          wx.showToast({title: '联机服务升级中，请先体验本地对局', icon: 'none'});
-          return;
-        }
-        const stage = resolveStage(this.replayStage || {name: this.data.stageName});
-        const payload = await api.post('/rooms', {stageId: stage.id});
+        await require('../../utils/online-navigation').requireOnlineAccount();
+        if (!current()) return;
+        const token = api.getToken();
+        const newRoom = this.data.replayNewRoom;
+        if (!newRoom && !this.onlineSessionId) throw new Error('请先同步本局结算后重试');
+        if (this.data.matchmaking && !runtimeConfig.isApiSupported('quickMatch')) throw new Error('快速匹配升级中，请稍后重试');
+        if (!this.data.matchmaking && !newRoom && !runtimeConfig.isApiSupported('roomRematch')) throw new Error('续玩服务升级中，请稍后重试');
+        const payload = this.data.matchmaking
+          ? await api.post('/matchmaking', {stageId: resolveStage(this.replayStage || {name: this.data.stageName}).id})
+          : newRoom
+          ? await api.post('/rooms', {stageId: resolveStage(this.replayStage || {name: this.data.stageName}).id})
+          : await api.post(`/games/${encodeURIComponent(this.onlineSessionId)}/rematch`);
+        if (!current() || (token !== api.getToken() && !api.isRecoveredToken(token, api.getToken()))) return;
         const roomId = (payload.room || payload).id;
-        if (!roomId) throw new Error('房间创建失败，请重试');
+        if (!roomId) throw new Error('房间信息未确认，请重试');
+        analytics.playFlow.queued(attempt, String(roomId));
         wx.redirectTo({url: `/pages/room/index?backendRoomId=${encodeURIComponent(roomId)}`});
       } catch (error) {
-        wx.showToast({title: error.message || '再来一局失败，请重试', icon: 'none'});
-      } finally {this.setData({replayPending: false});}
+        analytics.playFlow.failed(attempt, error);
+        if (current()) {
+          this.setData({replayError: error.message || '再来一局失败，请重试', ...(error.statusCode === 410 ? {replayNewRoom: true} : {})});
+          wx.showToast({title: error.message || '再来一局失败，请重试', icon: 'none'});
+        }
+      } finally {if (current()) this.setData({replayPending: false});}
       return;
     }
-    gameStore.restartGame();
-    wx.redirectTo({url: '/pages/arena/index'});
+
+  },
+  openPassportStage() {
+    const stage = this.data.passport?.nextStage;
+    if (stage) return this.leaveForHome(`/pages/home/index?stageId=${encodeURIComponent(stage.id)}`);
   },
   goHome() {
+    return this.leaveForHome('/pages/home/index');
+  },
+  async leaveForHome(url) {
+    if (this.data.replayPending) return;
     playCue('tap', {volume: 0.75});
     playVibrate('light');
     if (guideStore.shouldShowStep(guideStore.GUIDE_STEPS.RESULT)) {
       guideStore.complete();
       this.setData({guideVisible: false});
     }
+    if (this.onlineRoomId) {
+      try {await api.post(`/rooms/${encodeURIComponent(this.onlineRoomId)}/leave`);}
+      catch (error) {
+        if (![400, 404].includes(error.statusCode)) {
+          this.setData({replayError: error.message || '离开房间失败，请重试'});
+          return;
+        }
+      }
+    }
     gameStore.resetToHome();
-    wx.reLaunch({url: '/pages/home/index'});
+    wx.reLaunch({url});
   },
   syncUserProfile() {
     const cached = getCachedProfile();
@@ -626,12 +700,22 @@ Page({
       showScorePopup: false,
     });
   },
+  toggleNav() {
+    playVibrate('light');
+    this.setData({navExpanded: !this.data.navExpanded});
+  },
   switchTab(e) {
     playCue('tap', {volume: 0.75});
     playVibrate('light');
     const page = e.currentTarget.dataset.page;
     if (!page || page === '/pages/result/index') {
       return;
+    }
+    if (page === '/pages/arena/index' || page === '/pages/room/index') {
+      return this.playAgain();
+    }
+    if (page === '/pages/home/index') {
+      return this.goHome();
     }
     wx.redirectTo({url: page});
   },

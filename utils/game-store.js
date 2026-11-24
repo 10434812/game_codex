@@ -5,7 +5,6 @@ const {
   MAX_PLAYERS,
   PLAYER_STATUS_SELF_READY,
   PLAYER_STATUS_SELF_WAITING,
-  ROOM_UI_LIMIT,
   ROUND_INTERVAL_SECONDS,
 } = require('./constants');
 const engine = require('./game-engine');
@@ -713,7 +712,7 @@ function restartGame(options = {}) {
   const stage = state.stage || DEFAULT_STAGE;
   createRoomFromStage(stage, {
     ...options,
-    roomSize: options.roomSize || ROOM_UI_LIMIT,
+    roomSize: options.roomSize || state.players.length || undefined,
   });
   return startGame(options);
 }

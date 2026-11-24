@@ -139,8 +139,9 @@ page {
 }
 
 .app-gear {
-  width: 56rpx;
-  height: 56rpx;
+  width: 88rpx;
+  height: 88rpx;
+  flex-shrink: 0;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -381,6 +382,53 @@ page {
   animation: nav-active-bob 1.8s ease-in-out infinite;
 }
 
+/* 底部导航默认收起，仅保留右侧箭头；点击箭头展开/收起 */
+.bottom-nav.collapsed {
+  left: auto;
+  right: 20rpx;
+  bottom: calc(16rpx + env(safe-area-inset-bottom));
+  width: 88rpx;
+  min-height: 88rpx;
+  height: 88rpx;
+  padding: 0;
+  border-radius: 999rpx;
+  justify-content: center;
+}
+
+.bottom-nav.collapsed::before,
+.bottom-nav.collapsed::after {
+  display: none;
+}
+
+.nav-toggle {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 64rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav.collapsed .nav-toggle {
+  width: 88rpx;
+}
+
+.nav-toggle-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-top: 5rpx solid var(--stage-primary, #d97a12);
+  border-left: 5rpx solid var(--stage-primary, #d97a12);
+  border-radius: 3rpx;
+  transform: translateX(4rpx) rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+.bottom-nav.expanded .nav-toggle-arrow {
+  transform: translateX(-4rpx) rotate(135deg);
+}
+
 /* --- 全局游戏化交互动效 --- */
 .btn-hover {
   transform: scale(0.94) !important;
@@ -406,9 +454,8 @@ page {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 34%, rgba(255, 218, 133, 0.16), transparent 34%),
-    rgba(22, 15, 9, 0.42);
-  backdrop-filter: blur(3rpx);
+    radial-gradient(circle at 50% 34%, rgba(255, 218, 133, 0.1), transparent 34%),
+    rgba(22, 15, 9, 0.26);
 }
 
 .guide-card {
@@ -463,7 +510,10 @@ page {
 }
 
 .guide-primary {
-  width: 100%;
+  /* 微信 button 默认 width:184px 且选择器优先级更高，必须用 !important 才能撑满 */
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
   height: 88rpx;
   line-height: 88rpx;
   padding: 0;

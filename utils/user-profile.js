@@ -1,3 +1,4 @@
+const analytics = require('./analytics');
 const api = require('./api-client');
 const runtimeConfig = require('./runtime-config');
 const shopStore = require('./shop-store');
@@ -6,11 +7,37 @@ const privacyConsent = require('./privacy-consent');
 const USER_PROFILE_KEY = 'wx_user_profile_v1';
 const LOGOUT_INTENT_KEY = 'auth.logout-intent';
 let sessionRevision = 0;
+let explicitLoginPromise = null;
 
 const DEFAULT_PROFILE = {
   nickName: '微信用户',
   avatarUrl: '',
 };
+
+const TRIAL_DIALOG_INTERVAL_MS = 10000;
+let lastTrialDialogAt = 0;
+
+// 受邀体验拒绝登录时，服务端在 data 中返回体验编号，供测试者发给管理员开通。
+function readTrialUserId(error) {
+  const data = error && error.responseBody && error.responseBody.data;
+  const id = data && data.code === 'TRIAL_ACCESS_REQUIRED' ? Number(data.trialUserId) : 0;
+  return Number.isInteger(id) && id > 0 ? id : 0;
+}
+
+function showTrialAccessDialog(trialUserId) {
+  const now = Date.now();
+  if (typeof wx.showModal !== 'function' || now - lastTrialDialogAt < TRIAL_DIALOG_INTERVAL_MS) return;
+  lastTrialDialogAt = now;
+  wx.showModal({
+    title: '受邀体验',
+    content: `当前为受邀体验，你的体验编号是 ${trialUserId}。请把编号发给管理员，开通后重新登录即可。`,
+    confirmText: '复制编号',
+    cancelText: '知道了',
+    success(res) {
+      if (res.confirm && typeof wx.setClipboardData === 'function') wx.setClipboardData({data: String(trialUserId)});
+    },
+  });
+}
 
 function normalizeProfile(raw) {
   if (!raw || typeof raw !== 'object') {
@@ -65,7 +92,7 @@ function hasValidProfile(profile) {
   return Boolean(normalized.nickName && normalized.nickName !== '微信用户');
 }
 
-async function login({onAuthenticated, previousToken} = {}) {
+async function login({onAuthenticated, previousToken, throwOnError = false} = {}) {
   privacyConsent.assertAllowed();
   if (!runtimeConfig.getBoolean('wechat.login_enabled', true)) {
     return getCachedProfile();
@@ -93,6 +120,7 @@ async function login({onAuthenticated, previousToken} = {}) {
     if (revision !== sessionRevision || initialToken !== api.getToken()) return getCachedProfile();
     shopStore.resetAccountState();
     api.setToken(result.token);
+    analytics.track('login_success');
     if (onAuthenticated) onAuthenticated(result.token);
     // 新账号资料不能与上个账号或游客资料合并。
     const profile = saveProfile(result.user);
@@ -107,9 +135,41 @@ async function login({onAuthenticated, previousToken} = {}) {
     }
     return profile;
   } catch (err) {
+    if (revision === sessionRevision) {
+      analytics.track('login_fail');
+      const trialUserId = readTrialUserId(err);
+      if (trialUserId) showTrialAccessDialog(trialUserId);
+    }
     console.warn('[user-profile] login error:', err);
+    if (throwOnError) throw err;
     return getCachedProfile();
   }
+}
+
+// 只用于用户主动点击的入口；启动页仍使用 login() 并尊重主动退出标记。
+async function ensureLogin() {
+  privacyConsent.assertAllowed();
+  const maintenance = runtimeConfig.getFeatures().maintenance;
+  if ((maintenance && maintenance.enabled) || runtimeConfig.getBoolean('system.maintenance_mode', false)) {
+    throw new Error((maintenance && maintenance.message) || runtimeConfig.getValue('system.maintenance_message') || '系统维护中，请稍后重试');
+  }
+  if (api.isLoggedIn()) return getCachedProfile();
+  if (!runtimeConfig.getBoolean('wechat.login_enabled', true)) {
+    throw new Error('微信登录暂时关闭，请稍后重试');
+  }
+  if (!explicitLoginPromise) {
+    let authenticatedToken = '';
+    explicitLoginPromise = login({throwOnError: true, onAuthenticated(token) { authenticatedToken = token; }})
+      .then((profile) => {
+        if (!authenticatedToken || (api.getToken() !== authenticatedToken
+          && !api.isRecoveredToken(authenticatedToken, api.getToken()))) {
+          throw new Error('本次登录已取消，请重试');
+        }
+        clearLogoutIntent();
+        return profile;
+      }).finally(() => { explicitLoginPromise = null; });
+  }
+  return explicitLoginPromise;
 }
 
 async function requestUpdate(partial = {}) {
@@ -205,6 +265,7 @@ async function fetchProfile() {
 }
 
 module.exports = {
+  readTrialUserId,
   DEFAULT_PROFILE,
   getCachedProfile,
   hasValidProfile,
@@ -212,6 +273,7 @@ module.exports = {
   mergeProfile,
   updateProfile,
   login,
+  ensureLogin,
   requestUpdate,
   uploadAvatar,
   fetchProfile,

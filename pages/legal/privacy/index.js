@@ -12,4 +12,9 @@ Page({
       this.setData({nav: getNavLayout(), legalReady: isReady(), legal: legalConfig});
     } catch (_error) {}
   },
+  onBack() {
+    wx.navigateBack({
+      fail: () => wx.reLaunch({url: '/pages/boot/index'}),
+    });
+  },
 });

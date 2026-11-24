@@ -52,10 +52,25 @@
           <view class="podium-score">{{top3.third.score}}</view>
         </view>
       </view>
+      <view wx:if="{{challengeComparison}}" class="performance-team">好友挑战 · {{challengeComparison.outcome}}<text> · 你 {{challengeComparison.selfScore}} 分 / 好友 {{challengeComparison.friendScore}} 分</text></view>
 
+      <canvas type="2d" id="result-share-card" class="result-share-canvas" aria-hidden="true"></canvas>
       <view class="action-row">
-        <button class="primary-btn action-btn" bindtap="replay" loading="{{replayPending}}" disabled="{{replayPending}}" hover-class="btn-hover">{{interrupted ? '重新开局' : '再来一局'}}</button>
-        <button class="action-btn ghost-btn" bindtap="goHome" hover-class="btn-hover">返回首页</button>
+        <button class="primary-btn action-btn" bindtap="replay" loading="{{replayPending}}" disabled="{{replayPending}}" hover-class="btn-hover">{{matchmaking ? '再匹配一局' : replayNewRoom ? '新建好友房' : '原房再来一局'}}</button>
+        <button class="action-btn ghost-btn" bindtap="goHome" disabled="{{replayPending}}" hover-class="btn-hover">返回首页</button>
+      </view>
+      <button class="result-share-action" wx:if="{{!interrupted && resultId}}" open-type="share">{{canShareChallenge ? '分享战绩 · 邀好友挑战' : '分享本局战绩'}}</button>
+      <view class="performance-team" role="alert" wx:if="{{replayError}}">{{replayError}}</view>
+      <view class="performance-team" wx:else>{{matchmaking ? '再匹配一局，保留景区并重新寻找对手。' : '续玩保留原房好友和景区，点击即准备，由房主开始下一局。'}}</view>
+      <view class="next-growth-goal" wx:if="{{growthGoal && !interrupted}}">
+        <text class="growth-goal-text">{{growthGoal.text}}</text>
+        <button class="growth-goal-action" bindtap="openGrowthGoal" hover-class="btn-hover">{{growthGoal.actionLabel}}</button>
+      </view>
+      <view class="next-growth-goal" wx:if="{{passport && !interrupted}}">
+        <text class="growth-goal-text">景区护照 · {{passport.stampedCount}} / {{passport.stages.length}} 枚印章</text>
+        <text class="growth-goal-text" wx:if="{{passport.newStamp}}">本局获得「{{passport.newStamp.name}}」首游印章</text>
+        <text class="growth-goal-text" wx:if="{{passport.badge}}">已获得「全景区巡游」徽章</text>
+        <button wx:if="{{passport.nextStage}}" class="growth-goal-action" bindtap="openPassportStage" disabled="{{replayPending}}" hover-class="btn-hover">下一站：{{passport.nextStage.name}}</button>
       </view>
 
       <view class="match-performance" wx:if="{{performance}}">
@@ -76,7 +91,7 @@
             <text class="currency-amount">{{incomeAmountText}}</text>
           </view>
         </view>
-        <view class="exp-module">
+        <view class="exp-module" wx:if="{{expProgress}}">
           <view class="exp-head">
             <text>Lv.{{expProgress.level}}</text>
             <text>+{{gainText}} EXP</text>
@@ -85,6 +100,11 @@
             <view class="exp-fill" style="width: {{expProgress.percent}}%;"></view>
           </view>
           <view class="exp-foot">{{expProgress.current}}/{{expProgress.required}}</view>
+        </view>
+        <view wx:else class="exp-module">
+          <view class="exp-head">本局经验 +{{gainText}} EXP</view>
+          <button wx:if="{{expError}}" bindtap="syncResultExperience">{{expError}}</button>
+          <view wx:else class="exp-foot">正在同步账号经验…</view>
         </view>
         <view class="achievement-pill" style="--medal-accent: {{achievementMedal.accent}}; --medal-glow: {{achievementMedal.glow}}; --medal-rim: {{achievementMedal.rim}}; --medal-plate: {{achievementMedal.plate}};">
           <view class="achievement-medal">
@@ -118,13 +138,16 @@
         </view>
       </view>
 
-      <view class="bottom-nav result-nav">
-        <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
-          <view class="nav-dot">
-            <image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image>
+      <view class="bottom-nav result-nav {{navExpanded ? 'expanded' : 'collapsed'}}">
+        <block wx:if="{{navExpanded}}">
+          <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
+            <view class="nav-dot">
+              <image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image>
+            </view>
+            <text>{{ item.label }}</text>
           </view>
-          <text>{{ item.label }}</text>
-        </view>
+        </block>
+        <view class="nav-toggle" catchtap="toggleNav" hover-class="clickable-hover" aria-role="button" aria-label="{{navExpanded ? '收起导航' : '展开导航'}}"><view class="nav-toggle-arrow"></view></view>
       </view>
 
       <view class="nav-placeholder"></view>
@@ -134,7 +157,7 @@
       <view class="guide-mask"></view>
       <view class="guide-card guide-card-middle">
         <view class="guide-kicker">新手引导 5/5</view>
-        <view class="guide-title">查看本局锦鲤币、排行和经验；本地体验记录保存在当前设备</view>
+        <view class="guide-title">查看本局锦鲤币、排行和经验，再邀请好友来一局。</view>
       </view>
       <view class="guide-action-panel">
         <button class="guide-primary" bindtap="finishGuide" hover-class="btn-hover">知道了</button>

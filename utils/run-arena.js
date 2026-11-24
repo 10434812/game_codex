@@ -2,6 +2,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FIELD = void 0;
+exports.dropIntervalAt = dropIntervalAt;
+exports.isSprint = isSprint;
 exports.linkedScore = linkedScore;
 exports.runPerformanceMap = runPerformanceMap;
 exports.createRunWorld = createRunWorld;
@@ -11,9 +13,19 @@ exports.selectRunTarget = selectRunTarget;
 exports.runTeams = runTeams;
 exports.advanceRunArena = advanceRunArena;
 /** 实时对局规则源。scripts/generate-run-arena.mjs 生成小程序与服务端 CommonJS。 */
-exports.FIELD = { width: 1000, height: 1200, radius: 34, speed: 260, boost: 1.18, boostDistance: 210, contactDistance: 80, inputLifetime: 800, warningMs: 700,
-    firstDropDelayMs: 3000, dropIntervalMs: 5000, maxDrops: 10 };
 const bound = (n, min, max) => Math.max(min, Math.min(max, n));
+exports.FIELD = { width: 1000, height: 1200, radius: 34, speed: 260, boost: 1.18, boostDistance: 210, contactDistance: 80, inputLifetime: 800, warningMs: 700,
+    // 节奏：首轮 2 秒，间隔由 2 秒线性收紧到 1.2 秒；最后 15 秒正向得分翻倍。对局总时长固定 120 秒。
+    firstDropDelayMs: 2000, dropIntervalMs: 2000, minDropIntervalMs: 1200, maxDrops: 14, durationMs: 120000, sprintMs: 15000,
+    comboWindowMs: 4000, comboStep: 2, comboMaxBonus: 10, magnetMs: 6000, magnetRange: 220, magnetPull: 520 };
+const DROP_KINDS = ['bag', 'gift', 'bomb', 'shield', 'magnet'];
+/** 当前掉落间隔：随对局进度线性加快。 */
+function dropIntervalAt(elapsedMs) {
+    const progress = bound(elapsedMs / exports.FIELD.durationMs, 0, 1);
+    return Math.round(exports.FIELD.dropIntervalMs - (exports.FIELD.dropIntervalMs - exports.FIELD.minDropIntervalMs) * progress);
+}
+/** 终局冲刺：最后 sprintMs 内正向得分翻倍。 */
+function isSprint(elapsedMs) { return elapsedMs >= exports.FIELD.durationMs - exports.FIELD.sprintMs; }
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 function linkedScore(delta) { return Math.sign(delta) * Math.floor(Math.abs(delta) / 2); }
 const emptyStats = (complete) => ({ bags: 0, gifts: 0, bombs: 0, contributed: 0, received: 0, causedLoss: 0, complete });
@@ -24,7 +36,7 @@ function createRunWorld(players) {
     const columns = players.length <= 4 ? 2 : 3, rows = Math.ceil(players.length / columns);
     return { version: 1, elapsedMs: 0, nextDropAt: exports.FIELD.firstDropDelayMs, sequence: 0, eventSequence: 0, drops: [], effects: [],
         runners: players.map((p, i) => ({ id: p.id, x: 170 + (i % columns) * 660 / (columns - 1), y: rows <= 1 ? 600 : 260 + Math.floor(i / columns) * 680 / (rows - 1),
-            dx: 0, dy: 0, inputUntil: 0, targetId: '', mateId: '', boosted: false, botUntil: 0, stats: emptyStats(true) })) };
+            dx: 0, dy: 0, inputUntil: 0, targetId: '', mateId: '', boosted: false, botUntil: 0, stats: emptyStats(true), combo: 0, comboUntil: 0, shield: false, magnetUntil: 0 })) };
 }
 /** 恢复方向归零；历史固定棋盘存档迁移为可继续跑动的场地。 */
 function restoreRunWorld(saved, players, teams, elapsedMs) {
@@ -37,8 +49,8 @@ function restoreRunWorld(saved, players, teams, elapsedMs) {
         && saved.runners.length === players.length && players.every((p) => saved.runners.filter((r) => r.id === p.id && Number.isFinite(r.x) && Number.isFinite(r.y)).length === 1)
         && Number.isFinite(saved.elapsedMs) && saved.elapsedMs >= 0 && Number.isFinite(saved.nextDropAt)
         && Number.isSafeInteger(saved.sequence) && Number.isSafeInteger(saved.eventSequence)) {
-        return { ...saved, effects: [], drops: saved.drops.filter((d) => ['bag', 'gift', 'bomb'].includes(d.kind) && [d.x, d.y, d.speed, d.warningUntil, d.value].every(Number.isFinite)),
-            runners: saved.runners.map((r) => ({ ...r, stats: r.stats ? { ...r.stats } : emptyStats(false), dx: 0, dy: 0, inputUntil: 0, botUntil: 0, boosted: false })) };
+        return { ...saved, effects: [], drops: saved.drops.filter((d) => DROP_KINDS.includes(d.kind) && [d.x, d.y, d.speed, d.warningUntil, d.value].every(Number.isFinite)),
+            runners: saved.runners.map((r) => ({ combo: 0, comboUntil: 0, shield: false, magnetUntil: 0, ...r, stats: r.stats ? { ...r.stats } : emptyStats(false), dx: 0, dy: 0, inputUntil: 0, botUntil: 0, boosted: false })) };
     }
     for (const team of teams) {
         if (team.memberIds.length !== 2)
@@ -112,13 +124,16 @@ function frame(world, players, dt, random, events) {
     world.elapsedMs += dt;
     world.effects = world.effects.filter((e) => world.elapsedMs - e.at < 1100);
     if (world.elapsedMs >= world.nextDropAt) {
-        if (world.drops.length < exports.FIELD.maxDrops) {
+        // 多人场分散落点，避免全场只能争一个物品；间隔随进度收紧。
+        const count = Math.min(players.length <= 4 ? 1 : players.length <= 7 ? 2 : 3, exports.FIELD.maxDrops - world.drops.length);
+        const laneWidth = (exports.FIELD.width - 120) / Math.max(1, count);
+        for (let i = 0; i < count; i++) {
             const roll = random();
-            const kind = roll < 0.24 ? 'bomb' : roll < 0.64 ? 'bag' : 'gift';
-            world.drops.push({ id: `drop-${++world.sequence}`, kind, x: 60 + random() * (exports.FIELD.width - 120), y: -28,
-                value: kind === 'bomb' ? -10 : kind === 'bag' ? 10 : 20, speed: 210 + random() * 90, warningUntil: world.elapsedMs + exports.FIELD.warningMs });
+            const kind = roll < 0.22 ? 'bomb' : roll < 0.58 ? 'bag' : roll < 0.9 ? 'gift' : roll < 0.95 ? 'shield' : 'magnet';
+            world.drops.push({ id: `drop-${++world.sequence}`, kind, x: 60 + (i + random()) * laneWidth, y: -28,
+                value: kind === 'bomb' ? -10 : kind === 'bag' ? 10 : kind === 'gift' ? 20 : 0, speed: 210 + random() * 90, warningUntil: world.elapsedMs + exports.FIELD.warningMs });
         }
-        world.nextDropAt = world.elapsedMs + exports.FIELD.dropIntervalMs;
+        world.nextDropAt = world.elapsedMs + dropIntervalAt(world.elapsedMs);
     }
     for (const r of world.runners) {
         const player = players.find((p) => p.id === r.id);
@@ -151,6 +166,17 @@ function frame(world, players, dt, random, events) {
         if (world.elapsedMs < drop.warningUntil)
             return true;
         drop.y += drop.speed * dt / 1000;
+        if (drop.kind !== 'bomb') {
+            // 磁铁：吸附范围内的正向物品向最近的持有者靠拢。
+            const puller = world.runners.filter((r) => (r.magnetUntil || 0) > world.elapsedMs && distance(r, drop) <= exports.FIELD.magnetRange)
+                .sort((a, b) => distance(a, drop) - distance(b, drop) || a.id.localeCompare(b.id))[0];
+            const gap = puller ? distance(puller, drop) : 0;
+            if (puller && gap > 0) {
+                const pull = Math.min(gap, exports.FIELD.magnetPull * dt / 1000);
+                drop.x += (puller.x - drop.x) / gap * pull;
+                drop.y += (puller.y - drop.y) / gap * pull;
+            }
+        }
         const hit = world.runners.filter((r) => distance(r, drop) <= exports.FIELD.radius + 23)
             .sort((a, b) => distance(a, drop) - distance(b, drop) || a.id.localeCompare(b.id))[0];
         if (!hit)
@@ -159,7 +185,27 @@ function frame(world, players, dt, random, events) {
         if (!actor)
             return false;
         const mate = players.find((p) => p.id === hit.mateId);
-        const delta = drop.value, beforeScore = actor.score, beforeMateScore = mate?.score || 0;
+        const sprint = isSprint(world.elapsedMs), blocked = drop.kind === 'bomb' && !!hit.shield;
+        let combo = 0, delta = 0;
+        if (drop.kind === 'shield')
+            hit.shield = true;
+        else if (drop.kind === 'magnet')
+            hit.magnetUntil = world.elapsedMs + exports.FIELD.magnetMs;
+        else if (blocked)
+            hit.shield = false;
+        else if (drop.kind === 'bomb') {
+            delta = drop.value;
+            hit.combo = 0;
+            hit.comboUntil = 0;
+        }
+        else {
+            // 连击：窗口内连续接到正向物品，每级 +comboStep，封顶 comboMaxBonus。
+            combo = (hit.comboUntil || 0) >= world.elapsedMs ? (hit.combo || 0) + 1 : 1;
+            hit.combo = combo;
+            hit.comboUntil = world.elapsedMs + exports.FIELD.comboWindowMs;
+            delta = drop.value * (sprint ? 2 : 1) + Math.min(exports.FIELD.comboMaxBonus, (combo - 1) * exports.FIELD.comboStep);
+        }
+        const beforeScore = actor.score, beforeMateScore = mate?.score || 0;
         actor.score = Math.max(0, actor.score + delta);
         const linkedDelta = mate ? linkedScore(delta) : 0;
         if (mate)
@@ -170,7 +216,7 @@ function frame(world, players, dt, random, events) {
             stats.bags++;
         else if (drop.kind === 'gift')
             stats.gifts++;
-        else
+        else if (drop.kind === 'bomb' && !blocked)
             stats.bombs++;
         stats.contributed += Math.max(0, appliedLinkedDelta);
         stats.causedLoss += Math.max(0, -appliedLinkedDelta);
@@ -178,7 +224,8 @@ function frame(world, players, dt, random, events) {
         if (mateRunner)
             (mateRunner.stats || (mateRunner.stats = emptyStats(false))).received += Math.max(0, appliedLinkedDelta);
         const event = { id: ++world.eventSequence, type: 'pickup', actorId: hit.id, teammateId: mate?.id || '', delta, linkedDelta,
-            appliedDelta, appliedLinkedDelta, x: hit.x, y: hit.y, at: world.elapsedMs, kind: drop.kind };
+            appliedDelta, appliedLinkedDelta, x: hit.x, y: hit.y, at: world.elapsedMs, kind: drop.kind,
+            ...(combo > 1 ? { combo } : {}), ...(sprint && delta > 0 ? { sprint: true } : {}), ...(blocked ? { blocked: true } : {}) };
         world.effects.push(event);
         events.push(event);
         return false;

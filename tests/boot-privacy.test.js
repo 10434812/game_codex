@@ -28,9 +28,10 @@ function harness(options = {}) {
   if (options.unsupported) { delete wx.getPrivacySetting; delete wx.requirePrivacyAuthorize; }
   const consentModule = {exports: {}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../utils/privacy-consent.js'), 'utf8'), {
-    module: consentModule, require: () => legal, wx,
+    module: consentModule, require: (name) => name === './analytics' ? {discard() {}} : legal, wx,
   });
   const deps = {
+    '../../utils/analytics': {track() {}, flush() {}},
     '../../utils/boot-loader': {
       createBootLoader: () => ({start: async () => { calls.preload++; }}),
       createImagePreloadTask: () => async () => {}, getBootAssetQueue: () => [],
@@ -57,23 +58,14 @@ function harness(options = {}) {
 
 async function flush() { for (let i = 0; i < 20; i++) await Promise.resolve(); }
 
-test('开发版在协议筹备期间可主动进入本地预览，保留正式授权状态且保持退出可取消', async () => {
+test('开发版协议未就绪时也不能绕过授权进入游戏', async () => {
   const h = harness({ready: false, envVersion: 'develop'});
-  h.page.onLoad();
-  await flush();
-  assert.equal(h.page.data.previewAvailable, true);
+  h.page.onLoad(); await flush();
+  assert.equal(h.page.onEnterDevelopmentPreview, undefined);
   assert.equal(h.calls.launch, 0);
-  h.page.onEnterDevelopmentPreview();
-  await flush();
-  assert.equal(h.calls.launch, 1);
-  assert.equal(h.calls.destinations[0], '/pages/home/index');
   assert.equal(h.calls.login, 0);
-  assert.equal(h.calls.authorize, 0);
-  assert.equal(h.storage.has('legal-consent-version'), false);
-  assert.equal(h.page.data.consentGranted, false);
+  assert.equal(h.privacy.canEnter(), false);
   h.page.onUnload();
-  assert.equal(h.privacy.canEnter(), true);
-  assert.equal(h.privacy.isAllowed(), false);
 });
 
 for (const options of [{unsupported: true}, {settingError: true}, {setting: {}}, {ready: false}]) {
@@ -196,4 +188,17 @@ test('用户主动退出登录后，冷启动不会自动换回账号；重新�
   assert.equal(reconsent.calls.clearedLogoutIntent, 1);
   assert.equal(reconsent.calls.login, 1);
   reconsent.page.onUnload();
+});
+
+test('启动资源全部完成时进度仍保留配置与登录阶段，只有进入前达到100%', () => {
+  const h = harness();
+  h.page.updateProgress(100);
+  assert.ok(h.page.data.progress < 100);
+  assert.match(h.page.data.loadingText, /配置/);
+  h.page.configDone = true; h.page.updateBootProgress();
+  assert.match(h.page.data.loadingText, /账号/);
+  assert.ok(h.page.data.progress < 100);
+  h.page.loginDone = true; h.page.updateBootProgress();
+  assert.ok(h.page.data.progress < 100);
+  h.page.finishBoot(); assert.equal(h.page.data.progress, 100);
 });

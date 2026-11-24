@@ -1,7 +1,9 @@
+const audioSettings = require('../../utils/audio-settings');
 const {getNavLayout} = require('../../utils/nav');
 const {DEFAULT_AVATAR} = require('../../utils/constants');
 const gameStore = require('../../utils/game-store');
-const {getCachedProfile, hasValidProfile, requestUpdate, uploadAvatar, fetchProfile, deleteAccount, logout, clearLocalData: clearProfileData} = require('../../utils/user-profile');
+const {getCachedProfile, hasValidProfile, requestUpdate, uploadAvatar, fetchProfile, deleteAccount, logout, ensureLogin, clearLocalData: clearProfileData} = require('../../utils/user-profile');
+const api = require('../../utils/api-client');
 const playerStats = require('../../utils/player-stats');
 const {playCue, playVibrate} = require('../../utils/audio');
 const {createStageThemeData, resolveAmbientStage, saveStageTheme} = require('../../utils/stage-theme');
@@ -19,8 +21,11 @@ Page({
     },
     draft: getCachedProfile(),
     canSave: false,
+    audioSettings: audioSettings.getSettings(),
     defaultAvatar: DEFAULT_AVATAR,
     profileUpdating: false,
+    loggedIn: api.isLoggedIn(),
+    loginPending: false,
     deletingAccount: false,
     profileError: '',
     avatarReviewPending: false,
@@ -40,13 +45,25 @@ Page({
   onHide() {
     pageHelpers.pauseBackdropVideo(this);
   },
+  onUnload() {
+    this.loginEpoch = (this.loginEpoch || 0) + 1;
+  },
+  onAudioSetting(event) {
+    const key = event.currentTarget.dataset.key;
+    const settings = audioSettings.setSetting(key, !!event.detail.value);
+    this.setData({audioSettings: settings});
+    const audio = require('../../utils/audio'); audio.applySettings();
+    if (key === 'music' && settings.music) audio.playStageBgm(gameStore.getState().stage);
+  },
   onShow() {
+    this.setData({audioSettings: audioSettings.getSettings()});
     if (!privacy.canEnter()) return;
     pageHelpers.resumeBackdropVideo(this);
     this.syncDraft();
     fetchProfile().then((profile) => {
       if (this.data.profileUpdating || !profile) return;
       this.setData({
+        loggedIn: api.isLoggedIn(),
         draft: {...this.data.draft, avatarUrl: profile.avatarUrl},
         avatarReviewPending: this.data.avatarReviewPending && profile.avatarUrl === this.data.draft.avatarUrl,
       });
@@ -58,6 +75,7 @@ Page({
     const theme = saveStageTheme(resolveAmbientStage(gameState));
     this.setData({
       draft,
+      loggedIn: api.isLoggedIn(),
       canSave: hasValidProfile(draft),
       stageName: theme.stageName,
       stageImage: theme.stageImage,
@@ -65,6 +83,21 @@ Page({
       stageThemeKey: theme.stageThemeKey,
       stageThemeStyle: theme.stageThemeStyle,
     });
+  },
+  async onLogin() {
+    if (this.data.loginPending || this.data.profileUpdating || this.data.deletingAccount) return;
+    const epoch = this.loginEpoch || 0;
+    this.setData({loginPending: true, profileError: ''});
+    try {
+      await ensureLogin();
+      if (epoch !== (this.loginEpoch || 0)) return;
+      this.syncDraft();
+      wx.showToast({title: '登录成功', icon: 'success'});
+    } catch (error) {
+      if (epoch === (this.loginEpoch || 0)) this.setData({loggedIn: api.isLoggedIn(), profileError: error.message || '微信登录失败，请重试'});
+    } finally {
+      if (epoch === (this.loginEpoch || 0)) this.setData({loginPending: false});
+    }
   },
   async onChooseAvatar(e) {
     if (this.data.profileUpdating) {

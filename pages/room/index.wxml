@@ -52,47 +52,61 @@
       <view class="slot-grid">
         <view class="slot {{item.filled?'filled':'empty'}}" wx:for="{{slots}}" wx:key="index">
           <image class="avatar" wx:if="{{item.filled}}" src="{{item.avatar || defaultAvatar}}" mode="aspectFill" lazy-load="{{true}}"></image>
-          <button wx:else class="empty-avatar slot-invite-btn" open-type="{{backendRoomId && shareEnabled ? 'share' : ''}}" bindtap="inviteFriend" loading="{{creatingOnlineRoom}}" disabled="{{starting || creatingOnlineRoom || !shareEnabled}}" aria-label="{{backendRoomId ? '选择微信群或好友发送房间邀请' : '创建联网房间邀请好友'}}" hover-class="btn-hover"><view class="invite-plus" aria-hidden="true"></view></button>
+          <button wx:else class="empty-avatar slot-invite-btn" open-type="{{backendRoomId && shareEnabled ? 'share' : ''}}" bindtap="inviteFriend" loading="{{creatingOnlineRoom}}" disabled="{{starting || creatingOnlineRoom || !shareEnabled || roomUnavailable}}" aria-label="{{backendRoomId ? '选择微信群或好友发送房间邀请' : '创建联网房间邀请好友'}}" hover-class="btn-hover"><view class="invite-plus" aria-hidden="true"></view></button>
           <view class="slot-name">{{item.name}}</view>
-          <view class="slot-state" wx:if="{{item.state}}">• {{item.state}}</view>
+          <view class="slot-state {{item.ready ? 'is-ready' : 'not-ready'}}" wx:if="{{item.state}}">{{item.ready ? '✓ ' : ''}}{{item.state}}</view>
           <view class="star" wx:if="{{item.star}}">★</view>
         </view>
       </view>
 
       <view class="voice-box">
         <view class="voice-line">
-          <text class="voice-title">房间人数</text>
+          <text class="voice-title">房间人数 · {{readyCountText}}</text>
           <text class="percent">{{activePercent}}%</text>
         </view>
         <view class="track"><view class="bar" style="width: {{activePercent}}%;"></view></view>
       </view>
 
       <view class="bottom-actions">
-        <button class="start-btn {{backendRoomId && !isHost ? 'start-btn-disabled' : ''}}" bindtap="start" disabled="{{starting || creatingOnlineRoom || (backendRoomId && !isHost)}}" hover-class="btn-hover">
+        <view wx:if="{{roomConnectionError}}" class="room-recovery" role="alert">
+          <text>{{roomConnectionError}}</text>
+          <button wx:if="{{!roomUnavailable}}" class="primary-btn" bindtap="retryRoomConnection" loading="{{roomRetrying}}" disabled="{{roomRetrying}}">重新连接</button>
+          <button bindtap="leaveUnavailableRoom">返回首页</button>
+        </view>
+        <button wx:if="{{joinLoginRequired}}" class="start-btn" bindtap="createOnlineRoom" loading="{{creatingOnlineRoom}}" disabled="{{starting || creatingOnlineRoom}}" hover-class="btn-hover">{{creatingOnlineRoom ? '正在登录并加入' : '微信登录并加入好友房间'}}</button>
+        <button wx:elif="{{!matchmaking && backendRoomId && !isHost}}" class="start-btn guest-ready-btn {{selfReady ? 'is-ready' : 'need-ready'}}" bindtap="toggleReady" disabled="{{starting || creatingOnlineRoom || roomConnectionError || roomUnavailable}}" aria-label="{{selfReady ? '已准备，点击取消准备' : '点击准备'}}" hover-class="btn-hover">
+          <text class="btn-icon">{{selfReady ? '✓' : '!'}}</text>
+          <view class="guest-ready-text">
+            <text class="guest-ready-main">{{selfReady ? '已准备 · 等待房主开始' : '点我准备'}}</text>
+            <text class="guest-ready-sub">{{selfReady ? '点击可取消准备' : '房主需等你准备后才能开局'}}</text>
+          </view>
+        </button>
+        <button wx:elif="{{!matchmaking}}" class="start-btn" bindtap="start" disabled="{{starting || creatingOnlineRoom || roomConnectionError || roomUnavailable}}" hover-class="btn-hover">
           <text class="btn-icon">▶</text>
-          <text>{{backendRoomId && !isHost ? '等待房主开始' : startButtonText}}</text>
+          <text>{{startButtonText}}</text>
         </button>
         <view class="invite-hint">
           <text class="invite-hint-icon">邀</text>
-          <text>{{!shareEnabled ? '邀请分享暂未开放' : backendRoomId ? '点击＋，选择微信群或好友发送邀请' : '点击＋创建好友房，建好后即可分享邀请'}}</text>
+          <text>{{joinLoginRequired ? '微信登录后继续加入好友邀请的房间' : !shareEnabled ? '邀请分享暂未开放' : backendRoomId ? '点击＋，选择微信群或好友发送邀请' : '点击＋创建好友房，建好后即可分享邀请'}}</text>
         </view>
-        <view class="secondary-actions">
-          <button class="primary-btn invite-btn" open-type="{{backendRoomId && shareEnabled ? 'share' : ''}}" bindtap="inviteFriend" loading="{{creatingOnlineRoom}}" disabled="{{starting || creatingOnlineRoom || !shareEnabled}}" aria-label="{{backendRoomId ? '选择微信群或好友发送房间邀请' : '创建联网房间邀请好友'}}" hover-class="btn-hover">
+        <view wx:if="{{loginError}}" class="invite-hint" role="alert">{{loginError}}；{{joinLoginRequired ? '可再次点击登录并加入重试。' : '可再次点击邀请重试。'}}</view>
+        <button wx:if="{{matchmaking}}" class="start-btn" bindtap="cancelMatch" loading="{{matchCancelPending}}" disabled="{{matchCancelPending}}">取消匹配</button>
+        <view wx:if="{{!matchmaking}}" class="secondary-actions">
+          <button wx:if="{{!joinLoginRequired}}" class="primary-btn invite-btn" open-type="{{backendRoomId && shareEnabled ? 'share' : ''}}" bindtap="inviteFriend" loading="{{creatingOnlineRoom}}" disabled="{{starting || creatingOnlineRoom || !shareEnabled || roomUnavailable}}" aria-label="{{backendRoomId ? '选择微信群或好友发送房间邀请' : '创建联网房间邀请好友'}}" hover-class="btn-hover">
             <view class="invite-plus" aria-hidden="true"></view>
-            <text>{{creatingOnlineRoom ? '创建中' : backendRoomId ? '选择微信群' : '创建好友房'}}</text>
-          </button>
-          <button class="ready-btn" bindtap="toggleReady" disabled="{{starting || creatingOnlineRoom}}" hover-class="btn-hover">
-            <text class="btn-icon">{{selfReady ? '✓' : '○'}}</text>
-            <text>{{selfReady ? '取消准备' : '准备'}}</text>
+            <text>{{creatingOnlineRoom ? '正在连接' : backendRoomId ? '选择微信群' : '创建好友房'}}</text>
           </button>
         </view>
       </view>
 
-      <view class="bottom-nav">
-        <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
-          <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
-          <text>{{ item.label }}</text>
-        </view>
+      <view class="bottom-nav {{navExpanded ? 'expanded' : 'collapsed'}}">
+        <block wx:if="{{navExpanded}}">
+          <view wx:for="{{ tabs }}" wx:key="key" class="nav-item {{ activeTab === item.key ? 'active' : '' }}" data-page="{{ item.page }}" bindtap="switchTab" hover-class="clickable-hover">
+            <view class="nav-dot"><image class="nav-icon" src="{{activeTab===item.key ? item.iconActive : item.icon}}" mode="aspectFit"></image></view>
+            <text>{{ item.label }}</text>
+          </view>
+        </block>
+        <view class="nav-toggle" catchtap="toggleNav" hover-class="clickable-hover" aria-role="button" aria-label="{{navExpanded ? '收起导航' : '展开导航'}}"><view class="nav-toggle-arrow"></view></view>
       </view>
     </view>
 
@@ -100,7 +114,7 @@
       <view class="guide-mask"></view>
       <view class="guide-card guide-card-middle">
         <view class="guide-kicker">新手引导 2/5</view>
-        <view class="guide-title">准备好后开局，系统会补足体验玩家</view>
+        <view class="guide-title">邀请好友加入，准备好后由房主开始游戏</view>
       </view>
       <view class="guide-action-panel">
         <button class="guide-primary" bindtap="onGuidePrimary" hover-class="btn-hover">开始游戏</button>

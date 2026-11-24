@@ -1,3 +1,4 @@
+const analytics = require('../../utils/analytics');
 const {createBootLoader, createImagePreloadTask, getBootAssetQueue} = require('../../utils/boot-loader');
 const gameStore = require('../../utils/game-store');
 const api = require('../../utils/api-client');
@@ -26,7 +27,6 @@ const BOOT_VIDEO_POSTER = 'https://xcx.ukb88.com/assets/bg/bg.png';
 
 // 启动页网络阶段（拉配置 + 自动登录）共用的时间预算；超时即放行，避免弱网下启动页停留 30 秒以上（I-8）
 const BOOT_NETWORK_BUDGET_MS = 4200;
-const BOOT_LOGIN_MIN_MS = 1500;
 
 function withBootTimeout(promise, ms) {
   let timer = null;
@@ -59,17 +59,16 @@ Page({
     privacyChecking: false,
     legalReady: false,
     consentGranted: false,
-    previewAvailable: false,
-    developmentPreview: false,
   },
   onLoad(options = {}) {
     this.destination = privacy.restoreDestination(options.returnTo);
-    this.setData({nav: getNavLayout(), previewAvailable: privacy.isDevelopmentPreviewAvailable()});
+    this.setData({nav: getNavLayout()});
     this.isDestroyed = false;
     this.startBoot();
   },
   onUnload() {
     this.isDestroyed = true;
+    this.bootLoader?.cancel?.();
     if (!privacy.canEnter()) privacy.revoke();
     if (this.privacyResolver) {
       this.privacyResolver(false);
@@ -89,14 +88,20 @@ Page({
   onVideoEnded() {
   },
   updateProgress(progress) {
-    if (this.isDestroyed) return;
-    this.setData({
-      progress,
-      loadingText: progress >= 100 ? '加载完成' : '正在加载资源',
-    });
+    this.resourceProgress = progress;
+    this.updateBootProgress();
+  },
+  updateBootProgress() {
+    if (this.isDestroyed || this.bootFinished) return;
+    const progress = Math.min(99, Math.round((this.resourceProgress || 0) * .7 + (this.configDone ? 15 : 0) + (this.loginDone ? 14 : 0)));
+    const loadingText = !this.configDone ? '正在同步游戏配置' : !this.loginDone ? '正在连接微信账号' : '正在准备景区资源';
+    this.setData({progress, loadingText});
   },
   finishBoot() {
     if (this.isDestroyed) return;
+    this.bootFinished = true;
+    this.bootLoader?.cancel?.();
+    analytics.track('boot_ready', {durationMs: Math.max(0, Date.now() - (this.bootStartedAt || Date.now())), preloadCount: this.preloadCount || 0});
     this.setData({progress: 100, loadingText: '加载完成'});
     playVoice('bootReady', {debounceMs: 0});
     const holdMs = this._bootHoldMs || DEFAULT_HOLD_MS;
@@ -117,6 +122,8 @@ Page({
     this.setData({privacyChecking: true, privacyError: ''});
     try {
       await privacy.authorize();
+      analytics.track('privacy_accept');
+      void analytics.flush();
       if (this.isDestroyed) {
         privacy.revoke();
         return;
@@ -140,25 +147,13 @@ Page({
       this.startBoot();
     }
   },
-  onEnterDevelopmentPreview() {
-    if (this.isDestroyed || !privacy.isDevelopmentPreviewAvailable()) return;
-    privacy.beginDevelopmentPreview();
-    this.setData({privacyRequired: false, developmentPreview: true, privacyError: ''});
-    if (this.privacyResolver) {
-      this.privacyResolver(true);
-      this.privacyResolver = null;
-    } else {
-      this.bootStarted = false;
-      this.startBoot();
-    }
-  },
   onRejectPrivacy() {
     privacy.revoke();
     if (this.privacyResolver) {
       this.privacyResolver(false);
       this.privacyResolver = null;
     }
-    this.setData({privacyRequired: true, consentGranted: false, developmentPreview: false, privacyError: '你尚未同意，未登录或进入游戏。可重新授权或退出。'});
+    this.setData({privacyRequired: true, consentGranted: false, privacyError: '你尚未同意，未登录或进入游戏。可重新授权或退出。'});
     if (typeof wx.exitMiniProgram === 'function') {
       wx.exitMiniProgram({
         fail: () => this.setData({privacyError: '未能自动退出，请点击右上角关闭小程序；也可重新打开后授权。'}),
@@ -180,9 +175,7 @@ Page({
       const allowed = await privacy.checkPlatformConsent();
       if (!this.isDestroyed && allowed) this.completePrivacyConsent();
     } catch (error) {
-      if (!this.isDestroyed) this.setData({privacyError: this.data.previewAvailable && !this.data.legalReady
-        ? '正式协议准备中，开发版可先进入本地预览。'
-        : error.message || '无法获取微信隐私授权状态，请检查网络后重试。'});
+      if (!this.isDestroyed) this.setData({privacyError: error.message || '无法获取微信隐私授权状态，请检查网络后重试。'});
     } finally {
       if (!this.isDestroyed) this.setData({privacyChecking: false});
     }
@@ -198,7 +191,8 @@ Page({
     this.bootStarted = true;
     const consented = privacy.canEnter() || await this.waitForPrivacyConsent();
     if (!consented || this.isDestroyed) return;
-    this.setData({privacyRequired: false, consentGranted: privacy.isAllowed(), developmentPreview: privacy.isDevelopmentPreview()});
+    this.bootStartedAt = Date.now();
+    this.setData({privacyRequired: false, consentGranted: privacy.isAllowed()});
     this.setData({bootVideoSrc: BOOT_VIDEOS[Math.floor(Math.random() * BOOT_VIDEOS.length)]});
     playVoice('bootWelcome', {debounceMs: 0});
 
@@ -208,23 +202,31 @@ Page({
     // 优先预加载当前（上次游玩）景区背景，配合头像池/福袋图
     const currentStage = (gameStore.getState() || {}).stage || null;
     const tasks = getBootAssetQueue(currentStage).map((src) => createImagePreloadTask(src));
+    this.preloadCount = tasks.length;
     const loader = createBootLoader(tasks, (progress) => {
       this.updateProgress(progress);
     });
+    this.bootLoader = loader;
 
     const loadingDone = loader.start();
+    // Resource preparation runs beside configuration/authentication. Progress
+    // reserves space for all phases, so full progress means ready to enter.
+    const budgetEnd = Date.now() + BOOT_NETWORK_BUDGET_MS;
+    const networkDone = (async () => {
+      await withBootTimeout(runtimeConfig.fetchRemoteConfig(), Math.floor(BOOT_NETWORK_BUDGET_MS * .6));
+      if (!privacy.canEnter() || this.isDestroyed) return;
+      this.configDone = true; this.updateBootProgress();
+      await withBootTimeout(tryAutoLogin(), Math.max(0, budgetEnd - Date.now()));
+      this.loginDone = true; this.updateBootProgress();
+    })();
     const minTimer = new Promise((r) => setTimeout(r, minMs));
     const maxTimer = new Promise((r) => setTimeout(r, maxMs));
 
-    Promise.race([
+    Promise.all([Promise.race([
       Promise.all([loadingDone, minTimer]),
       maxTimer,
-    ]).then(async () => {
+    ]), networkDone]).then(() => {
       if (!privacy.canEnter() || this.isDestroyed) return;
-      const budgetEnd = Date.now() + BOOT_NETWORK_BUDGET_MS;
-      await withBootTimeout(runtimeConfig.fetchRemoteConfig(), BOOT_NETWORK_BUDGET_MS);
-      // 登录超时后放行进入游客态；登录仍在后台完成，资料与 token 由 userProfile 的修订号保护
-      await withBootTimeout(tryAutoLogin(), Math.max(BOOT_LOGIN_MIN_MS, budgetEnd - Date.now()));
       this.finishBoot();
     }).catch(() => {
       if (this.isDestroyed) return;

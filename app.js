@@ -1,3 +1,4 @@
+const analytics = require('./utils/analytics');
 const audio = require('./utils/audio.js');
 const gameStore = require('./utils/game-store');
 const runtimeConfig = require('./utils/runtime-config');
@@ -5,6 +6,8 @@ const privacy = require('./utils/privacy-consent');
 
 App({
   onLaunch(options = {}) {
+    require('./utils/platform-lifecycle').installUpdates?.();
+    analytics.track?.('app_launch');
     this.audio = audio;
     this._isInitialLaunch = true;
     this._maintenanceNotified = false;
@@ -20,11 +23,16 @@ App({
       this._isInitialLaunch = false;
       return;
     }
+    analytics.track?.('app_launch', {source: 'foreground'});
     if (this.audio && typeof this.audio.playStageBgm === 'function') {
       this.audio.playStageBgm(gameStore.getState().stage, {volume: 0.38});
     }
   },
+  onError(error) {analytics.reportError?.(error);},
+  onUnhandledRejection(event) {analytics.reportError?.(event.reason);},
   onHide() {
+    analytics.playFlow?.backgroundAll?.();
+    void analytics.flush?.();
     // 切后台时暂停本地对局计时，避免后台跑完静默结算
     gameStore.pauseGame();
     // 退后台暂停 BGM，避免小程序在后台继续播放

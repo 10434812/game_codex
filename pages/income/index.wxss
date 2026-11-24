@@ -126,3 +126,10 @@
   color: var(--stage-deep, #92724b);
   font-size: 24rpx;
 }
+.ledger-more {
+  margin-top: 24rpx;
+  min-height: 88rpx;
+  font-size: 28rpx;
+  color: var(--stage-ink, #4a2f17);
+  background: var(--stage-panel-solid, #fff8ea);
+}
