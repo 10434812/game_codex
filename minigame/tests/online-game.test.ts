@@ -21,6 +21,7 @@ async function harness() {
     teams: [{id: 'team-1', memberIds: ['1', '2']}], visibleScoreIds: ['2'], fortuneBag: {id: 'offer-1', remainingSeconds: 10, opportunity: {name: '好运', bonus: 60}}};
   const calls: string[] = [];
   let customGet: ((path: string) => Promise<unknown>) | null = null;
+  let customPost: OnlineTransport['post'] | null = null;
   const transport: OnlineTransport = {
     token: api.getToken,
     async get(path) {
@@ -30,15 +31,17 @@ async function harness() {
       if (path.endsWith('/result')) return {resultId: 'session-9-user-1', gain: 60, coins: 180, ranking: [{id: '1', isSelf: true, score: 180, rank: 1}]};
       return structuredClone(state);
     },
-    async post(path) {
+    async post(path, data) {
       calls.push(`POST ${path}`);
+      if (customPost) return customPost(path, data);
+      if (path.endsWith('/rematch')) {room.sessionId = null; room.room.status = 'waiting'; return structuredClone(room);}
       if (path === '/rooms' || path.endsWith('/join')) return structuredClone(room);
       if (path.endsWith('/start')) {room.sessionId = 9; room.room.status = 'playing'; return {sessionId: 9};}
       return structuredClone(state);
     },
   };
   const game = new OnlineGame(transport);
-  return {game, room, state, calls, setGet: (callback: typeof customGet) => {customGet = callback;}};
+  return {game, room, state, calls, setGet: (callback: typeof customGet) => {customGet = callback;}, setPost: (callback: typeof customPost) => {customPost = callback;}};
 }
 
 test('联机主流程从真实房间响应进入对局，结算读取个人结果', async () => {
@@ -136,5 +139,130 @@ test('结算确认后迟到的操作响应保持完成状态', async () => {
     await h.game.setSelfTeam('2');
     assert.equal(h.game.getState().status, 'finished');
     assert.equal(h.game.getSnapshot().result?.resultId, 'session-9-user-1');
+  } finally {h.game.clear();}
+});
+
+test('小游戏续玩保留原房、清除旧场次结果，仍可进入新场次', async () => {
+  const h = await harness();
+  try {
+    await h.game.joinRoom('1234'); await h.game.startGame();
+    h.state.status = 'finished'; await h.game.refresh();
+    assert.ok(h.game.getSnapshot().result);
+    await h.game.rematch();
+    assert.ok(h.calls.includes('POST /games/9/rematch'));
+    assert.equal(h.calls.some((call) => /\/leave|POST \/rooms$/.test(call)), false);
+    assert.equal(h.game.getSnapshot().room?.id, '7');
+    assert.equal(h.game.getSnapshot().sessionId, ''); assert.equal(h.game.getSnapshot().result, null);
+    assert.equal(h.game.getState().status, 'room'); assert.equal(h.game.getState().result, null);
+    h.state.sessionId = 10; h.room.sessionId = 10; h.room.room.status = 'playing'; h.state.status = 'playing'; h.state.stateVersion = 1;
+    await h.game.refresh();
+    await new Promise((done) => setTimeout(done, 0));
+    assert.equal(h.game.getSnapshot().sessionId, '10');
+    assert.equal(h.game.getState().status, 'playing');
+  } finally {h.game.clear();}
+});
+
+test('小游戏续玩响应隔离旧账号，原房失效时保留成绩和新建入口', async () => {
+  const h = await harness();
+  try {
+    await h.game.joinRoom('1234'); await h.game.startGame();
+    h.state.status = 'finished'; await h.game.refresh();
+    h.setPost(async () => {throw Object.assign(new Error('原房间已解散'), {statusCode: 410});});
+    await assert.rejects(h.game.rematch(), /解散/);
+    assert.equal(h.game.getSnapshot().rematchUnavailable, true);
+    assert.ok(h.game.getSnapshot().result);
+    let finish!: (value: unknown) => void;
+    h.setPost(() => new Promise((resolve) => {finish = resolve;}));
+    const pending = h.game.rematch(); api.setToken('other-account');
+    finish(h.room); await pending;
+    assert.equal(h.game.getState().status, 'finished');
+    assert.equal(h.game.getSnapshot().sessionId, '9');
+  } finally {h.game.clear();}
+});
+
+test('收到新鲜WS快照时跳过定时HTTP，快照停更后恢复HTTP', async (t) => {
+  const h = await harness();
+  let opened: () => void = () => {}, message: (event: {data: string}) => void = () => {};
+  Object.assign(Reflect.get(globalThis, 'wx'), {connectSocket: () => ({
+    onOpen(callback: () => void) {opened = callback;}, onMessage(callback: typeof message) {message = callback;},
+    onClose() {}, onError() {}, close() {}, send() {},
+  })});
+  t.mock.timers.enable({apis: ['setTimeout', 'Date'], now: Date.now()});
+  try {
+    await h.game.joinRoom('1234'); await h.game.startGame(); opened();
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    const before = h.calls.filter((call) => call === 'GET /games/9').length;
+    t.mock.timers.tick(1000);
+    message({data: JSON.stringify({event: 'game_state', data: h.state})});
+    t.mock.timers.tick(500);
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    assert.equal(h.calls.filter((call) => call === 'GET /games/9').length, before);
+    t.mock.timers.tick(1500);
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    assert.equal(h.calls.filter((call) => call === 'GET /games/9').length, before + 1);
+  } finally {h.game.clear(); t.mock.timers.reset();}
+});
+
+test('快速匹配接受服务端房间并可取消；换号后的匹配响应不进入旧房', async () => {
+  const h = await harness();
+  try {
+    h.setPost(async (path) => {
+      if (path === '/matchmaking') return {...h.room, room: {...h.room.room, match_due_at: '2026-11-14T12:00:00'}};
+      return {};
+    });
+    await h.game.quickMatch(h.game.getState().stage);
+    assert.equal(h.game.getSnapshot().room?.matching, true);
+    assert.ok(h.calls.includes('POST /matchmaking'));
+    await h.game.leave(); assert.equal(h.game.getSnapshot().room, null);
+    assert.ok(h.calls.includes('POST /rooms/7/leave'));
+    h.setPost(async (path, data) => {
+      if (path !== '/matchmaking') return {};
+      assert.deepEqual(data, {stageId: h.game.getState().stage.id, createFriendRoomIfEmpty: true});
+      return {...h.room, autoCreatedFriendRoom: true};
+    });
+    assert.equal(await h.game.quickMatch(h.game.getState().stage, undefined, {createFriendRoomIfEmpty: true}), true);
+    assert.equal(h.game.getSnapshot().room?.matching, false);
+    await h.game.leave();
+    let finish!: (value: unknown) => void;
+    h.setPost(() => new Promise((resolve) => {finish = resolve;}));
+    const pending = h.game.quickMatch(h.game.getState().stage); api.setToken('new-account');
+    finish(h.room); await pending;
+    assert.equal(h.game.getSnapshot().room, null);
+  } finally {h.game.clear();}
+});
+
+test('再匹配失败保留已确认的结算结果，成功后清除旧场次', async () => {
+  const h = await harness();
+  try {
+    await h.game.joinRoom('1234'); await h.game.startGame(); h.state.status = 'finished'; await h.game.refresh();
+    const result = h.game.getSnapshot().result;
+    h.setPost(async () => {throw new Error('匹配暂不可用');});
+    await assert.rejects(h.game.quickMatch(h.game.getState().stage), /不可用/);
+    assert.equal(h.game.getSnapshot().result, result); assert.equal(h.game.getState().status, 'finished');
+    h.setPost(async () => ({...h.room, sessionId: null, room: {...h.room.room, status: 'waiting', match_due_at: 'soon'}}));
+    await h.game.quickMatch(h.game.getState().stage);
+    assert.equal(h.game.getSnapshot().result, null); assert.equal(h.game.getSnapshot().sessionId, '');
+    assert.equal(h.game.getSnapshot().room?.matching, true);
+  } finally {h.game.clear();}
+});
+
+test('恢复前台立即发送新方向，旧移动失败与finally不能影响新队列', async () => {
+  const h = await harness();
+  const moves: {resolve: (value: unknown) => void; reject: (error: Error) => void}[] = [];
+  const tick = () => new Promise((resolve) => setImmediate(resolve));
+  try {
+    await h.game.joinRoom('1234'); await h.game.startGame();
+    h.setPost(() => new Promise((resolve, reject) => moves.push({resolve, reject})));
+    h.game.setRunDirection(1, 0);
+    h.game.hide(); h.game.show(); await tick();
+    h.game.setRunDirection(-1, 0);
+    assert.equal(moves.length, 2, '新输入不等待旧生命周期请求结束');
+    moves[0].reject(new Error('旧移动请求超时')); await tick();
+    assert.equal(h.game.getSnapshot().error, '');
+    h.game.setRunDirection(0, 1);
+    assert.equal(moves.length, 2, '旧finally不能释放新移动的锁');
+    moves[1].resolve(h.state); await tick();
+    assert.equal(moves.length, 3);
+    moves[2].resolve(h.state); await tick();
   } finally {h.game.clear();}
 });

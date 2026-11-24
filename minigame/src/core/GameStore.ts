@@ -14,7 +14,6 @@ import {
   MAX_PLAYERS,
   PLAYER_STATUS_SELF_READY,
   PLAYER_STATUS_SELF_WAITING,
-  ROOM_UI_LIMIT,
   ROUND_INTERVAL_SECONDS,
   type Stage,
   type StageLike,
@@ -62,6 +61,7 @@ export interface ScoreBreakdown {
 }
 
 export interface FinishedResult extends GameResult {
+  matchmaking?: boolean;
   resultId: string;
   gain: number;
   coins: number;
@@ -70,6 +70,8 @@ export interface FinishedResult extends GameResult {
   scoreBreakdownMap: Record<string, ScoreBreakdown>;
   performanceMap?: Record<string, RunStats>;
   rewardNotice?: string;
+  challengeCode?: string;
+  challengeComparison?: {selfScore: number; friendScore: number};
 }
 
 export interface GameState {
@@ -816,7 +818,7 @@ export function restartGame(options: GameStoreOptions = {}): GameState {
   const stage = state.stage || DEFAULT_STAGE;
   createRoomFromStage(stage, {
     ...options,
-    roomSize: options.roomSize || ROOM_UI_LIMIT,
+    roomSize: options.roomSize || state.players.length || undefined,
   });
   return startGame(options);
 }

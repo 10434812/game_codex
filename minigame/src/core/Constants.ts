@@ -21,7 +21,7 @@ export interface ScoreRange {
   max: number;
 }
 
-export const INITIAL_SCORE_RANGE: ScoreRange = {min: 80, max: 220};
+export const INITIAL_SCORE_RANGE: ScoreRange = {min: 100, max: 100};
 export const POSITIVE_SCORE_RANGE: ScoreRange = {min: 20, max: 80};
 export const NEGATIVE_SCORE_RANGE: ScoreRange = {min: 10, max: 60};
 

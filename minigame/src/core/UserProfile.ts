@@ -1,3 +1,4 @@
+import {analytics} from './Analytics';
 /**
  * 用户资料（原 utils/user-profile.js）。
  *
@@ -9,7 +10,7 @@ import * as api from './ApiClient';
 import * as privacyConsent from './PrivacyConsent';
 import * as runtimeConfig from './RuntimeConfig';
 import * as shopStore from './ShopStore';
-import {toast} from '../platform/feedback';
+import {showTrialAccessDialog, toast} from '../platform/feedback';
 import {requestLoginCode} from '../platform/request';
 import {readJson, removeKey, writeJson} from '../platform/storage';
 
@@ -97,6 +98,16 @@ function readLoginResult(result: unknown): {token: string; user: RawProfile} | n
   return {token, user: user as RawProfile};
 }
 
+/** 受邀体验拒绝登录时服务端返回的体验编号；其他错误返回 0。 */
+export function readTrialUserId(error: unknown): number {
+  const body = error && typeof error === 'object' && 'responseBody' in error ? (error as {responseBody?: unknown}).responseBody : undefined;
+  const data = body && typeof body === 'object' && 'data' in body ? (body as {data?: unknown}).data : undefined;
+  if (!data || typeof data !== 'object') return 0;
+  const record = data as {code?: unknown; trialUserId?: unknown};
+  const id = record.code === 'TRIAL_ACCESS_REQUIRED' ? Number(record.trialUserId) : 0;
+  return Number.isInteger(id) && id > 0 ? id : 0;
+}
+
 function readAvatarReview(result: unknown): string | undefined {
   if (result && typeof result === 'object' && 'avatarReview' in result) {
     const review = result.avatarReview;
@@ -118,7 +129,7 @@ export async function login(): Promise<UserProfile> {
       return getCachedProfile();
     }
 
-    const parsed = readLoginResult(await api.post('/auth/login', {code}));
+    const parsed = readLoginResult(await api.post('/auth/login', {code, client: 'minigame'}));
     if (!parsed) {
       throw new Error('登录响应不完整，请重新登录');
     }
@@ -141,8 +152,12 @@ export async function login(): Promise<UserProfile> {
       console.warn('[user-profile] refreshInventory error:', error);
       toast('登录成功，账号资产同步失败，请在商城重试');
     }
+    analytics.track('login_success');
     return profile;
   } catch (error) {
+    analytics.track('login_fail');
+    const trialUserId = readTrialUserId(error);
+    if (trialUserId && revision === sessionRevision) showTrialAccessDialog(trialUserId);
     console.warn('[user-profile] login error:', error);
     throw error;
   }

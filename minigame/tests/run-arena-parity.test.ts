@@ -21,3 +21,15 @@ test('三端实时对局在相同输入和随机源下运行 120 秒完全一致
     assert.deepEqual(states[0], states[1]); assert.deepEqual(states[0], states[2]);
   }
 });
+
+test('三端多人场同轮分散掉落保持一致', () => {
+  for (const count of [4, 5, 7, 8, 10]) {
+    const players = Array.from({length: count}, (_, i) => ({id: String(i), name: String(i), score: 100, teamId: null}));
+    const results = [run, js, backend].map((m) => {
+      const world = m.createRunWorld(players); world.elapsedMs = 2990;
+      return m.advanceRunArena(world, players, 50, makeRandom(701));
+    });
+    assert.deepEqual(results[0], results[1]); assert.deepEqual(results[0], results[2]);
+    assert.equal(results[0].world.drops.length, count <= 4 ? 1 : count <= 7 ? 2 : 3);
+  }
+});

@@ -1,3 +1,4 @@
+import {analytics} from './Analytics';
 /**
  * 隐私与协议同意（原 utils/privacy-consent.js）。
  *
@@ -93,6 +94,7 @@ export async function authorize(): Promise<void> {
 export function revoke(): void {
   confirmedVersion = '';
   revision += 1;
+  analytics.discard();
 }
 
 /**

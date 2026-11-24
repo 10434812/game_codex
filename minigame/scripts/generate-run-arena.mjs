@@ -9,13 +9,17 @@ const checkOnly = process.argv.includes('--check');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const sources = [['minigame/src/core/RunArena.ts', 'utils/run-arena.js', 'back/src/game-engine/run-arena.js'],
   ['minigame/src/render/arena-effects.ts', 'utils/arena-effects.js'],
-  ['minigame/src/render/run-arena-renderer.ts', 'utils/run-arena-renderer.js']];
+  ['minigame/src/render/run-arena-renderer.ts', 'utils/run-arena-renderer.js'],
+  ['minigame/src/render/result-share-card.ts', 'utils/result-share-card.js'],
+  ['minigame/src/core/PlayFlow.ts', 'utils/play-flow.js'],
+  ['minigame/src/core/ArenaMotion.ts', 'utils/arena-motion.js'],
+  ['minigame/src/core/GrowthGoal.ts', 'utils/growth-goal.js']];
 
 const stale = [];
 for (const [source, ...targets] of sources) {
   const text = fs.readFileSync(path.join(root, source), 'utf8');
   const output = '// Generated from ' + source + '\n' + ts.transpileModule(text, {compilerOptions: {target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS}}).outputText;
-  const rendered = output.replace('require("../core/RunArena")', 'require("./run-arena")');
+  const rendered = output.replace(/require\("(?:\.\.\/core\/|\.\/)RunArena"\)/, 'require("./run-arena")');
   for (const target of targets) {
     const targetPath = path.join(root, target);
     if (checkOnly) {

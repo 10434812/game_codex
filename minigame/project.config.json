@@ -54,6 +54,14 @@
       {
         "value": "package-lock.json",
         "type": "file"
+      },
+      {
+        "value": ".scratch",
+        "type": "folder"
+      },
+      {
+        "value": "scripts",
+        "type": "folder"
       }
     ],
     "include": []

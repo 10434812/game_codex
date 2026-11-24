@@ -31,7 +31,7 @@ const CONFIG_CACHE_TTL_MS = 60 * 1000;
 
 let cachedConfig: Record<string, string> = {...DEFAULT_CONFIG};
 let cachedFeatures: Record<string, unknown> = {};
-let lastFetchTime = 0;
+let lastFetchTime: number | null = null;
 let pendingPromise: Promise<Record<string, string>> | null = null;
 
 export function getConfigMap(): Record<string, string> {
@@ -40,6 +40,11 @@ export function getConfigMap(): Record<string, string> {
 
 export function getFeatures(): Record<string, unknown> {
   return JSON.parse(JSON.stringify(cachedFeatures || {})) as Record<string, unknown>;
+}
+
+export function isApiSupported(name: string): boolean {
+  const features = cachedFeatures.api;
+  return !!features && typeof features === 'object' && (features as Record<string, unknown>)[name] === true;
 }
 
 /** 原始值：远端可能给出布尔或数字，不做字符串化，交给调用方判断。 */
@@ -85,7 +90,7 @@ function readFeatures(data: unknown): Record<string, unknown> {
 
 export async function fetchRemoteConfig(force = false): Promise<Record<string, string>> {
   const now = Date.now();
-  if (!force && now - lastFetchTime < CONFIG_CACHE_TTL_MS) {
+  if (!force && lastFetchTime !== null && now - lastFetchTime < CONFIG_CACHE_TTL_MS) {
     return getConfigMap();
   }
   if (pendingPromise) {
@@ -101,7 +106,7 @@ export async function fetchRemoteConfig(force = false): Promise<Record<string, s
     })
     .catch((error) => {
       console.warn('[runtime-config] fetchRemoteConfig error:', error);
-      lastFetchTime = Date.now();
+      // Keep the last successful timestamp so the next caller can retry.
       return getConfigMap();
     })
     .finally(() => {
@@ -114,6 +119,6 @@ export async function fetchRemoteConfig(force = false): Promise<Record<string, s
 export function __resetForTests(): void {
   cachedConfig = {...DEFAULT_CONFIG};
   cachedFeatures = {};
-  lastFetchTime = 0;
+  lastFetchTime = null;
   pendingPromise = null;
 }

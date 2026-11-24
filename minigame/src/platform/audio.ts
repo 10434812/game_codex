@@ -1,3 +1,4 @@
+import {getSettings} from '../core/AudioSettings';
 /**
  * 音频。对应小程序端 utils/audio.js 的「共享 + 循环」两种模式，
  * 但资源地址由调用方传入，本模块不硬编码 URL。
@@ -8,13 +9,14 @@ import {getWx, type WxInnerAudio} from './wx';
 export class GameAudio {
   private bgm: WxInnerAudio | null = null;
   private cue: WxInnerAudio | null = null;
+  private cueKind: 'sound' | 'voice' = 'sound';
   private bgmUrl = '';
   private readonly lastVoiceAt: Record<string, number> = {};
 
   /** 循环播放背景音乐；同一首重复调用不重启。 */
   playBgm(url: string, volume = 0.38): void {
     const wxApi = getWx();
-    if (!wxApi || !url) {
+    if (!getSettings().music || !wxApi || !url) {
       return;
     }
     if (this.bgmUrl === url && this.bgm) {
@@ -31,6 +33,11 @@ export class GameAudio {
     this.bgmUrl = url;
   }
 
+  applySettings(): void {
+    const settings = getSettings();
+    if (!settings.music) this.stopBgm();
+    if (!settings[this.cueKind]) this.cue?.stop();
+  }
   stopBgm(): void {
     if (!this.bgm) {
       return;
@@ -47,6 +54,10 @@ export class GameAudio {
 
   /** 播放一次性音效；新的音效会打断上一个。 */
   playCue(url: string, volume = 0.8): void {
+    if (!getSettings().sound) return;
+    this.playSound(url, volume, 'sound');
+  }
+  private playSound(url: string, volume: number, kind: 'sound' | 'voice'): void {
     const wxApi = getWx();
     if (!wxApi || !url) {
       return;
@@ -56,6 +67,7 @@ export class GameAudio {
       audio.onError((error) => console.warn('[audio] 音效失败', error));
       this.cue = audio;
     }
+    this.cueKind = kind;
     this.cue.stop();
     this.cue.src = url;
     this.cue.loop = false;
@@ -68,13 +80,14 @@ export class GameAudio {
    * 避免连续事件把播报叠在一起（对应小程序端 playVoice 的 debounceMs）。
    */
   playVoice(url: string, debounceMs = 3000, volume = 0.9): void {
+    if (!getSettings().voice) return;
     const now = Date.now();
     const last = this.lastVoiceAt[url] || 0;
     if (now - last < debounceMs) {
       return;
     }
     this.lastVoiceAt[url] = now;
-    this.playCue(url, volume);
+    this.playSound(url, volume, 'voice');
   }
 
   destroy(): void {

@@ -2,11 +2,11 @@ import {existsSync, mkdirSync, writeFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {createCanvas, GlobalFonts, loadImage} from '@napi-rs/canvas';
-import * as store from '../dist/core/GameStore.js';
-import {ArenaScene} from '../dist/scenes/arena-scene.js';
-import {createRunWorld, advanceRunArena, selectRunTarget} from '../dist/core/RunArena.js';
-import {renderRunArena, runFieldRect} from '../dist/render/run-arena-renderer.js';
-import {ARENA_EFFECT_ASSETS, ARENA_DROP_ASSETS} from '../dist/render/arena-effects.js';
+import * as store from '../.scratch/smoke/core/GameStore.js';
+import {ArenaScene} from '../.scratch/smoke/scenes/arena-scene.js';
+import {createRunWorld, advanceRunArena, selectRunTarget} from '../.scratch/smoke/core/RunArena.js';
+import {renderRunArena, runFieldRect} from '../.scratch/smoke/render/run-arena-renderer.js';
+import {ARENA_EFFECT_ASSETS, ARENA_DROP_ASSETS} from '../.scratch/smoke/render/arena-effects.js';
 const effectImages = Object.fromEntries(await Promise.all(Object.values(ARENA_EFFECT_ASSETS).map(async (asset) => {
   const image = await loadImage(fileURLToPath(new URL('..' + asset, import.meta.url)));
   assert.equal(image.width / image.height, 2);
@@ -15,7 +15,7 @@ const effectImages = Object.fromEntries(await Promise.all(Object.values(ARENA_EF
   assert.equal(context.getImageData(0, 0, 1, 1).data[3], 0, '图集边角必须透明');
   return [asset, image];
 })));
-for (const asset of Object.values(ARENA_DROP_ASSETS)) {
+for (const asset of Object.values(ARENA_DROP_ASSETS).filter(Boolean)) {
   const image = await loadImage(fileURLToPath(new URL('..' + asset, import.meta.url)));
   assert.equal(image.width, 256); assert.equal(image.height, 256);
   const probe = createCanvas(256, 256), context = probe.getContext('2d'); context.drawImage(image, 0, 0);
@@ -30,7 +30,7 @@ let seed = 32; const random = () => {seed = (Math.imul(seed, 1664525) + 10139042
 store.__resetForTests(); store.createRoomFromStage({id: 1}, {roomSize: 8, random}); store.startGame({autoStartTimer: false, random});
 for (let i = 0; i < 70; i++) {store.setRunDirection(i % 20 < 10 ? .8 : -.8, .15); store.advanceRunFrame(100, {random});}
 for (const height of [1280, 1600]) {
-  const canvas = createCanvas(720, height), ctx = canvas.getContext('2d'), scene = new ArenaScene({width: 720, height, offsetY: 70}); scene.start();
+  const canvas = createCanvas(720, height), ctx = canvas.getContext('2d'), scene = new ArenaScene({source: store, width: 720, height, offsetY: 70}); scene.start();
   scene.render(ctx); writeFileSync(`${output}/arena-${height}.png`, canvas.toBuffer('image/png')); scene.dispose();
 }
 const ps = store.getState().players.map((p) => ({...p, isRobot: false})), world = createRunWorld(ps);

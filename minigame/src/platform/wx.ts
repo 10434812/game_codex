@@ -42,6 +42,7 @@ export interface WxSystemInfo {
 export interface WxCanvas {
   width: number;
   height: number;
+  toTempFilePath?(options: {fileType?: 'png' | 'jpg'; width?: number; height?: number; destWidth?: number; destHeight?: number; success?: (response: {tempFilePath: string}) => void; fail?: () => void}): void;
   getContext(type: '2d'): Canvas2DContext;
 }
 
@@ -113,11 +114,18 @@ export interface WxSocketTask {
 }
 
 export interface WxApi {
+  onError?(callback: (error: unknown) => void): void;
+  onMemoryWarning?(callback: () => void): void;
+  onShareAppMessage?(callback: () => {title: string; query: string}): void;
+  onShareTimeline?(callback: () => {title: string; query: string}): void;
+  showShareMenu?(options: {menus: string[]}): void;
+  getUpdateManager?(): {onUpdateReady(callback: () => void): void; applyUpdate(): void};
   getMenuButtonBoundingClientRect?(): {top: number; bottom: number; height: number; left: number};
   connectSocket?(options: {url: string; protocols?: string[]}): WxSocketTask;
-  showModal?(options: {title: string; content: string; editable?: boolean; placeholderText?: string; confirmText?: string; success: (result: {confirm: boolean; content?: string}) => void; fail?: (error: unknown) => void}): void;
+  showModal?(options: {title: string; content: string; editable?: boolean; placeholderText?: string; confirmText?: string; cancelText?: string; success: (result: {confirm: boolean; content?: string}) => void; fail?: (error: unknown) => void}): void;
+  setClipboardData?(options: {data: string; fail?: (error: unknown) => void}): void;
   chooseMedia?(options: {count: number; mediaType: string[]; sourceType: string[]; success: (result: {tempFiles: {tempFilePath: string}[]}) => void; fail?: (error: unknown) => void}): void;
-  shareAppMessage?(options: {title: string; query: string}): void;
+  shareAppMessage?(options: {title: string; query: string; imageUrl?: string}): void;
   showActionSheet?(options: {itemList: string[]; success: (result: {tapIndex: number}) => void; fail?: (error: unknown) => void}): void;
   getLaunchOptionsSync?(): {query?: Record<string, string>};
   exitMiniProgram?(): void;

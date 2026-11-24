@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {mkdirSync, writeFileSync, existsSync} from 'node:fs';
 import {createCanvas, GlobalFonts} from '@napi-rs/canvas';
-import {renderRulesPanel, rulesPanelLayout} from '../dist/render/rules-panel.js';
+import {renderRulesPanel, rulesPanelLayout} from '../.scratch/smoke/render/rules-panel.js';
 
 const font = ['/System/Library/Fonts/PingFang.ttc', '/System/Library/Fonts/STHeiti Light.ttc'].find(existsSync);
 if (font) GlobalFonts.registerFromPath(font, 'sans-serif');

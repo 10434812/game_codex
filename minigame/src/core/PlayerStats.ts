@@ -160,14 +160,15 @@ export function recordSettlement(payload: SettlementPayload = {}): StatsState {
   );
 }
 
-export async function fetchSummary(): Promise<StatsSummary> {
+export async function fetchSummary(): Promise<StatsSummary | null> {
+  const token = api.getToken();
+  if (!token) return getSummary();
   try {
-    if (!api.isLoggedIn()) {
-      return getSummary();
-    }
     const data = await api.get('/stats/summary');
+    if (token !== api.getToken()) return null;
     if (data && typeof data === 'object') {
       const remote = data as {totalIncome?: number; totalExp?: number; recordCount?: number};
+      if (!Number.isFinite(Number(remote.totalExp)) || Number(remote.totalExp) < 0) return null;
       return {
         totalIncome: remote.totalIncome || 0,
         totalExp: remote.totalExp || 0,
@@ -177,7 +178,7 @@ export async function fetchSummary(): Promise<StatsSummary> {
   } catch (error) {
     console.warn('[player-stats] fetchSummary error:', error);
   }
-  return getSummary();
+  return null;
 }
 
 export async function fetchHistory(page = 1, limit = 20): Promise<HistoryPage> {

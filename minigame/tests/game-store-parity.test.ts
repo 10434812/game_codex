@@ -23,6 +23,7 @@ interface LegacyGameStore {
   ensureRoom(stage: unknown, options?: unknown): unknown;
   inviteHumanPlayer(options?: unknown): unknown;
   startGame(options?: unknown): unknown;
+  restartGame(options?: unknown): unknown;
   tick(options?: unknown): unknown;
   finishGame(): unknown;
   applyPlayerScoreDelta(playerId: string, delta: unknown, options?: unknown): unknown;
@@ -167,6 +168,22 @@ test('持久化恢复判定与小程序端行为一致', () => {
       assert.match(restored.feedText, /已恢复/);
     }
   }
+});
+
+test('复玩保留人数与显式调整人数在两个客户端一致', () => {
+  const pair = createPair();
+  resetBoth(pair);
+  stepBoth(pair,
+    (module) => module.createRoomFromStage({id: 1}, {roomSize: 6, random: makeRandom(21)}),
+    () => storeTs.createRoomFromStage({id: 1}, {roomSize: 6, random: makeRandom(21)}), 'create 6');
+  stepBoth(pair,
+    (module) => module.restartGame({autoStartTimer: false, random: makeRandom(22)}),
+    () => storeTs.restartGame({autoStartTimer: false, random: makeRandom(22)}), 'replay 6');
+  assert.equal(storeTs.getState().players.length, 6);
+  stepBoth(pair,
+    (module) => module.restartGame({roomSize: 4, autoStartTimer: false, random: makeRandom(23)}),
+    () => storeTs.restartGame({roomSize: 4, autoStartTimer: false, random: makeRandom(23)}), 'replay 4');
+  assert.equal(storeTs.getState().players.length, 4);
 });
 
 test('建房、邀请与开局状态一致', () => {

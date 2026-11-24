@@ -1,6 +1,6 @@
 import {FIELD, type RunWorld, type RunnerPlayer} from '../core/RunArena';
 import type {Canvas2DContext, Rect, ImageLike} from './canvas-utils';
-import {pickupEffect, ARENA_DROP_ASSETS} from './arena-effects';
+import {pickupEffect, pickupText, dropMeta, ARENA_DROP_ASSETS} from './arena-effects';
 export interface RunAppearance {images?: Record<string, ImageLike>; skinImage?: string; ringImage?: string; petImage?: string; bagImage?: string; giftImage?: string; emotes?: Record<string, string>; paper?: string}
 
 export function runFieldRect(width: number, height: number, top = 150): Rect {
@@ -34,14 +34,15 @@ export function renderRunArena(ctx: Canvas2DContext, world: RunWorld, players: r
   }
   for (const drop of world.drops) {
     const warning = world.elapsedMs < drop.warningUntil;
-    const color = drop.kind === 'bomb' ? '#693d33' : drop.kind === 'bag' ? '#b83f2c' : '#317966';
+    const meta = dropMeta(drop.kind), color = meta.color;
     if (warning) {
       ctx.globalAlpha = .55 + .3 * Math.sin(world.elapsedMs / 100);
       ctx.fillStyle = color; ctx.fillRect(px(drop.x) - 3, rect.y, 6, 32);
       ctx.font = `bold ${Math.max(12, 24 * unit)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(drop.kind === 'bomb' ? '雷 ↓' : drop.kind === 'bag' ? '福 ↓' : '礼 ↓', px(drop.x), rect.y + 36); ctx.globalAlpha = 1; continue;
+      ctx.fillText(`${meta.glyph} ↓`, px(drop.x), rect.y + 36); ctx.globalAlpha = 1; continue;
     }
     const dropAsset = (drop.kind === 'bag' ? appearance.bagImage : drop.kind === 'gift' ? appearance.giftImage : '') || ARENA_DROP_ASSETS[drop.kind];
+    if (drop.kind === 'shield' || drop.kind === 'magnet') circle(drop.x, drop.y, 36, '', '#f3c65c');
     const dropImage = appearance.images?.[dropAsset];
     if (dropImage) {
       ctx.drawImage(dropImage, px(drop.x) - 45 * unit, py(drop.y) - 45 * unit, 90 * unit, 90 * unit);
@@ -49,7 +50,7 @@ export function renderRunArena(ctx: Canvas2DContext, world: RunWorld, players: r
     }
     circle(drop.x, drop.y, 27, color);
     ctx.fillStyle = '#fff7df'; ctx.font = `bold ${30 * unit}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(drop.kind === 'bomb' ? '雷' : drop.kind === 'bag' ? '福' : '礼', px(drop.x), py(drop.y));
+    ctx.fillText(meta.glyph, px(drop.x), py(drop.y));
     if (drop.kind === 'bomb') {ctx.strokeStyle = '#a94a22'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px(drop.x + 8), py(drop.y - 25)); ctx.lineTo(px(drop.x + 22), py(drop.y - 43)); ctx.stroke();}
   }
   // 绘制在人物下方，火光和金光不会盖住玩家及名牌。
@@ -94,6 +95,8 @@ export function renderRunArena(ctx: Canvas2DContext, world: RunWorld, players: r
     const selected = selfRunner?.targetId === r.id;
     if (incoming || selected) circle(r.x, r.y, 47, '', incoming ? '#317966' : '#ad5e16');
     if (r.boosted) circle(r.x, r.y, 42, '#edd09a');
+    if ((r.magnetUntil || 0) > world.elapsedMs) circle(r.x, r.y, FIELD.magnetRange, '', '#8a4a9c55');
+    if (r.shield) circle(r.x, r.y, 46, '', '#2f6f9a');
     circle(r.x, r.y + 7, FIELD.radius + 1, '#d2bd94');
     circle(r.x, r.y, FIELD.radius, p.isSelf ? '#ab4e16' : r.mateId ? '#317966' : '#725538', '#fff9e9');
     ctx.fillStyle = '#fff9e9'; ctx.font = `bold ${29 * unit}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -119,14 +122,24 @@ export function renderRunArena(ctx: Canvas2DContext, world: RunWorld, players: r
     const p = players.find((p) => p.id === r.id); if (!p) continue;
     const labelFont = Math.max(12, 32 * unit);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `bold ${labelFont}px sans-serif`; ctx.fillStyle = '#51361e';
-    const name = `${p.name.slice(0, 5)} · ${p.score}`, w = ctx.measureText(name).width + 8, h = labelFont + 6;
+    const name = `${p.name.slice(0, 5)}${p.isRobot ? '·机器人' : ''} · ${p.score}`, w = ctx.measureText(name).width + 8, h = labelFont + 6;
     const overlap = (a: Rect, b: Rect) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
     const candidates = [57, -62, 100, -105, 145, -150].flatMap((dy) => [0, 110, -110, 200, -200].map((dx) => ({
       x: Math.max(rect.x + 4, Math.min(rect.x + rect.width - w - 4, px(r.x + dx) - w / 2)),
       y: Math.max(rect.y + 4, Math.min(rect.y + rect.height - h - 4, py(r.y + dy) - h / 2)), width: w, height: h,
     })));
     const cost = (label: Rect) => labels.filter((l) => overlap(l, label)).length * 10000 + world.runners.filter((body) => overlap(label, {x: px(body.x) - 37 * unit, y: py(body.y) - 37 * unit, width: 74 * unit, height: 74 * unit})).length * 3000 + Math.hypot(label.x + w / 2 - px(r.x), label.y + h / 2 - py(r.y + 57));
-    const label = candidates.sort((a, b) => cost(a) - cost(b))[0]; labels.push(label);
+    let label = candidates[0];
+    let bestCost = cost(label);
+    for (let i = 1; i < candidates.length; i++) {
+      const candidate = candidates[i];
+      const candidateCost = cost(candidate);
+      if (candidateCost < bestCost) {
+        label = candidate;
+        bestCost = candidateCost;
+      }
+    }
+    labels.push(label);
     if (Math.hypot(label.x + w / 2 - px(r.x), label.y - py(r.y)) > 85 * unit) {
       ctx.strokeStyle = '#b49a6c'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px(r.x), py(r.y)); ctx.lineTo(label.x + w / 2, label.y + h / 2); ctx.stroke();
     }
@@ -140,10 +153,9 @@ export function renderRunArena(ctx: Canvas2DContext, world: RunWorld, players: r
     if (progress < 0 || progress >= 1) continue;
     ctx.globalAlpha = Math.min(1, (1 - progress) * 3);
     ctx.font = `bold ${32 * unit}px sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = effect.delta < 0 ? '#a42f27' : '#27725d';
-    const delta = effect.appliedDelta ?? effect.delta, linked = effect.appliedLinkedDelta ?? effect.linkedDelta;
+    const linked = effect.appliedLinkedDelta ?? effect.linkedDelta;
     const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
-    const label = effect.kind === 'bomb' ? '踩雷' : effect.kind === 'gift' ? '礼物' : '福袋';
-    const text = effect.type === 'team' ? '组队成功' : `${label} ${signed(delta)}${effect.teammateId ? ` / 队友${signed(linked)}` : ''}`;
+    const text = effect.type === 'team' ? '组队成功' : `${pickupText(effect)}${effect.teammateId && linked ? ` / 队友${signed(linked)}` : ''}`;
     const textWidth = ctx.measureText(text).width + 18 * unit;
     const textX = Math.max(rect.x + textWidth / 2 + 4, Math.min(rect.x + rect.width - textWidth / 2 - 4, px(effect.x)));
     const above = py(effect.y - 155 - progress * 65);

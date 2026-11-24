@@ -3,16 +3,19 @@
   "private": true,
   "type": "module",
   "description": "锦鲤前程 微信小游戏客户端（原生 Canvas2D，不依赖游戏引擎与编辑器）",
-  "engines": {"node": ">=24"},
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "codegen": "node scripts/generate-shop-catalog.mjs && node scripts/generate-legal-config.mjs && node scripts/generate-run-arena.mjs && node scripts/copy-stage-assets.mjs",
-    "build": "npm run codegen && tsc -p tsconfig.json",
+    "build": "npm run codegen && npm run typecheck && node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node scripts/generate-shop-catalog.mjs && node scripts/generate-legal-config.mjs && node scripts/copy-stage-assets.mjs && node scripts/generate-run-arena.mjs --check && node --import ./tests/register-hook.mjs --test tests/*.test.ts",
-    "smoke": "npm run build && node --import ./tests/register-dist-hook.mjs tests/render-smoke.mjs && node --import ./tests/register-dist-hook.mjs tests/menu-smoke.mjs && node --import ./tests/register-dist-hook.mjs tests/rules-smoke.mjs"
+    "smoke": "npm run build && node tests/bundle-smoke.mjs && tsc -p tsconfig.json --outDir .scratch/smoke && node --import ./tests/register-dist-hook.mjs tests/share-card-smoke.mjs && node --import ./tests/register-dist-hook.mjs tests/render-smoke.mjs && node --import ./tests/register-dist-hook.mjs tests/menu-smoke.mjs && node --import ./tests/register-dist-hook.mjs tests/rules-smoke.mjs"
   },
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.11",
+    "esbuild": "^0.28.2",
     "typescript": "^5.8.3"
   }
 }

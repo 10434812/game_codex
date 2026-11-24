@@ -94,7 +94,8 @@ test('并发调用共用同一个请求', async () => {
   cleanup();
 });
 
-test('拉取失败回落默认值，并记录本次尝试时间', async (t) => {
+test('拉取失败回落默认值，下次调用重试并恢复联机能力', async (t) => {
+  t.after(cleanup);
   const warnings: unknown[][] = [];
   t.mock.method(console, 'warn', (...args: unknown[]) => warnings.push(args));
   const state: StubState = {requests: [], respond: () => ({fail: 'request:fail timeout'})};
@@ -103,10 +104,19 @@ test('拉取失败回落默认值，并记录本次尝试时间', async (t) => {
 
   const merged = await runtimeConfig.fetchRemoteConfig();
   assert.equal(merged['wechat.share_title'], runtimeConfig.DEFAULT_CONFIG['wechat.share_title']);
-  // 失败时也应更新 lastFetchTime，避免每次调用都重试
   assert.equal(state.requests.length, 2, 'GET 会退避重试一次');
   assert.equal(warnings.length, 1);
   assert.match(String(warnings[0][0]), /fetchRemoteConfig error/);
+
+  state.respond = () => ({statusCode: 200, data: {code: 0, data: {
+    configs: {'wechat.share_title': '恢复成功'}, features: {api: {onlineArena: true}},
+  }}});
+  await runtimeConfig.fetchRemoteConfig();
+  assert.equal(state.requests.length, 3);
+  assert.equal(runtimeConfig.getValue('wechat.share_title'), '恢复成功');
+  assert.equal(runtimeConfig.isApiSupported('onlineArena'), true);
+  await runtimeConfig.fetchRemoteConfig();
+  assert.equal(state.requests.length, 3, '成功后仍应缓存');
 
   cleanup();
 });
