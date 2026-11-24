@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const {sessionOrigin} = require('../utils/session-age');
 const https = require('https');
 const config = require('../config');
 const db = require('../models/db');
@@ -103,9 +104,9 @@ function normalizeExpiresIn(value) {
  * @param {Object} user - User row from database
  * @returns {string} signed JWT
  */
-function generateToken(user, expiresIn = config.jwt.expiresIn) {
+function generateToken(user, expiresIn = config.jwt.expiresIn, origin = Math.floor(Date.now() / 1000), client = 'miniprogram') {
   return jwt.sign(
-    { userId: user.id, openid: user.openid },
+    { userId: user.id, openid: user.openid, oat: origin, client },
     config.jwt.secret,
     { expiresIn: normalizeExpiresIn(expiresIn) }
   );
@@ -118,11 +119,16 @@ function generateToken(user, expiresIn = config.jwt.expiresIn) {
  * @returns {Promise<{ token: string, user: Object }>}
  * @throws {Error} if WeChat API fails or code is invalid
  */
-async function login(code, {previousToken} = {}) {
+async function login(code, {previousToken, client = 'miniprogram'} = {}) {
+  if (!['miniprogram', 'minigame'].includes(client)) {
+    throw Object.assign(new Error('不支持的登录客户端'), {statusCode: 400});
+  }
   let previousUser = null;
   if (previousToken) {
     try {
       previousUser = jwt.verify(previousToken, config.jwt.secret, {ignoreExpiration: true});
+      if ((previousUser.client || 'miniprogram') !== client) throw new Error('client mismatch');
+      previousUser.oat = sessionOrigin(previousUser, config.jwt.maxSessionDays);
       if (!Number.isSafeInteger(Number(previousUser.userId)) || Number(previousUser.userId) <= 0 || !previousUser.openid) {
         throw new Error('invalid user');
       }
@@ -130,7 +136,7 @@ async function login(code, {previousToken} = {}) {
       throw Object.assign(new Error('登录凭证无效，请重新登录'), {statusCode: 401});
     }
   }
-  const wxConfig = await configService.getWechatLoginSettings();
+  const wxConfig = await configService.getWechatLoginSettings(client);
   if (!wxConfig.enabled) {
     throw new Error('WeChat login disabled');
   }
@@ -150,20 +156,20 @@ async function login(code, {previousToken} = {}) {
     user = await db.queryOne('SELECT * FROM users WHERE id = ? AND openid = ?', [previousUser.userId, wxSession.openid]);
     if (!user || user.deleted_at) throw Object.assign(new Error('账号已注销或不存在，请重新登录'), {statusCode: 401});
     if (user.is_banned) throw Object.assign(new Error('账号已被封禁，请联系客服'), {statusCode: 403});
-  } else if (config.deployment.channel === 'trial') {
-    user = await db.queryOne('SELECT * FROM users WHERE openid = ?', [wxSession.openid]);
-    if (!user) throw Object.assign(new Error('当前为受邀体验，请联系管理员添加体验账号'), {statusCode: 403});
-    if (user.deleted_at) throw Object.assign(new Error('账号已注销，请重新登录'), {statusCode: 401});
   } else {
+    // 受邀体验也为新微信号建档（不发 token），以便返回体验编号给管理员加白名单。
     const startCoinsValue = await configService.getConfig('game.initial_coins');
     const startCoins = Number.isFinite(Number(startCoinsValue)) ? Number(startCoinsValue) : 100;
     user = await findOrCreateUser(wxSession.openid, startCoins);
+    if (config.deployment.channel === 'trial' && user.deleted_at) {
+      throw Object.assign(new Error('账号已注销，请重新登录'), {statusCode: 401});
+    }
   }
 
   assertTrialAccess(user.id);
 
   // 3. Generate JWT
-  const token = generateToken(user, wxConfig.tokenTtl || config.jwt.expiresIn);
+  const token = generateToken(user, wxConfig.tokenTtl || config.jwt.expiresIn, previousUser ? previousUser.oat : undefined, client);
 
   // 4. Return token + public user profile
   return {

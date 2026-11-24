@@ -33,6 +33,7 @@ function createDbStub(overrides = {}) {
     release: () => {},
     query: async (sql, params = []) => {
       calls.push({ sql, params });
+      if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}], []];
       if (overrides.throwOn && new RegExp(overrides.throwOn).test(sql)) {
         const err = new Error('injected failure');
         if (overrides.failCode) err.code = overrides.failCode;
@@ -42,6 +43,7 @@ function createDbStub(overrides = {}) {
     },
     execute: async (sql, params = []) => {
       calls.push({ sql, params });
+      if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}], []];
       if (overrides.throwOn && new RegExp(overrides.throwOn).test(sql)) {
         const err = new Error('injected failure');
         if (overrides.failCode) err.code = overrides.failCode;
@@ -60,6 +62,7 @@ function createDbStub(overrides = {}) {
     pool: { getConnection: async () => connection },
     execute: async (sql, params = []) => {
       calls.push({ sql, params });
+      if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}], []];
       return [{ affectedRows: 1 }, []];
     },
     queryOne: async () => null,
@@ -258,6 +261,25 @@ test('finishGame rolls back the whole transaction and stays retryable on DB fail
   assert.equal(game.status, undefined);
 });
 
+test('finishGame releases its lock if result calculation throws, allowing a successful retry', async (t) => {
+  const { dbStub, calls } = createDbStub();
+  const svc = loadGameService(dbStub);
+  const engine = require('../src/game-engine/game-engine');
+  const buildResult = engine.buildResult;
+  let attempts = 0;
+  t.mock.method(engine, 'buildResult', (...args) => {
+    if (++attempts === 1) throw new Error('result calculation failed');
+    return buildResult(...args);
+  });
+  const game = sampleGame();
+  await assert.rejects(svc.finishGame(game, {}), /result calculation failed/);
+  assert.equal(game.settlementDone, false);
+  assert.equal(calls.length, 0, 'calculation failure must not start database settlement');
+  await svc.finishGame(game, {});
+  assert.equal(game.status, 'finished');
+  assert.equal(calls.filter((call) => /INSERT INTO coin_records/.test(call.sql)).length, 1);
+});
+
 test('finishGame skips settlement when the DB session was already finished', async () => {
   const { dbStub, calls } = createDbStub({ sessionStatus: 'finished' });
   const svc = loadGameService(dbStub);
@@ -285,12 +307,14 @@ function createStartGameDbStub({ existingSessionId = null, duplicateOnce = false
         release: () => {},
         execute: async (sql, params = []) => {
           calls.push({ sql, params });
+      if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}], []];
           return [{ affectedRows: 1 }, []];
         },
       }),
     },
     execute: async (sql, params = []) => {
       calls.push({ sql, params });
+      if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}], []];
       if (/INSERT INTO game_sessions/.test(sql)) {
         sessionInserts += 1;
         if (duplicateOnce && sessionInserts === 1) {
@@ -388,7 +412,7 @@ test('startGameSession syncs in-memory initial score into existing game_players 
   for (const update of updates) {
     const [teamId, initialScore, sessionIdParam, userId] = update.params;
     assert.ok(Number.isInteger(initialScore), 'initial_score must be an integer');
-    assert.ok(initialScore >= 80 && initialScore <= 220, 'initial_score within engine range');
+    assert.equal(initialScore, 100, '所有玩家初始分数一致');
     assert.equal(sessionIdParam, 77);
     assert.ok([1, 2].includes(userId));
   }
@@ -457,6 +481,7 @@ test('reconcileOrphanSessions interrupts orphaned playing sessions and rolls the
     release: () => {},
     execute: async (sql, params = []) => {
       calls.push({ sql, params });
+      if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}], []];
       if (/SELECT id, status FROM game_sessions/.test(sql)) return [[{ id: 99, status: 'playing' }], []];
       if (/SELECT id FROM game_sessions/.test(sql) && /LIMIT 1/.test(sql)) return [[], []];
       return [{ affectedRows: 1 }, []];
@@ -488,7 +513,7 @@ test('reconcileOrphanSessions interrupts orphaned playing sessions and rolls the
   assert.equal(sessionUpdate.params[0], 99);
   const playerRollback = calls.find((call) => /UPDATE game_players SET final_score = initial_score/.test(call.sql));
   assert.ok(playerRollback);
-  const roomRollback = calls.find((call) => /UPDATE rooms SET status/.test(call.sql));
+  const roomRollback = calls.find((call) => /UPDATE rooms SET status = 'waiting'/.test(call.sql));
   assert.ok(roomRollback);
   assert.match(roomRollback.sql, /status = 'waiting'/);
   assert.equal(roomRollback.params[0], 7);
@@ -519,7 +544,8 @@ test('recoverFailedStart clears partial memory and restores only the failed room
   };
   connection.execute = async (sql, params = []) => {
     calls.push({ sql, params });
-    if (/SELECT id, status FROM game_sessions/.test(sql)) return [[{ id: 99, status: 'playing' }], []];
+    if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}], []];
+      if (/SELECT id, status FROM game_sessions/.test(sql)) return [[{ id: 99, status: 'playing' }], []];
     if (/SELECT id FROM game_sessions/.test(sql)) return [[], []];
     return [{ affectedRows: 1 }, []];
   };
@@ -683,7 +709,8 @@ test('recoverFailedStart retries a transient DB failure and then interrupts the 
         rollback: async () => {},
         release: () => {},
         execute: async (sql) => {
-          if (/SELECT id, status FROM game_sessions/.test(sql)) return [[{ id: 55, status: 'playing' }], []];
+          if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}], []];
+      if (/SELECT id, status FROM game_sessions/.test(sql)) return [[{ id: 55, status: 'playing' }], []];
           return [{ affectedRows: 1 }, []];
         },
       }),

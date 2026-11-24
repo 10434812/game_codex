@@ -9,7 +9,7 @@ router.get('/public', async (_req, res) => {
     const data = await configService.getPublicConfigs();
     res.json(success({
       ...data,
-      features: {...data.features, api: {announcements: true, currentGame: true, authRefresh: true, onlineArena: true}},
+      features: {...data.features, api: {announcements: true, currentGame: true, authRefresh: true, onlineArena: true, roomRematch: true, quickMatch: true, retention: true}},
     }));
   } catch (err) {
     console.error('[Public Configs]', err);

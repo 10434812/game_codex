@@ -1,5 +1,6 @@
 const { fail } = require('../utils/response');
 const config = require('../config');
+const logger = require('../utils/logger');
 
 const GENERIC_SERVER_ERROR = '服务开小差了，请稍后重试';
 
@@ -16,7 +17,7 @@ function errorHandler(err, req, res, _next) {
 
   // 服务端日志始终记录完整错误（生产只记录 5xx，开发记录全部）
   if (statusCode >= 500 || config.nodeEnv !== 'production') {
-    console.error('[ErrorHandler]', err);
+    logger.error('http_request_failed', {statusCode, code: err.code, method: req.method, route: req.route?.path});
   }
 
   const message = statusCode >= 500 && config.nodeEnv === 'production'

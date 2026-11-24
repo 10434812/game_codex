@@ -177,6 +177,18 @@ const CONFIG_DEFINITIONS = [
     isSensitive: true,
   },
   {
+    key: 'wechat.minigame_app_id',
+    defaultValue: 'wx3a1d54efeadbace9',
+    description: '小游戏 AppID（独立登录校验）',
+    valueType: 'text', group: 'wechat', isPublic: false,
+  },
+  {
+    key: 'wechat.minigame_secret',
+    defaultValue: '',
+    description: '小游戏 AppSecret（仅后台保存，不回退使用小程序密钥）',
+    valueType: 'password', group: 'wechat', isPublic: false, isSensitive: true,
+  },
+  {
     key: 'wechat.login_token_ttl',
     defaultValue: '604800',
     description: '登录态默认有效期（秒）',

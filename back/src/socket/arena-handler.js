@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const {actionBudget} = require('../utils/action-budget');
 const config = require('../config');
 const db = require('../models/db');
 const gameService = require('../services/game-service');
@@ -53,8 +54,10 @@ function initSocket(io) {
     const stopWatching = watchAccount(socket.userId, () => socket.disconnect(true));
 
     // Catch both synchronous exceptions and rejected async handlers.
+    const allowAction = actionBudget(5);
     const onAction = (event, handler) => {
       socket.on(event, async (payload) => {
+        if (!allowAction()) return;
         try {
           if (!payload || typeof payload !== 'object' || Array.isArray(payload)
             || !['number', 'string'].includes(typeof payload.sessionId)
@@ -111,23 +114,6 @@ function initSocket(io) {
           emoteId,
         });
       }
-    });
-
-    // Fortune bag actions
-    onAction('fortune_buy', async ({ sessionId, opportunity }) => {
-      if (!opportunity || typeof opportunity !== 'object' || Array.isArray(opportunity)) {
-        socket.emit('arena_error', { code: 400, message: 'invalid_opportunity' });
-        return;
-      }
-      // Security: only players of this session may act on its fortune bag.
-      if (!(await isSessionMember(socket, sessionId))) {
-        return;
-      }
-      socket.to(`arena:${sessionId}`).emit('fortune_result', {
-        userId: socket.userId,
-        action: 'buy',
-        opportunity,
-      });
     });
 
     socket.on('disconnect', () => {

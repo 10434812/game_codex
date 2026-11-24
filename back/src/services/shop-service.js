@@ -517,16 +517,18 @@ async function buyItem(userId, itemId) {
  * @returns {Promise<{ success: boolean }>}
  */
 async function equipItem(userId, itemId, category) {
-  // Verify user owns the item. The category is taken from the owned row, never
-  // from the client, so a skin cannot be marked equipped under the "pet" slot.
+  // Verify user owns the item (the free default skin `skin-default` is always owned).
+  // The category is taken from the owned row, never from the client, so a skin
+  // cannot be marked equipped under the "pet" slot.
+  const isDefaultSkin = itemId === 'skin-default';
   const owned = await db.queryOne(
     'SELECT id, category FROM user_items WHERE user_id = ? AND item_id = ?',
     [userId, itemId]
   );
-  if (!owned) {
+  if (!owned && !isDefaultSkin) {
     throw Object.assign(new Error('未拥有该物品'), { status: 400 });
   }
-  const slot = owned.category || category;
+  const slot = owned ? (owned.category || category) : 'skin';
 
   // Transaction: unequip all in category, then equip this one
   const conn = await db.pool.getConnection();
@@ -539,11 +541,19 @@ async function equipItem(userId, itemId, category) {
       [userId, slot]
     );
 
-    // Equip this specific item
-    await conn.execute(
-      'UPDATE user_items SET is_equipped = 1 WHERE user_id = ? AND item_id = ?',
-      [userId, itemId]
-    );
+    if (owned) {
+      await conn.execute(
+        'UPDATE user_items SET is_equipped = 1 WHERE user_id = ? AND item_id = ?',
+        [userId, itemId]
+      );
+    } else if (isDefaultSkin) {
+      await conn.execute(
+        `INSERT INTO user_items (user_id, item_id, category, is_equipped)
+         VALUES (?, 'skin-default', 'skin', 1)
+         ON DUPLICATE KEY UPDATE is_equipped = 1`,
+        [userId]
+      );
+    }
 
     await conn.commit();
 

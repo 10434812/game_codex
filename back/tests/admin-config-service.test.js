@@ -88,19 +88,21 @@ test('prepareImportConfigs accepts object exports and skips unknown keys', () =>
 test('importConfigs writes valid configs and reports skipped rows', async (t) => {
   const stored = new Map();
   const restore = patchDb({
-    execute: async (_sql, params = []) => {
-      if (params.length >= 4 && typeof params[0] === 'string') {
-        stored.set(params[0], params[1]);
-      }
-      return [[], []];
+    pool: {
+      getConnection: async () => ({
+        beginTransaction: async () => {},
+        commit: async () => {},
+        rollback: async () => stored.clear(),
+        release() {},
+        execute: async (sql, [key, value]) => {
+          if (sql.startsWith('INSERT')) {
+            stored.set(key, value);
+            return [{ affectedRows: 1 }];
+          }
+          return [[{ config_key: key, config_value: stored.get(key), updated_by: 7 }]];
+        },
+      }),
     },
-    queryOne: async (_sql, params = []) => ({
-      config_key: params[0],
-      config_value: stored.get(params[0]),
-      description: '',
-      updated_by: 7,
-      updated_at: '2026-05-20T00:00:00.000Z',
-    }),
   });
   t.after(restore);
 
@@ -119,4 +121,38 @@ test('importConfigs writes valid configs and reports skipped rows', async (t) =>
   assert.deepEqual(result.skipped, [
     { key: 'legacy.removed', reason: 'unknown_config_key' },
   ]);
+});
+
+test('小游戏登录配置独立读取，缺失密钥不回退到小程序配置', async (t) => {
+  const restore = patchDb({
+    execute: async () => [[], []],
+    queryOne: async (_sql, params) => {
+      const values = {'wechat.login_app_id': 'native-app', 'wechat.login_secret': 'native-test-secret',
+        'wechat.minigame_app_id': 'game-app', 'wechat.minigame_secret': ''};
+      return Object.hasOwn(values, params[0]) ? {config_value: values[params[0]]} : null;
+    },
+  });
+  t.after(restore);
+  const native = await configService.getWechatLoginSettings();
+  const game = await configService.getWechatLoginSettings('minigame');
+  assert.equal(native.appId, 'native-app'); assert.equal(native.secret, 'native-test-secret');
+  assert.equal(game.appId, 'game-app'); assert.equal(game.secret, '');
+  const {CONFIG_DEFINITION_MAP} = require('../src/config/system-config-definitions');
+  assert.equal(CONFIG_DEFINITION_MAP['wechat.minigame_secret'].isSensitive, true);
+  assert.equal(CONFIG_DEFINITION_MAP['wechat.minigame_secret'].isPublic, false);
+});
+
+test('后台区分两端登录就绪状态；小程序已配密钥不能让小游戏误报就绪', async (t) => {
+  const values = new Map([['wechat.login_secret', 'native-test-secret']]);
+  const restore = patchDb({execute: async () => [[], []], queryAll: async () => Array.from(values, ([config_key, config_value]) => ({config_key, config_value}))});
+  t.after(restore);
+  let summary = await configService.getAdminConfigSummary();
+  assert.equal(summary.capabilities.login.isReady, true);
+  assert.equal(summary.capabilities.minigameLogin.isReady, false);
+  assert.deepEqual(summary.capabilities.minigameLogin.missingKeys, ['wechat.minigame_secret']);
+  assert.equal(JSON.stringify(summary).includes('native-test-secret'), false);
+  values.set('wechat.minigame_secret', 'game-test-secret');
+  summary = await configService.getAdminConfigSummary();
+  assert.equal(summary.capabilities.minigameLogin.isReady, true);
+  assert.equal(JSON.stringify(summary).includes('game-test-secret'), false);
 });

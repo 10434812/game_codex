@@ -35,17 +35,22 @@ router.put('/:id/ban', adminAuth, async (req, res) => {
 
 router.put('/:id/coins', adminAuth, async (req, res) => {
   try {
-    const amount = Number(req.body.amount) || 0;
+    const amount = Number(req.body.amount);
     const data = await userService.adjustCoins(req.params.id, amount, req.body.reason || '');
     await logOperation(req.admin, 'adjust_coins', 'user', req.params.id, {
       userId: req.params.id,
-      amount,
+      amount: data.amount,
+      requestedAmount: amount,
       reason: req.body.reason || '',
       coinsAfter: data.coins,
     }, req.ip);
     res.json(success(data));
   }
-  catch (err) { console.error('[Admin Coins]', err); res.status(500).json(fail('调整金币失败', 500)); }
+  catch (err) {
+    const status = err.statusCode || 500;
+    if (status >= 500) console.error('[Admin Coins]', err);
+    res.status(status).json(fail(status < 500 ? err.message : '调整金币失败', status));
+  }
 });
 
 module.exports = router;

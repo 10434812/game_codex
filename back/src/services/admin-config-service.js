@@ -6,6 +6,7 @@ const { CONFIG_DEFINITIONS, CONFIG_DEFINITION_MAP } = require('../config/system-
 const CONFIG_EXPORT_SCHEMA_VERSION = 1;
 const CAPABILITY_FIELDS = {
   login: ['wechat.login_app_id', 'wechat.login_secret', 'wechat.login_agreement_url', 'wechat.login_privacy_url'],
+  minigameLogin: ['wechat.minigame_app_id', 'wechat.minigame_secret', 'wechat.login_agreement_url', 'wechat.login_privacy_url'],
   share: ['wechat.share_title', 'wechat.share_path', 'wechat.share_image_url', 'wechat.share_timeline_title'],
   fortune: ['fortune.reality_enabled', 'fortune.public_signal_limit', 'fortune.refresh_interval_seconds'],
   aiDigest: ['ai.base_url', 'ai.api_key', 'ai.model'],
@@ -25,16 +26,26 @@ async function ensureSystemConfigTable() {
   `);
 }
 
+let ensureDefaultsPromise = null;
+
 async function ensureDefaultConfigs() {
-  await ensureSystemConfigTable();
-  for (const item of CONFIG_DEFINITIONS) {
-    await db.execute(
-      `INSERT INTO system_configs (config_key, config_value, description, updated_at)
-       VALUES (?, ?, ?, NOW())
-       ON DUPLICATE KEY UPDATE description = VALUES(description)`,
-      [item.key, item.defaultValue, item.description]
-    );
+  if (!ensureDefaultsPromise) {
+    ensureDefaultsPromise = (async () => {
+      await ensureSystemConfigTable();
+      for (const item of CONFIG_DEFINITIONS) {
+        await db.execute(
+          `INSERT INTO system_configs (config_key, config_value, description, updated_at)
+           VALUES (?, ?, ?, NOW())
+           ON DUPLICATE KEY UPDATE description = VALUES(description)`,
+          [item.key, item.defaultValue, item.description]
+        );
+      }
+    })().catch((err) => {
+      ensureDefaultsPromise = null;
+      throw err;
+    });
   }
+  return ensureDefaultsPromise;
 }
 
 function normalizeBooleanString(value, fallback = false) {
@@ -127,26 +138,40 @@ async function getConfig(key) {
 }
 
 async function updateConfig(key, value, adminId) {
+  return writeConfig(db, key, value, adminId);
+}
+
+async function writeConfig(connection, key, value, adminId) {
   const definition = CONFIG_DEFINITION_MAP[key];
   const normalizedValue = normalizeConfigValue(value, definition);
-  await db.execute(
+  await connection.execute(
     `INSERT INTO system_configs (config_key, config_value, description, updated_by, updated_at)
      VALUES (?, ?, ?, ?, NOW())
      ON DUPLICATE KEY UPDATE config_value = VALUES(config_value), description = VALUES(description), updated_by = VALUES(updated_by), updated_at = NOW()`,
     [key, normalizedValue, definition ? definition.description : '', adminId]
   );
 
-  const row = await db.queryOne('SELECT * FROM system_configs WHERE config_key = ?', [key]);
+  const [[row]] = await connection.execute('SELECT * FROM system_configs WHERE config_key = ?', [key]);
   return mapConfig(row, definition);
 }
 
 async function updateConfigs(configs, adminId) {
-  const results = [];
-  for (const { key, value } of configs) {
-    const result = await updateConfig(key, value, adminId);
-    results.push(result);
+  if (configs.length === 0) return [];
+  const connection = await db.pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const results = [];
+    for (const { key, value } of configs) {
+      results.push(await writeConfig(connection, key, value, adminId));
+    }
+    await connection.commit();
+    return results;
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
   }
-  return results;
 }
 
 function normalizeImportPayload(payload) {
@@ -250,18 +275,19 @@ async function getPublicConfigs() {
   };
 }
 
-async function getWechatLoginSettings() {
+async function getWechatLoginSettings(client = 'miniprogram') {
+  const mini = client === 'minigame';
   const [enabledValue, appIdValue, secretValue, tokenTtlValue] = await Promise.all([
     getConfig('wechat.login_enabled'),
-    getConfig('wechat.login_app_id'),
-    getConfig('wechat.login_secret'),
+    getConfig(mini ? 'wechat.minigame_app_id' : 'wechat.login_app_id'),
+    getConfig(mini ? 'wechat.minigame_secret' : 'wechat.login_secret'),
     getConfig('wechat.login_token_ttl'),
   ]);
 
   return {
     enabled: normalizeBooleanString(enabledValue, true),
-    appId: String(appIdValue || config.wx.appId || '').trim(),
-    secret: String(secretValue || config.wx.secret || '').trim(),
+    appId: String(appIdValue || (!mini && config.wx.appId) || '').trim(),
+    secret: String(secretValue || (!mini && config.wx.secret) || '').trim(),
     tokenTtl: String(tokenTtlValue || config.jwt.expiresIn || '').trim() || config.jwt.expiresIn,
   };
 }
@@ -276,6 +302,7 @@ async function getAdminConfigSummary() {
     sensitiveConfigCount: CONFIG_DEFINITIONS.filter((item) => item.isSensitive).length,
     capabilities: {
       login: buildCapabilitySummary(configMap, 'login', 'wechat.login_enabled', CAPABILITY_FIELDS.login),
+      minigameLogin: buildCapabilitySummary(configMap, 'minigameLogin', 'wechat.login_enabled', CAPABILITY_FIELDS.minigameLogin),
       share: buildCapabilitySummary(configMap, 'share', 'wechat.share_enabled', CAPABILITY_FIELDS.share),
       fortune: buildCapabilitySummary(configMap, 'fortune', 'fortune.reality_enabled', CAPABILITY_FIELDS.fortune),
       aiDigest: buildCapabilitySummary(configMap, 'aiDigest', 'fortune.ai_digest_enabled', CAPABILITY_FIELDS.aiDigest),

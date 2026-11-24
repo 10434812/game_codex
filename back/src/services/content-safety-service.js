@@ -2,7 +2,6 @@ const https = require('https');
 const crypto = require('crypto');
 const configService = require('./admin-config-service');
 
-let tokenCache = null;
 const TIMEOUT_MS = 8000;
 
 function unavailable() {
@@ -43,23 +42,27 @@ function requestJson(url, payload) {
   });
 }
 
-async function getAccessToken() {
-  const settings = await configService.getWechatLoginSettings();
+const tokenCaches = new Map();
+
+async function getAccessToken(client = 'miniprogram') {
+  const targetClient = client === 'minigame' ? 'minigame' : 'miniprogram';
+  const settings = await configService.getWechatLoginSettings(targetClient);
   if (!settings.appId || !settings.secret) throw unavailable();
   const identity = crypto.createHash('sha256').update(`${settings.appId}:${settings.secret}`).digest('hex');
-  if (tokenCache && tokenCache.identity === identity && tokenCache.expiresAt > Date.now() + 60000) {
-    return tokenCache.value;
+  const cached = tokenCaches.get(targetClient);
+  if (cached && cached.identity === identity && cached.expiresAt > Date.now() + 60000) {
+    return cached.value;
   }
   const query = new URLSearchParams({ grant_type: 'client_credential', appid: settings.appId, secret: settings.secret });
   const result = await requestJson(`https://api.weixin.qq.com/cgi-bin/token?${query}`);
   if (result.errcode || typeof result.access_token !== 'string' || !result.access_token || !(Number(result.expires_in) > 60)) throw unavailable();
-  tokenCache = { identity, value: result.access_token, expiresAt: Date.now() + Number(result.expires_in) * 1000 };
-  return tokenCache.value;
+  tokenCaches.set(targetClient, { identity, value: result.access_token, expiresAt: Date.now() + Number(result.expires_in) * 1000 });
+  return result.access_token;
 }
 
-async function checkText(content, openid) {
+async function checkText(content, openid, client = 'miniprogram') {
   if (typeof content !== 'string' || !content.trim() || !openid) throw unavailable();
-  const token = await getAccessToken();
+  const token = await getAccessToken(client);
   const result = await requestJson(`https://api.weixin.qq.com/wxa/msg_sec_check?access_token=${encodeURIComponent(token)}`, {
     content, version: 2, scene: 1, openid,
   });
@@ -68,9 +71,9 @@ async function checkText(content, openid) {
   if (result.result.suggest !== 'pass') throw rejected('昵称未通过内容安全校验');
 }
 
-async function checkImage(mediaUrl, openid) {
+async function checkImage(mediaUrl, openid, client = 'miniprogram') {
   if (!openid || !mediaUrl.startsWith('https://')) throw unavailable();
-  const token = await getAccessToken();
+  const token = await getAccessToken(client);
   const result = await requestJson(`https://api.weixin.qq.com/wxa/media_check_async?access_token=${encodeURIComponent(token)}`, {
     media_url: mediaUrl, media_type: 2, version: 2, scene: 1, openid,
   });
@@ -118,8 +121,15 @@ async function decodeCallback(query, encrypted) {
     if (plain.length < 20) throw unavailable();
     const size = plain.readUInt32BE(16);
     if (size > plain.length - 20) throw unavailable();
-    const wx = await configService.getWechatLoginSettings();
-    if (!wx.appId || plain.subarray(20 + size).toString() !== wx.appId) throw unavailable();
+    const appIds = new Set();
+    for (const client of ['miniprogram', 'minigame']) {
+      try {
+        const wx = await configService.getWechatLoginSettings(client);
+        if (wx && wx.appId) appIds.add(wx.appId);
+      } catch (_) {}
+    }
+    const callbackAppId = plain.subarray(20 + size).toString();
+    if (!appIds.size || !appIds.has(callbackAppId)) throw unavailable();
     return plain.subarray(20, 20 + size).toString('utf8');
   } catch (_) { throw unavailable(); }
 }

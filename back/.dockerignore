@@ -1,0 +1,10 @@
+node_modules
+admin-web/node_modules
+admin-web/dist
+.env
+.env.*
+!.env.example
+uploads
+private
+tests
+*.log

@@ -16,7 +16,7 @@ function resolveRange(from, to, limit) {
   if (from || to) {
     return { start: from || '1970-01-01', end: to ? `${to} 23:59:59` : '2099-12-31 23:59:59' };
   }
-  const days = Math.min(Math.max(Number(limit) || 0, 1), 366);
+  const days = Math.min(Math.max(Number(limit) || 7, 1), 366);
   const endDate = new Date();
   const startDate = new Date(endDate);
   startDate.setDate(startDate.getDate() - (days - 1));
@@ -31,11 +31,17 @@ function resolveRange(from, to, limit) {
   };
 }
 
-/** Fill missing calendar days with zeroes so charts always have one point per day. */
-function fillMissingDates(rows, keyField, valueField, dateKeys) {
-  if (!dateKeys) return rows;
-  const map = new Map(rows.map((row) => [row.date, Number(row[keyField] || 0)]));
-  return dateKeys.map((date) => ({ date, [valueField]: map.get(date) || 0 }));
+/** Normalize mysql2 dates and aggregates before returning or filling a series. */
+function dailySeries(rows, field, dateKeys) {
+  if (!dateKeys) {
+    return rows.map((row) => ({ date: dateKey(row.date), [field]: Number(row[field]) }));
+  }
+  const values = new Map(rows.map((row) => [dateKey(row.date), Number(row[field])]));
+  return dateKeys.map((date) => ({ date, [field]: values.get(date) ?? 0 }));
+}
+
+function dateKey(date) {
+  return date instanceof Date ? formatDate(date) : date;
 }
 
 async function getOverview(from, to, limit) {
@@ -69,9 +75,9 @@ async function getOverview(from, to, limit) {
     ),
   ]);
   return {
-    dau: fillMissingDates(dau, 'count', 'count', dateKeys),
-    games: fillMissingDates(games, 'count', 'count', dateKeys),
-    revenue: fillMissingDates(revenue, 'amount', 'amount', dateKeys),
+    dau: dailySeries(dau, 'count', dateKeys),
+    games: dailySeries(games, 'count', dateKeys),
+    revenue: dailySeries(revenue, 'amount', dateKeys),
   };
 }
 

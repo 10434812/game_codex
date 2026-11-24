@@ -5,7 +5,13 @@ const gameService = require('../../services/admin-game-service');
 const { success, fail } = require('../../utils/response');
 
 router.get('/', adminAuth, async (req, res) => {
-  try { const data = await gameService.listGames(req.query.status || '', Number(req.query.page) || 1, Number(req.query.limit) || 20); res.json(success(data)); }
+  try {
+    const data = await gameService.listGames(
+      req.query.status || '', Number(req.query.page) || 1, Number(req.query.limit) || 20,
+      typeof req.query.mode === 'string' ? req.query.mode : ''
+    );
+    res.json(success(data));
+  }
   catch (err) { console.error('[Admin Games]', err); res.status(500).json(fail('获取对局列表失败', 500)); }
 });
 

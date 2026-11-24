@@ -75,7 +75,7 @@ router.post('/avatar', (req, res, next) => {
 }, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json(fail('请选择头像文件', 400));
-    const review = await avatarReviewService.submit(req.user.userId, req.user.openid, req.file.buffer);
+    const review = await avatarReviewService.submit(req.user.userId, req.user.openid, req.file.buffer, { client: req.user.client });
     const profile = await userService.getProfile(req.user.userId);
     res.status(202).json(success({ ...profile, ...review }, review.message));
   } catch (err) {
@@ -111,7 +111,7 @@ router.put('/profile', async (req, res) => {
       return res.status(400).json(fail('昵称不能超过32个字符', 400));
     }
 
-    const profile = await userService.updateProfile(req.user.userId, { nickName, avatarUrl });
+    const profile = await userService.updateProfile(req.user.userId, { nickName, avatarUrl }, { client: req.user.client });
     res.json(success(profile, '更新成功'));
   } catch (err) {
     if (err.statusCode === 400) {

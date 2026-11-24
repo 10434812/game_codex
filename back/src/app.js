@@ -21,7 +21,13 @@ const PERIODIC_RECONCILE_INTERVAL_MS = 60000;
 let periodicReconcileTimer = null;
 const avatarReviewService = require('./services/avatar-review-service');
 
+const logger = require('./utils/logger');
+const {waitForDrain} = require('./utils/drain');
+const {apiTrafficGuard} = require('./middleware/traffic-guard');
 const app = express();
+app.locals.draining = false;
+let pendingStarts = 0;
+let matchmakingRunning = false;
 
 // 反向代理信任策略：仅当部署方显式设置 TRUST_PROXY 时才信任转发头，
 // 避免默认信任 X-Forwarded-For 带来的来源 IP 伪造风险。
@@ -32,7 +38,14 @@ if (config.nodeEnv === 'production' && config.trustProxy === false) {
 
 // ─── Middleware ───────────────────────────────────────────
 app.use(cors({ origin: config.cors.origin }));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'img-src': ["'self'", 'data:', 'https:'],
+    },
+  },
+}));
 app.use(morgan(config.nodeEnv === 'development' ? 'dev' : 'combined'));
 app.use(express.json({
   verify: (req, _res, buf) => {
@@ -42,7 +55,21 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Routes ──────────────────────────────────────────────
-app.use('/api', routes);
+app.use('/api', apiTrafficGuard(), (req, res, next) => {
+  const startsNewGame = req.method === 'POST' && (req.path === '/rooms' || req.path === '/rooms/' || req.path === '/matchmaking' || req.path === '/matchmaking/' || /^\/rooms\/[^/]+\/(start|rematch)\/?$/.test(req.path) || /^\/games\/[^/]+\/rematch\/?$/.test(req.path));
+  if (app.locals.draining && (startsNewGame || req.path === '/ready')) {
+    return res.status(503).json({code: 503, message: '服务器维护中，请稍后', data: null});
+  }
+  if (startsNewGame) {
+    pendingStarts++;
+    let released = false;
+    const release = () => {if (!released) {released = true; pendingStarts--;}};
+    // A disconnected HTTP client can leave a start handler running. Keep
+    // counting it until finish (or the drain deadline), never release on close.
+    res.once('finish', release);
+  }
+  next();
+}, routes);
 
 // ─── Static: uploaded avatars ────────────────────────────
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads'), {
@@ -95,12 +122,40 @@ function cleanupExpiredAvatars() {
     .catch(() => console.error('[AvatarReview] Expired media cleanup failed; it will be retried.'))
     .finally(() => { avatarCleanupRunning = false; });
 }
+const roomService = require('./services/room-service');
+let roomCleanupRunning = false;
+let lastAnalyticsCleanupAt = 0;
+const roomCleanupTimer = setInterval(async () => {
+  if (roomCleanupRunning || app.locals.draining) return;
+  roomCleanupRunning = true;
+  try {
+    await roomService.cleanupStaleRooms();
+    if (Date.now() - lastAnalyticsCleanupAt > 86400000) {
+      const removed = await require('./services/analytics-service').cleanupExpired();
+      if (removed < 5000) lastAnalyticsCleanupAt = Date.now();
+    }
+  }
+  catch (error) {logger.error('room_cleanup_failed', {code: error.code});}
+  finally {roomCleanupRunning = false;}
+}, 5 * 60 * 1000);
+roomCleanupTimer.unref();
+const matchmakingService = require('./services/matchmaking-service');
+const matchmakingTimer = setInterval(async () => {
+  if (matchmakingRunning || app.locals.draining) return;
+  matchmakingRunning = true;
+  try {await matchmakingService.advanceDue(arenaRealtime, () => !app.locals.draining);}
+  catch (error) {logger.error('matchmaking_failed', {code: error.code});}
+  finally {matchmakingRunning = false;}
+}, 1000);
+matchmakingTimer.unref();
 const avatarCleanupTimer = setInterval(cleanupExpiredAvatars, 60 * 1000);
 avatarCleanupTimer.unref();
 
 server.on('close', () => {
   arenaRealtime.close();
   clearInterval(avatarCleanupTimer);
+  clearInterval(roomCleanupTimer);
+  clearInterval(matchmakingTimer);
 });
 
 // ─── Start ───────────────────────────────────────────────
@@ -127,7 +182,7 @@ server.listen(config.port, () => {
   // so such rooms recover without a process restart. Live in-memory games are
   // skipped by reconcileOrphanSessions, so this never ends an active match.
   periodicReconcileTimer = setInterval(() => {
-    gameService.reconcileOrphanSessions().catch((err) => {
+    gameService.reconcileOrphanSessions({ minAgeSeconds: 30 }).catch((err) => {
       console.error('[GameService] Periodic reconcile error:', err);
     });
   }, PERIODIC_RECONCILE_INTERVAL_MS);
@@ -138,20 +193,24 @@ server.listen(config.port, () => {
 
 // ─── Graceful shutdown ──────────────────────────────────
 let shuttingDown = false;
-function shutdown(signal) {
+async function shutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
-  console.log(`[GameCodex] Received ${signal}, shutting down gracefully...`);
+  app.locals.draining = true;
+  clearInterval(roomCleanupTimer);
+  clearInterval(matchmakingTimer);
+  clearInterval(avatarCleanupTimer);
+  logger.info('server_draining', {signal});
   if (periodicReconcileTimer) clearInterval(periodicReconcileTimer);
 
   const forceExit = setTimeout(() => {
     console.error('[GameCodex] Graceful shutdown timed out, forcing exit');
     process.exit(1);
-  }, 10000);
+  }, (Math.max(1, Number(process.env.SHUTDOWN_DRAIN_SECONDS) || 150) + 10) * 1000);
   if (forceExit && typeof forceExit.unref === 'function') forceExit.unref();
 
-  // Stop driving games / background jobs first so no tick can start a new
-  // write while we drain.
+  const drained = await waitForDrain({games: gameService.getActiveGames, pending: () => pendingStarts + (matchmakingRunning ? 1 : 0), timeoutMs: Math.max(1, Number(process.env.SHUTDOWN_DRAIN_SECONDS) || 150) * 1000});
+  logger.info('server_drain_finished', {drained});
   gameService.stopAllTimers();
   // Close both realtime hubs so open ws/socket.io connections do not keep
   // server.close() waiting until the force-exit timeout.

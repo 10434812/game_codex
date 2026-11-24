@@ -2,12 +2,13 @@ const express = require('express');
 const authService = require('../services/auth-service');
 const db = require('../models/db');
 const { success, fail } = require('../utils/response');
+const {TRIAL_ACCESS_REQUIRED} = require('../services/trial-access');
 
 const router = express.Router();
 
 async function handleLogin(req, res, refresh) {
   try {
-    const { code } = req.body;
+    const { code, client = 'miniprogram' } = req.body;
 
     if (!code) {
       return res.status(400).json(fail('缺少登录凭证 code', 400));
@@ -17,7 +18,7 @@ async function handleLogin(req, res, refresh) {
     if (refresh && !authorization.startsWith('Bearer ')) {
       return res.status(401).json(fail('缺少登录凭证', 401));
     }
-    const result = await authService.login(code, refresh ? {previousToken: authorization.slice(7)} : undefined);
+    const result = await authService.login(code, {client, ...(refresh ? {previousToken: authorization.slice(7)} : {})});
 
     // 封禁校验：被封禁用户不发放新 token（旧 token 由 auth 中间件拦截）
     const userRow = await db.queryOne('SELECT is_banned FROM users WHERE id = ?', [result.user.id]);
@@ -27,8 +28,9 @@ async function handleLogin(req, res, refresh) {
 
     res.json(success(result, '登录成功'));
   } catch (err) {
-    if (err.statusCode === 401 || err.statusCode === 403) {
-      return res.status(err.statusCode).json(fail(err.message, err.statusCode));
+    if (err.statusCode === 400 || err.statusCode === 401 || err.statusCode === 403) {
+      const data = err.code === TRIAL_ACCESS_REQUIRED ? {code: err.code, trialUserId: err.trialUserId} : null;
+      return res.status(err.statusCode).json(fail(err.message, err.statusCode, data));
     }
     if (err.message === 'WeChat login disabled') {
       return res.status(403).json(fail('微信登录已关闭', 403));

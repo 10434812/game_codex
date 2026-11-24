@@ -7,7 +7,10 @@ const { success, fail } = require('../../utils/response');
 
 router.get('/', adminAuth, async (req, res) => {
   try {
-    const data = await roomService.listRooms(req.query.status || '', Number(req.query.page) || 1, Number(req.query.limit) || 20);
+    const data = await roomService.listRooms(
+      req.query.status || '', Number(req.query.page) || 1, Number(req.query.limit) || 20,
+      typeof req.query.mode === 'string' ? req.query.mode : ''
+    );
     res.json(success(data));
   } catch (err) {
     console.error('[Admin Rooms]', err);
@@ -50,6 +53,7 @@ router.put('/:id/close', adminAuth, async (req, res) => {
     }, req.ip);
     res.json(success(data, '房间已强制关闭'));
   } catch (err) {
+    if (err.statusCode === 409) return res.status(409).json(fail(err.message, 409));
     console.error('[Admin Close Room]', err);
     res.status(500).json(fail('强制关闭房间失败', 500));
   }

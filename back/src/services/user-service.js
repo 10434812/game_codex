@@ -107,7 +107,7 @@ async function getProfile(userId) {
  * @param {{ nickName?: string, avatarUrl?: string }} updates
  * @returns {Promise<Object>} updated profile
  */
-async function updateProfile(userId, { nickName, avatarUrl }) {
+async function updateProfile(userId, { nickName, avatarUrl }, { client = 'miniprogram' } = {}) {
   const invalid = (message) => {
     const error = new Error(message);
     error.statusCode = 400;
@@ -124,7 +124,7 @@ async function updateProfile(userId, { nickName, avatarUrl }) {
     throw error;
   }
   const normalized = nickName.trim();
-  await contentSafetyService.checkText(normalized, user.openid);
+  await contentSafetyService.checkText(normalized, user.openid, client);
   const [result] = await db.execute('UPDATE users SET nick_name = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL AND is_banned = 0', [normalized, userId]);
   if (!result.affectedRows) {
     const error = new Error('用户不存在');
@@ -237,6 +237,10 @@ async function deleteAccount(userId) {
 
     await conn.execute('DELETE FROM user_items WHERE user_id = ?', [userId]);
     await conn.execute('DELETE FROM coin_records WHERE user_id = ?', [userId]);
+    await conn.execute('DELETE FROM analytics_events WHERE user_id = ?', [userId]);
+    await conn.execute('DELETE FROM daily_tasks WHERE user_id = ?', [userId]);
+    await conn.execute('DELETE FROM daily_checkins WHERE user_id = ?', [userId]);
+    await conn.execute('DELETE FROM growth_claims WHERE user_id = ?', [userId]);
     await removeOwnedAvatars(conn, user, removedFiles);
     await conn.execute(
       `UPDATE users SET openid = CONCAT('deleted:', id, ':', UUID()), nick_name = ?, avatar_url = '',

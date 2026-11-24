@@ -21,17 +21,18 @@ function success(data = null, message = 'ok') {
  * Error/fail response.
  * @param {string} message - Error message
  * @param {number} code - HTTP status code (default 400)
- * @returns {{ code: number, message: string, data: null }}
+ * @param {*} data - 可选的受控业务数据（仅 4xx 使用，5xx 一律为 null）
+ * @returns {{ code: number, message: string, data: * }}
  *
  * 生产环境安全策略：5xx 响应统一使用通用文案，避免把数据库报错原文/
  * 堆栈等内部细节回传客户端；4xx 业务错误保留受控文案。
  */
-function fail(message = 'error', code = 400) {
+function fail(message = 'error', code = 400, data = null) {
   const safeCode = Number(code) || 400;
   const safeMessage = safeCode >= 500 && config.nodeEnv === 'production'
     ? GENERIC_SERVER_ERROR
     : message;
-  return { code: safeCode, message: safeMessage, data: null };
+  return { code: safeCode, message: safeMessage, data: safeCode >= 500 ? null : data };
 }
 
 module.exports = { success, fail };

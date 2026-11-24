@@ -144,7 +144,7 @@ async function getLeaderboard(type = 'income', limit = 50) {
        win_count AS winCount
      FROM users
      WHERE is_banned = 0 AND deleted_at IS NULL
-     ORDER BY ${orderBy}
+     ORDER BY ${orderBy}, id ASC
      LIMIT ?`,
     [String(maxLimit)]
   );

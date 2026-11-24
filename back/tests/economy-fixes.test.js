@@ -78,8 +78,9 @@ test('listAvailableRooms is a single bounded query with per-room counts', async 
     },
   });
 
-  const rooms = await svc.listAvailableRooms();
+  const rooms = await svc.listAvailableRooms(1);
   assert.match(seen, /LIMIT 100/);
+  assert.match(seen, /rp\.user_id = \?/);
   assert.equal(rooms[0].player_count, 3);
 });
 

@@ -1,5 +1,6 @@
 const { WebSocketServer } = require('ws');
 const jwt = require('jsonwebtoken');
+const {actionBudget} = require('../utils/action-budget');
 const config = require('../config');
 const db = require('../models/db');
 const gameService = require('../services/game-service');
@@ -254,7 +255,9 @@ function createArenaRealtimeHub(server) {
         safeSend(client, 'game_state', state);
       }
 
+      const allowInput = actionBudget(20);
       client.on('message', (raw) => {
+        if (!allowInput()) return;
         try {
           if (raw.length > MAX_CLIENT_MESSAGE_BYTES) return;
           const message = JSON.parse(String(raw));

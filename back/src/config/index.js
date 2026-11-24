@@ -125,6 +125,7 @@ module.exports = {
     // 管理员端 token 密钥，与用户端分离（admin-auth / 后台登录）
     adminSecret: adminSigningSecret,
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    maxSessionDays: Math.max(1, parseInteger(process.env.JWT_MAX_SESSION_DAYS, 30)),
   },
 
   wx: {
@@ -134,7 +135,7 @@ module.exports = {
 
   admin: {
     username: process.env.ADMIN_USERNAME || 'admin',
-    password: requireProductionEnv('ADMIN_PASSWORD', ''),
+    password: process.env.ADMIN_PASSWORD || '',
   },
 
   cors: {

@@ -164,6 +164,7 @@ test('joinRoom increments players only once per successful join', async () => {
   const playerInserts = calls.filter((call) => /INSERT INTO room_players/.test(call.sql));
   assert.equal(claims.length, 1);
   assert.equal(playerInserts.length, 1);
+  assert.match(playerInserts[0].sql, /VALUES \(\?, \?, \?, 1, 0\)/, '受邀加入的玩家默认已准备');
 });
 
 test('已在进行中满员房间的原成员可返回，不重复插入或增加人数', async () => {

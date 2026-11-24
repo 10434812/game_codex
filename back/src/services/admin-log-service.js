@@ -1,6 +1,20 @@
 const db = require('../models/db');
 const { mapLog } = require('../utils/admin-presenters');
 
+function mapAuditLog(row) {
+  const log = mapLog(row);
+  // Older config audits stored submitted values. Only expose the affected keys.
+  if (log?.action === 'update' && log.targetType === 'config' && log.detail) {
+    try {
+      const detail = JSON.parse(log.detail);
+      log.detail = Array.isArray(detail?.keys) ? JSON.stringify({ keys: detail.keys }) : null;
+    } catch {
+      log.detail = null;
+    }
+  }
+  return log;
+}
+
 async function listLogs(filters = {}, page = 1, limit = 20) {
   const offset = (page - 1) * limit;
   const conditions = [];
@@ -49,12 +63,12 @@ async function listLogs(filters = {}, page = 1, limit = 20) {
     [...params, String(limit), String(offset)]
   );
 
-  return { records: records.map(mapLog), total: total?.total || 0, page: Number(page), limit: Number(limit) };
+  return { records: records.map(mapAuditLog), total: total?.total || 0, page: Number(page), limit: Number(limit) };
 }
 
 async function getLog(id) {
   const log = await db.queryOne('SELECT * FROM operation_logs WHERE id = ?', [id]);
-  return mapLog(log);
+  return mapAuditLog(log);
 }
 
 async function getLogStats() {

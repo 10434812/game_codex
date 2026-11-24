@@ -2,6 +2,7 @@ const {taskDate} = require('./daily-task-service');
 const db = require('../models/db');
 const engine = require('../game-engine/game-engine');
 const runArena = require('../game-engine/run-arena');
+const logger = require('../utils/logger');
 const gameActions = require('./game-actions-service');
 const {
   GAME_DURATION_SECONDS,
@@ -145,6 +146,8 @@ function buildResultPayload(game, viewerUserId) {
     performanceMap: runArena.runPerformanceMap(game.runWorld),
     rest: ranking.slice(3).map((player) => mapResultPlayer(player, viewerUserId)),
     resultId: viewerUserId ? `session-${game.sessionId}-user-${viewerUserId}` : `session-${game.sessionId}`,
+    roomId: game.roomId,
+    matchmaking: !!game.matchmaking,
     gain,
     coins: gain * 3,
     rank: selfRank,
@@ -183,6 +186,7 @@ function personalizeStoredResultPayload(result, options = {}) {
     top3: buildTop3(ranking, viewerUserId),
     rest: ranking.slice(3).map((player) => mapResultPlayer(player, viewerUserId)),
     resultId: viewerUserId ? `session-${sessionId}-user-${viewerUserId}` : (result.resultId || `session-${sessionId}`),
+    roomId: options.roomId || result.roomId,
     gain,
     coins,
     rank: selfRank,
@@ -293,6 +297,7 @@ async function startGameSession(roomId, hostUserId, io) {
     sessionId,
     roomId,
     stageId: room.stage_id,
+    matchmaking: !!room.match_due_at,
     stage: findStageById(room.stage_id),
     duration: GAME_DURATION_SECONDS,
     timeLeft: GAME_DURATION_SECONDS,
@@ -336,13 +341,14 @@ function startTickLoop(sessionId, realtime) {
   const scheduleNext = () => {
     if (!activeGames.has(game.sessionId) || game.status === 'finished') return;
     game.timer = setTimeout(async () => {
+      game.timer = null;
       try {
         const now = Date.now();
         const deltaMs = Math.min(1000, Math.max(0, now - previousAt));
         previousAt = now;
         await tick(game, realtime, deltaMs);
       } catch (err) {
-        console.error(`[GameService] Tick error for session ${sessionId}:`, err);
+        logger.error('game_tick_failed', {sessionId, code: err.code});
       }
       scheduleNext();
     }, game.runWorld ? 50 : 1000);
@@ -492,11 +498,12 @@ async function finishGame(game, realtime) {
     game.timer = null;
   }
 
-  // Calculate results using engine
-  const result = buildResultPayload(game);
-
+  let result;
   let conn;
   try {
+    // Calculation can fail before the first DB call; it must release the same
+    // settlement lock as transaction failures so the tick loop can retry.
+    result = buildResultPayload(game);
     conn = await db.pool.getConnection();
     await conn.beginTransaction();
 
@@ -684,41 +691,39 @@ async function forceFinishSession(sessionId, realtime, options = {}) {
     return { aborted: false, inMemory: true, settled: false, alreadyFinished: true, sessionId: numericId };
   }
 
-  if (game.timer) {
-    clearTimeout(game.timer);
-    game.timer = null;
+  if (game.settlementDone) {
+    throw Object.assign(new Error('对局正在结束，请刷新房间状态后重试'), { statusCode: 409 });
   }
+  const hadPendingTick = Boolean(game.timer);
 
   const settle = options.settle !== false;
   if (settle) {
-    // Settle by elapsed time: reuse the normal settlement path, which
-    // writes final scores / rewards, inserts game_results and broadcasts
-    // game_finished. Players keep what they earned up to this point.
-    await finishGame(game, realtime);
-    if (game.status !== 'finished') {
-      // A tick may have been mid-settlement when we cleared the timer
-      // (finishGame is a no-op while settlementDone is set). Retry once:
-      // if that in-flight settlement failed, this call settles now that no
-      // further tick can run.
+    try {
       await finishGame(game, realtime);
+    } catch (err) {
+      if (hadPendingTick && game.status === 'playing') startTickLoop(numericId, realtime);
+      throw err;
     }
-  }
-
-  if (game.status !== 'finished') {
-    // Rollback / last resort: mark the session finished without granting any
-    // rewards, so the room and session can never stay stuck in 'playing'.
-    await db.execute(
-      'UPDATE game_sessions SET status = ?, finished_at = NOW(), round_count = ? WHERE id = ?',
-      ['finished', game.round || 0, numericId]
-    );
+  } else {
+    game.settlementDone = true;
+    try {
+      await db.execute(
+        'UPDATE game_sessions SET status = ?, finished_at = NOW(), round_count = ? WHERE id = ?',
+        ['finished', game.round || 0, numericId]
+      );
+    } catch (err) {
+      game.settlementDone = false;
+      throw err;
+    }
+    clearTimeout(game.timer);
+    game.timer = null;
     game.status = 'finished';
-    if (realtime && typeof realtime.emitToSession === 'function') {
-      realtime.emitToSession(numericId, 'game_finished', {
-        sessionId: numericId,
-        aborted: true,
-        result: null,
-      });
-    }
+    scheduleCleanup(game);
+    realtime?.emitToSession?.(numericId, 'game_finished', {
+      sessionId: numericId,
+      aborted: true,
+      result: null,
+    });
   }
 
   // Extra abort notice (clients that don't handle it simply ignore it).
@@ -775,10 +780,16 @@ function getGameState(sessionId, viewerUserId) {
  *
  * @returns {Promise<number>} number of orphaned sessions handled
  */
-async function reconcileOrphanSessions() {
-  const sessions = await db.queryAll(
-    "SELECT id, room_id, stage_id FROM game_sessions WHERE status = 'playing'"
-  );
+async function reconcileOrphanSessions({ minAgeSeconds = 0 } = {}) {
+  const age = Number.isFinite(Number(minAgeSeconds)) && Number(minAgeSeconds) > 0 ? Math.floor(Number(minAgeSeconds)) : 0;
+  const sessions = age > 0
+    ? await db.queryAll(
+      "SELECT id, room_id, stage_id FROM game_sessions WHERE status = 'playing' AND started_at <= DATE_SUB(NOW(), INTERVAL ? SECOND)",
+      [age]
+    )
+    : await db.queryAll(
+      "SELECT id, room_id, stage_id FROM game_sessions WHERE status = 'playing'"
+    );
   let handled = 0;
   for (const session of sessions) {
     if (activeGames.has(Number(session.id))) {
@@ -823,6 +834,8 @@ async function interruptOrphanSession(session, reason = '服务已重启，本�
     // Minimal result payload so the result page can show "对局已中断".
     const payload = await buildInterruptedResultPayload(session.id, session.stage_id);
     payload.reason = reason;
+    const [[interruptedRoom]] = await conn.execute('SELECT match_due_at FROM rooms WHERE id = ?', [session.room_id]);
+    payload.matchmaking = !!interruptedRoom?.match_due_at;
 
     await conn.execute(
       'INSERT INTO game_results (session_id, result_json) VALUES (?, ?) ON DUPLICATE KEY UPDATE result_json = VALUES(result_json)',
@@ -842,8 +855,10 @@ async function interruptOrphanSession(session, reason = '服务已重启，本�
       [session.room_id, session.id]
     );
     if (!otherPlayingRows || otherPlayingRows.length === 0) {
+      // Abandoned quick matches close instead of automatically starting again.
+      await conn.execute("UPDATE rooms SET status = 'finished', finished_at = NOW(), match_due_at = NULL WHERE id = ? AND status = 'playing' AND match_due_at IS NOT NULL", [session.room_id]);
       await conn.execute(
-        "UPDATE rooms SET status = 'waiting' WHERE id = ? AND status = 'playing'",
+        "UPDATE rooms SET status = 'waiting', match_due_at = NULL WHERE id = ? AND status = 'playing'",
         [session.room_id]
       );
     }

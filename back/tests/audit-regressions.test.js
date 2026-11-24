@@ -38,6 +38,7 @@ function socketHarness({ blocked = false, throwState = false } = {}) {
     '../models/db': { queryOne: async () => ({ present: 1 }) },
     '../services/game-service': { getGameState() { if (throwState) throw new Error('state failed'); return null; } },
     './account-guard': guard,
+    '../utils/action-budget': require('../src/utils/action-budget'),
   });
   init({ use(fn) { authenticate = fn; }, on(event, fn) { connect = fn; } });
   connect(socket);
@@ -46,7 +47,7 @@ function socketHarness({ blocked = false, throwState = false } = {}) {
 
 test('Socket.IO rejects malformed event payloads without throwing', async () => {
   const { handlers, sent } = socketHarness();
-  for (const event of ['join_arena', 'leave_arena', 'emote', 'fortune_buy']) {
+  for (const event of ['join_arena', 'leave_arena', 'emote']) {
     for (const payload of [undefined, null, [], 'bad', {}, { sessionId: {} }]) {
       await assert.doesNotReject(async () => handlers[event](payload));
     }
@@ -129,6 +130,7 @@ test('legacy native WebSocket entry rejects disabled members before sending stat
     ws: { WebSocket: { OPEN: 1 }, WebSocketServer }, '../config': { jwt: { secret: 'test' } },
     '../models/db': { queryOne: async () => ({ present: 1 }) },
     '../services/game-service': { getGameState() { assert.fail('disabled user must not read state'); } },
+    '../utils/action-budget': require('../src/utils/action-budget'),
     './account-guard': { assertActiveUser: async () => { throw new Error('account disabled'); }, watchAccount() {} },
   });
   native.initNativeArenaWs({});
@@ -149,6 +151,7 @@ test('real Socket.IO transport survives a missing payload and accepts the next v
     jsonwebtoken: { verify: () => ({ userId: 1 }) }, '../config': { jwt: { secret: 'test' } },
     '../models/db': { queryOne: async () => ({ present: 1 }) },
     '../services/game-service': { getGameState: () => ({ sessionId: 5 }) },
+    '../utils/action-budget': require('../src/utils/action-budget'),
     './account-guard': { assertActiveUser: async () => {}, watchAccount: () => () => {} },
   });
   init(io);

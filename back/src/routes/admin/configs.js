@@ -5,14 +5,6 @@ const configService = require('../../services/admin-config-service');
 const { logOperation } = require('../../middleware/operation-logger');
 const { success, fail } = require('../../utils/response');
 
-// Sensitive config keys are masked in operation logs (see operation-logger's
-// sanitizeDetail; value keys named secret/api_key/private_key etc. are masked
-// automatically, plus the ones below).
-const SENSITIVE_CONFIG_KEYS = [
-  'wechat.login_secret',
-  'ai.api_key',
-];
-
 router.get('/', adminAuth, async (req, res) => {
   try {
     const data = await configService.getAllConfigs();
@@ -42,11 +34,10 @@ router.put('/', adminAuth, async (req, res) => {
     const data = await configService.updateConfigs(configs, req.admin.adminId);
     await logOperation(req.admin, 'update', 'config', '', {
       keys: configs.map((item) => item && item.key),
-      values: configs.map((item) => (SENSITIVE_CONFIG_KEYS.includes(item && item.key) ? '***' : item && item.value)),
     }, req.ip);
     res.json(success(data, '批量更新成功'));
   } catch (err) {
-    console.error('[Admin Batch Configs]', err);
+    console.error('[Admin Batch Configs]', err.code || err.name);
     res.status(500).json(fail('批量更新配置失败', 500));
   }
 });
@@ -75,13 +66,10 @@ router.put('/:key', adminAuth, async (req, res) => {
       String(req.body.value),
       req.admin.adminId
     );
-    await logOperation(req.admin, 'update', 'config', req.params.key, {
-      key: req.params.key,
-      value: SENSITIVE_CONFIG_KEYS.includes(req.params.key) ? '***' : String(req.body.value),
-    }, req.ip);
+    await logOperation(req.admin, 'update', 'config', req.params.key, null, req.ip);
     res.json(success(data, '更新成功'));
   } catch (err) {
-    console.error('[Admin Update Config]', err);
+    console.error('[Admin Update Config]', err.code || err.name);
     res.status(500).json(fail('更新配置失败', 500));
   }
 });

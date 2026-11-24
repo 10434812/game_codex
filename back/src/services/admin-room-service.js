@@ -1,15 +1,29 @@
 const db = require('../models/db');
 const { mapRoom, mapRoomPlayer } = require('../utils/admin-presenters');
 
-async function listRooms(status = '', page = 1, limit = 20) {
+// Only quick-match rooms are created with four seats. That capacity survives
+// cancellation and rematches even when their matchmaking deadline is cleared.
+const roomTypeSql = `CASE
+  WHEN r.match_due_at IS NOT NULL OR r.max_players = 4 THEN 'quick'
+  WHEN r.max_players > 4 THEN 'friends'
+  ELSE 'unknown'
+END`;
+
+async function listRooms(status = '', page = 1, limit = 20, mode = '') {
   const offset = (page - 1) * limit;
-  let where = '';
+  const conditions = [];
   const params = [];
 
   if (status) {
-    where = 'WHERE r.status = ?';
+    conditions.push('r.status = ?');
     params.push(status);
   }
+
+  if (mode) {
+    conditions.push(`(${roomTypeSql}) = ?`);
+    params.push(mode);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const total = await db.queryOne(
     `SELECT COUNT(*) as total FROM rooms r ${where}`,
@@ -17,12 +31,12 @@ async function listRooms(status = '', page = 1, limit = 20) {
   );
 
   const records = await db.queryAll(
-    `SELECT r.*, u.nick_name as host_name, u.avatar_url as host_avatar,
+    `SELECT r.*, u.nick_name as host_name, u.avatar_url as host_avatar, ${roomTypeSql} AS mode,
             (SELECT COUNT(*) FROM room_players WHERE room_id = r.id) as player_count
      FROM rooms r
      LEFT JOIN users u ON r.host_user_id = u.id
      ${where}
-     ORDER BY r.created_at DESC
+     ORDER BY r.created_at DESC, r.id DESC
      LIMIT ? OFFSET ?`,
     [...params, String(limit), String(offset)]
   );
@@ -32,7 +46,8 @@ async function listRooms(status = '', page = 1, limit = 20) {
 
 async function getRoomDetail(roomId) {
   const room = await db.queryOne(
-    `SELECT r.*, u.nick_name as host_name, u.avatar_url as host_avatar
+    `SELECT r.*, u.nick_name as host_name, u.avatar_url as host_avatar, ${roomTypeSql} AS mode,
+            (SELECT gs.id FROM game_sessions gs WHERE gs.room_id = r.id ORDER BY gs.id DESC LIMIT 1) AS latest_session_id
      FROM rooms r
      LEFT JOIN users u ON r.host_user_id = u.id
      WHERE r.id = ?`,
@@ -53,6 +68,7 @@ async function getRoomDetail(roomId) {
   return {
     ...mapRoom(room),
     players: players.map(mapRoomPlayer),
+    latestSessionId: room.latest_session_id ?? null,
   };
 }
 
@@ -80,14 +96,10 @@ async function forceCloseRoom(roomId, options = {}) {
 
   let sessionResult = null;
   if (session) {
-    try {
-      sessionResult = await gameService.forceFinishSession(session.id, realtime, {
-        settle: options.settle !== false,
-        reason: '管理员强制关闭房间',
-      });
-    } catch (err) {
-      console.error('[AdminRoom] forceFinishSession failed for session', session.id, err.message);
-    }
+    sessionResult = await gameService.forceFinishSession(session.id, realtime, {
+      settle: options.settle !== false,
+      reason: '管理员强制关闭房间',
+    });
   }
 
   await db.execute(

@@ -29,11 +29,11 @@ router.post('/', async (req, res) => {
 });
 
 /**
- * GET /api/rooms — List available rooms
+ * GET /api/rooms — List waiting rooms the current user belongs to
  */
 router.get('/', async (req, res) => {
   try {
-    const rooms = await roomService.listAvailableRooms();
+    const rooms = await roomService.listAvailableRooms(req.user.userId);
     return res.json(success(rooms));
   } catch (err) {
     console.error('[rooms] listRooms error:', err);
@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
 });
 
 /**
- * GET /api/rooms/:id — Get room details
+ * GET /api/rooms/:id — Get room details (members only to prevent ID enumeration)
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -52,7 +52,7 @@ router.get('/:id', async (req, res) => {
     }
 
     const result = await roomService.getRoom(roomId, req.user.userId);
-    if (!result) {
+    if (!result || !Array.isArray(result.players) || !result.players.some((p) => Number(p.user_id) === Number(req.user.userId))) {
       return res.status(404).json(fail('房间不存在', 404));
     }
 

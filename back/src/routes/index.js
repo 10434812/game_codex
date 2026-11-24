@@ -18,14 +18,18 @@ const mount = (path, name) => {
   console.log(`[Routes] Mounted /api${path}`);
 };
 
+mount('/events', './events');
 mount('/auth', './auth');
 mount('/user', './user');
+mount('/matchmaking', './matchmaking');
 mount('/rooms', './rooms');
 mount('/games', './games');
 mount('/shop', './shop');
 mount('/stats', './stats');
 mount('/tasks', './tasks');
+mount('/retention', './retention');
 mount('/leaderboard', './leaderboard');
+mount('/weekend', './weekend');
 mount('/configs', './configs');
 mount('/announcements', './announcements');
 mount('/admin', './admin');

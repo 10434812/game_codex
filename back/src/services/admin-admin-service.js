@@ -107,10 +107,13 @@ async function updateAdmin(id, updates) {
   if (updates.is_active !== undefined || updates.isActive !== undefined || updates.isBanned !== undefined) {
     setClauses.push('is_active = ?');
     params.push(nextActive ? 1 : 0);
+    if (!nextActive) {
+      setClauses.push('session_version = session_version + 1');
+    }
   }
   if (updates.password) {
     const passwordHash = await bcrypt.hash(updates.password, SALT_ROUNDS);
-    setClauses.push('password_hash = ?');
+    setClauses.push('password_hash = ?', 'session_version = session_version + 1');
     params.push(passwordHash);
   }
 
@@ -127,14 +130,14 @@ async function updateAdmin(id, updates) {
 
 async function deleteAdmin(id) {
   await assertNotLastActiveSuper(id);
-  await db.execute('UPDATE admins SET is_active = 0 WHERE id = ?', [id]);
+  await db.execute('UPDATE admins SET is_active = 0, session_version = session_version + 1 WHERE id = ?', [id]);
   return { deleted: true };
 }
 
 async function resetPassword(id, newPassword) {
   assertPassword(newPassword);
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await db.execute('UPDATE admins SET password_hash = ? WHERE id = ?', [passwordHash, id]);
+  await db.execute('UPDATE admins SET password_hash = ?, session_version = session_version + 1 WHERE id = ?', [passwordHash, id]);
   return { reset: true };
 }
 

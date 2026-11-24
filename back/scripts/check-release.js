@@ -4,6 +4,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { getReleaseBlockers } = require('../src/services/release-readiness');
 
+const {checkGameplaySchema, checkLoginSettings, checkApiCapabilities} = require('./check-gameplay-release');
 const args = process.argv.slice(2);
 const allowed = new Set(['--database', '--url', '--target', '--assets']);
 let publicUrl = null;
@@ -49,16 +50,16 @@ async function checkDatabase(blockers) {
       blockers.push('数据库：头像待审核表缺失或不完整，请核对 009 迁移。');
     }
     const [payments] = await connection.execute("SELECT COUNT(*) AS count FROM system_configs WHERE config_key LIKE 'wechat.pay_%'");
-    if (Number(payments[0].count)) blockers.push('数据库：仍保留微信支付配置，请核对 007 迁移。');
+    if (Number(payments[0].count)) blockers.push('数据库：仍保留微信支付配置，请核对 006 迁移。');
     const [external] = await connection.execute("SELECT COUNT(*) AS count FROM fortune_sources WHERE provider <> 'simulated' AND is_active = 1");
-    if (Number(external[0].count)) blockers.push('数据库：仍有启用的外部题材源，请核对 007/010 迁移。');
-    const [settings] = await connection.execute("SELECT config_key, config_value FROM system_configs WHERE config_key IN ('fortune.reality_enabled', 'wechat.login_app_id', 'wechat.login_secret')");
+    if (Number(external[0].count)) blockers.push('数据库：仍有启用的外部题材源，请核对 006/010 迁移。');
+    const [settings] = await connection.execute("SELECT config_key, config_value FROM system_configs WHERE config_key IN ('fortune.reality_enabled', 'wechat.login_enabled', 'wechat.login_app_id', 'wechat.login_secret', 'wechat.minigame_app_id', 'wechat.minigame_secret', 'game.round_duration')");
     const settingsMap = new Map(settings.map((row) => [row.config_key, row.config_value]));
     if (settingsMap.get('fortune.reality_enabled') !== 'false') blockers.push('数据库：题材联动未明确关闭。');
     const { wx } = require('../src/config');
-    if (!(settingsMap.get('wechat.login_app_id') || wx.appId) || !(settingsMap.get('wechat.login_secret') || wx.secret)) {
-      blockers.push('数据库/环境：微信登录凭证缺失。');
-    }
+    const project = target === 'miniprogram' ? require('../../project.config.json') : require('../../minigame/project.config.json');
+    checkLoginSettings(settingsMap, {target, expectedAppId: project.appid, nativeFallback: wx}, blockers);
+    await checkGameplaySchema(connection, blockers);
     console.log('已完成数据库只读检查；未输出配置值或执行迁移。');
   } catch (error) {
     blockers.push(`数据库只读核查失败（${error.code || 'QUERY_FAILED'}）；未验证的项不视为通过。`);
@@ -76,6 +77,7 @@ async function checkPublicService(blockers) {
     const payload = await response.json();
     if (payload.code !== 0 || !payload.data || !payload.data.configs) throw new Error('INVALID_CONFIG_RESPONSE');
     const { configs, features } = payload.data;
+    checkApiCapabilities(features, blockers);
     if (Object.keys(configs).some((key) => key.startsWith('wechat.pay_')) || (features && features.wechat && Object.hasOwn(features.wechat, 'payEnabled'))) {
       blockers.push('线上：仍返回已移除的支付能力，与当前纯娱乐版本不一致。');
     }

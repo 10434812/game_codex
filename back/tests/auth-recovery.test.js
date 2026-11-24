@@ -117,16 +117,44 @@ test('受邀体验不向名单外已有账号发放续期凭证', async (t) => {
   assert.equal(insertions, 0);
 });
 
-test('受邀体验不自动注册名单外微信账号', async (t) => {
+test('受邀体验为名单外新微信号建档但不发凭证，并返回体验编号', async (t) => {
   const original = config.deployment;
+  const originalExecute = db.execute;
+  const originalQueryOne = db.queryOne;
   config.deployment = {channel: 'trial', trialUserIds: [7]};
-  t.after(() => {config.deployment = original;});
+  let created = null;
+  db.execute = async (sql, params) => {
+    insertions += 1;
+    assert.match(sql, /INSERT INTO users/);
+    created = {id: 42, openid: params[0], is_banned: 0};
+    return [{insertId: 42}];
+  };
+  db.queryOne = async (sql, params) => {
+    if (/SELECT \* FROM users WHERE openid = \?/.test(sql)) return created && params[0] === created.openid ? created : null;
+    if (/SELECT \* FROM users WHERE id = \?/.test(sql)) return created && Number(params[0]) === created.id ? created : null;
+    return originalQueryOne(sql, params);
+  };
+  t.after(() => {config.deployment = original; db.execute = originalExecute; db.queryOne = originalQueryOne;});
   user = null;
-  const response = await fetch(base.replace('/refresh', '/login'), {
+  const login = () => fetch(base.replace('/refresh', '/login'), {
     method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code: 'test-code'}),
   });
+  const response = await login();
   assert.equal(response.status, 403);
-  assert.equal(insertions, 0);
+  const body = await response.json();
+  assert.match(body.message, /体验编号是 42/);
+  assert.deepEqual(body.data, {code: 'TRIAL_ACCESS_REQUIRED', trialUserId: 42});
+  assert.equal(insertions, 1);
+  // 再次登录复用同一账号，不重复建档。
+  const again = await login();
+  assert.equal(again.status, 403);
+  assert.equal((await again.json()).data.trialUserId, 42);
+  assert.equal(insertions, 1);
+  // 加入名单后即可登录。
+  config.deployment = {channel: 'trial', trialUserIds: [7, 42]};
+  const allowed = await login();
+  assert.equal(allowed.status, 200);
+  assert.equal((await allowed.json()).data.user.id, 42);
 });
 
 test('微信账号变化时拒绝续期，不创建账号', async () => {
@@ -163,4 +191,50 @@ test('无效签名在请求微信或数据库之前被拒绝', async () => {
   assert.equal(result.status, 401);
   assert.equal(wechatCalls, 0);
   assert.equal(insertions, 0);
+});
+
+test('小游戏登录选择独立配置并在JWT记录客户端，跨端续期被拒绝', async () => {
+  const settings = require(configServicePath);
+  const original = settings.getWechatLoginSettings;
+  const selected = [];
+  settings.getWechatLoginSettings = async (client) => {
+    selected.push(client);
+    return {enabled: true, appId: `${client}-app`, secret: 'test-only', tokenTtl: '7d'};
+  };
+  try {
+    const response = await fetch(base.replace('/refresh', '/login'), {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code: 'test-code', client: 'minigame'}),
+    });
+    assert.equal(response.status, 200);
+    const token = (await response.json()).data.token;
+    assert.equal(jwt.verify(token, process.env.JWT_SECRET).client, 'minigame');
+    assert.deepEqual(selected, ['minigame']);
+    const cross = await refresh(token);
+    assert.equal(cross.status, 401);
+    assert.equal(wechatCalls, 1);
+    const same = await fetch(base, {
+      method: 'POST', headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
+      body: JSON.stringify({code: 'test-code', client: 'minigame'}),
+    });
+    assert.equal(same.status, 200);
+    assert.deepEqual(selected, ['minigame', 'minigame']);
+  } finally {settings.getWechatLoginSettings = original;}
+});
+
+test('非法客户端在微信换码前返回400，小游戏配置缺失不签发账号', async () => {
+  const response = await fetch(base.replace('/refresh', '/login'), {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code: 'test-code', client: 'unknown'}),
+  });
+  assert.equal(response.status, 400); assert.equal(wechatCalls, 0);
+  const settings = require(configServicePath), original = settings.getWechatLoginSettings;
+  settings.getWechatLoginSettings = async () => ({enabled: true, appId: 'mini', secret: ''});
+  try {
+    const missing = await fetch(base.replace('/refresh', '/login'), {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code: 'test-code', client: 'minigame'}),
+    });
+    assert.equal(missing.status, 500); assert.equal(wechatCalls, 0);
+  } finally {settings.getWechatLoginSettings = original;}
 });

@@ -31,7 +31,7 @@ router.post('/login', loginRateLimit, async (req, res) => {
     }
 
     const admin = await db.queryOne(
-      'SELECT id, username, password_hash, role, is_active FROM admins WHERE username = ?',
+      'SELECT id, username, password_hash, role, is_active, session_version FROM admins WHERE username = ?',
       [username]
     );
 
@@ -50,20 +50,21 @@ router.post('/login', loginRateLimit, async (req, res) => {
       return res.status(403).json(fail('该管理员账号已被禁用', 403));
     }
 
+    const actor = { adminId: admin.id, username: admin.username, role: admin.role };
     const passwordMatch = await bcrypt.compare(password, admin.password_hash);
     if (!passwordMatch) {
-      await logOperation({ id: admin.id, username: admin.username, role: admin.role }, 'login_failed', 'admin', admin.id, { reason: 'bad_password' }, req.ip);
+      await logOperation(actor, 'login_failed', 'admin', admin.id, { reason: 'bad_password' }, req.ip);
       return res.status(401).json(fail('用户名或密码错误', 401));
     }
 
     const token = jwt.sign(
-      { adminId: admin.id, username: admin.username, role: admin.role },
+      { ...actor, sessionVersion: admin.session_version },
       config.jwt.adminSecret,
       { expiresIn: config.jwt.expiresIn }
     );
 
     await db.execute('UPDATE admins SET last_login_at = NOW() WHERE id = ?', [admin.id]);
-    await logOperation({ id: admin.id, username: admin.username, role: admin.role }, 'login', 'admin', admin.id, {}, req.ip);
+    await logOperation(actor, 'login', 'admin', admin.id, {}, req.ip);
 
     res.json(
       success(

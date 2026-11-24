@@ -4,6 +4,11 @@ const adminAuth = require('../../middleware/admin-auth');
 const statsService = require('../../services/admin-stats-service');
 const { success, fail } = require('../../utils/response');
 
+router.get('/analytics', adminAuth, async (_req, res, next) => {
+  try {res.json(success(await require('../../services/analytics-service').getOverview()));}
+  catch (error) {next(error);}
+});
+
 router.get('/overview', adminAuth, async (req, res) => {
   try {
     // limit (days) is honored when from/to are not given: "近 N 日" becomes

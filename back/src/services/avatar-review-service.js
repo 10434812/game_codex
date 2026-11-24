@@ -51,7 +51,7 @@ async function expirePending() {
   }
 }
 
-async function submit(userId, openid, buffer) {
+async function submit(userId, openid, buffer, { client = 'miniprogram' } = {}) {
   const { baseUrl } = safety.callbackSettings();
   buffer = await normalizeImage(buffer);
   await expirePending();
@@ -80,7 +80,7 @@ async function submit(userId, openid, buffer) {
     } finally {
       conn.release();
     }
-    const traceId = await safety.checkImage(`${baseUrl}/api/user/content-safety/media/${token}`, openid);
+    const traceId = await safety.checkImage(`${baseUrl}/api/user/content-safety/media/${token}`, openid, client);
     await db.execute('UPDATE avatar_reviews SET trace_id = ? WHERE id = ?', [traceId, reviewId]);
     return { avatarReview: 'pending', message: '头像审核中，通过后自动生效' };
   } catch (error) {

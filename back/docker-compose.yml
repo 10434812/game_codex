@@ -29,6 +29,13 @@ services:
       - ./sql/011_game_duration_100.sql:/docker-entrypoint-initdb.d/011_game_duration_100.sql
       - ./sql/012_daily_tasks.sql:/docker-entrypoint-initdb.d/012_daily_tasks.sql
       - ./sql/013_game_duration_120.sql:/docker-entrypoint-initdb.d/013_game_duration_120.sql
+      - ./sql/014_analytics_events.sql:/docker-entrypoint-initdb.d/014_analytics_events.sql
+      - ./sql/016_room_activity.sql:/docker-entrypoint-initdb.d/016_room_activity.sql
+      - ./sql/017_matchmaking.sql:/docker-entrypoint-initdb.d/017_matchmaking.sql
+      - ./sql/018_retention_rewards.sql:/docker-entrypoint-initdb.d/018_retention_rewards.sql
+      - ./sql/019_admin_session_version.sql:/docker-entrypoint-initdb.d/019_admin_session_version.sql
+      - ./sql/020_friend_challenges.sql:/docker-entrypoint-initdb.d/020_friend_challenges.sql
+      - ./sql/021_scenic_passport.sql:/docker-entrypoint-initdb.d/021_scenic_passport.sql
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
 volumes:

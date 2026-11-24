@@ -211,16 +211,9 @@ async function ensureDefaultSources() {
   await ensureFortuneTables();
   for (const source of DEFAULT_SOURCES) {
     await db.execute(
-      `INSERT INTO fortune_sources
+      `INSERT IGNORE INTO fortune_sources
        (source_key, name, category, provider, endpoint_url, parser_config, refresh_interval_seconds, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-       ON DUPLICATE KEY UPDATE
-         name = VALUES(name),
-         category = VALUES(category),
-         provider = VALUES(provider),
-         endpoint_url = VALUES(endpoint_url),
-         parser_config = VALUES(parser_config),
-         refresh_interval_seconds = VALUES(refresh_interval_seconds)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
       [
         source.source_key,
         source.name,

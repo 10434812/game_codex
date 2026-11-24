@@ -332,7 +332,7 @@ test('admin-auth rejects user tokens (separate secrets) and disabled admins', as
     const config = require('../src/config');
 
     let banned = false;
-    db.queryOne = async () => (banned ? { id: 1, username: 'admin', role: 'super', is_active: 0 } : { id: 1, username: 'admin', role: 'super', is_active: 1 });
+    db.queryOne = async () => ({ id: 1, username: 'admin', role: 'super', is_active: banned ? 0 : 1, session_version: 0 });
 
     // 用用户密钥签发的 token 无法通过管理员鉴权
     const userToken = jwt.sign({ userId: 5 }, config.jwt.secret, { expiresIn: '1h' });
@@ -344,8 +344,7 @@ test('admin-auth rejects user tokens (separate secrets) and disabled admins', as
 
     // 停用管理员 → 403
     banned = true;
-    adminAuth.__private.adminStateCache.clear();
-    const adminToken = jwt.sign({ adminId: 1 }, config.jwt.adminSecret, { expiresIn: '1h' });
+    const adminToken = jwt.sign({ adminId: 1, sessionVersion: 0 }, config.jwt.adminSecret, { expiresIn: '1h' });
     const res2 = mockRes();
     await adminAuth(mockReq({ headers: { authorization: `Bearer ${adminToken}` } }), res2, () => {});
     assert.equal(res2.statusCode, 403);
@@ -353,7 +352,6 @@ test('admin-auth rejects user tokens (separate secrets) and disabled admins', as
 
     // 启用管理员 → 放行，角色取自数据库
     banned = false;
-    adminAuth.__private.adminStateCache.clear();
     const req3 = mockReq({ headers: { authorization: `Bearer ${adminToken}` } });
     const res3 = mockRes();
     let passed = false;

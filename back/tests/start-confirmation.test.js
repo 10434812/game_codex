@@ -10,6 +10,7 @@ function fixture(t) {
     beginTransaction: async () => {}, commit: async () => {}, rollback: async () => {}, release() {},
     execute: async (sql, params) => {
       calls.push({sql, params});
+      if (/SELECT match_due_at FROM rooms/.test(sql)) return [[{match_due_at: null}]];
       if (/SELECT id, status FROM game_sessions/.test(sql)) return [[{id: 9, status: 'playing'}]];
       if (/SELECT id FROM game_sessions/.test(sql)) return [[]];
       return [{affectedRows: 1}];

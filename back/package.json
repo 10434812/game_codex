@@ -12,6 +12,7 @@
     "test": "node --test tests/*.test.js",
     "test:integration": "node scripts/test-full-flow.js",
     "release:check": "node scripts/check-release.js",
+    "migrate": "node scripts/migrate.js",
     "fortune:refresh": "node scripts/refresh-fortune-reality.js"
   },
   "dependencies": {

@@ -5,6 +5,7 @@ const gameService = require('../services/game-service');
 const gameActions = require('../services/game-actions-service');
 const db = require('../models/db');
 const { success, fail } = require('../utils/response');
+const challenges = require('../services/friend-challenge-service');
 
 /**
  * A user may only read a game they actually played in. Non-members get the
@@ -31,6 +32,15 @@ router.get('/current', auth, (req, res, next) => {
      WHERE gp.user_id = ? AND gs.status = 'playing' ORDER BY gs.id DESC LIMIT 1`,
     [req.user.userId]
   ).then((session) => res.json(success(session))).catch(next);
+});
+
+router.post('/:id/rematch', auth, async (req, res, next) => {
+  const sessionId = parseSessionId(req.params.id);
+  if (!sessionId) return res.status(400).json(fail('无效的对局ID', 400));
+  try {
+    const room = await require('../services/room-service').rematch(sessionId, req.user.userId);
+    return res.json(success(room, '已返回原房间并准备'));
+  } catch (error) {return next(error);}
 });
 
 router.post('/:id/cancel-start', auth, (req, res, next) => {
@@ -75,7 +85,9 @@ router.get('/:id/result', auth, async (req, res) => {
     const activeGame = gameService.getActiveGame(sessionId);
     if (activeGame) {
       if (activeGame.status !== 'finished') return res.status(409).json(fail('结算确认中，请稍后重试', 409));
-      return res.json(success(gameService.buildResultPayload(activeGame, req.user.userId)));
+      const payload = gameService.buildResultPayload(activeGame, req.user.userId);
+      const fields = payload.interrupted ? {} : await challenges.resultFields(sessionId, req.user.userId);
+      return res.json(success({...payload, ...fields}));
     }
 
     const result = await db.queryOne(
@@ -84,7 +96,7 @@ router.get('/:id/result', auth, async (req, res) => {
     );
     if (!result) return res.status(404).json(fail('对局结果不存在', 404));
     const session = await db.queryOne(
-      'SELECT id, stage_id FROM game_sessions WHERE id = ?',
+      'SELECT id, stage_id, room_id FROM game_sessions WHERE id = ?',
       [sessionId]
     );
     const playerRow = await db.queryOne(
@@ -92,12 +104,15 @@ router.get('/:id/result', auth, async (req, res) => {
       [sessionId, req.user.userId]
     );
     const storedResult = typeof result.result_json === 'string' ? JSON.parse(result.result_json) : result.result_json;
-    res.json(success(gameService.personalizeStoredResultPayload(storedResult, {
+    const payload = gameService.personalizeStoredResultPayload(storedResult, {
       sessionId,
       viewerUserId: req.user.userId,
       stageId: session && session.stage_id,
+      roomId: session && session.room_id,
       playerRow,
-    })));
+    });
+    const fields = payload.interrupted ? {} : await challenges.resultFields(sessionId, req.user.userId);
+    res.json(success({...payload, ...fields}));
   } catch (err) {
     console.error('[Game Result]', err);
     res.status(500).json(fail('获取对局结果失败', 500));
